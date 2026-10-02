@@ -33,3 +33,12 @@
 .micro-help{font-size:10px;line-height:1.45;color:#7c8796;margin:8px 0 0}.empty-note{font-size:11px;color:#8b95a2;padding:7px}
 
 .asset-mini-actions{display:flex;gap:3px}.asset-mini-actions button{padding:4px 5px;font-size:9px}
+
+/* Final workflow controls */
+.project-name{width:210px;background:#1b2638;border-color:#34435a;color:#dce6f4;padding:7px 9px}
+.left-tools{grid-template-columns:1fr 1fr!important;gap:6px!important}
+.left-tools select{min-width:0}
+.checkline{display:flex!important;align-items:center;gap:7px}
+.checkline input{width:auto!important;margin:0!important}
+.title{white-space:normal!important;overflow-wrap:anywhere;max-height:50px;overflow:hidden}
+#textColor{height:35px;padding:3px}
