@@ -83,6 +83,17 @@ var sample=[
 var vars={"名称":"name","费用":"cost","系别":"faction","攻击":"attack","血量":"health","移速":"move","射程":"range","兵种":"unitType","稀有度":"rarity"};
 
 var loadJson=function(key,fallback){try{var v=JSON.parse(localStorage.getItem(key)||"null");return v==null?fallback:v}catch(e){return fallback}};
+var dbReady=false,dbSaveTimer=null;
+function openProjectDb(){
+  return new Promise(function(resolve,reject){
+    var req=indexedDB.open("card-assembly-studio",1);
+    req.onupgradeneeded=function(){if(!req.result.objectStoreNames.contains("kv"))req.result.createObjectStore("kv")};
+    req.onsuccess=function(){resolve(req.result)};req.onerror=function(){reject(req.error)};
+  });
+}
+async function dbPut(key,value){var db=await openProjectDb();return new Promise(function(resolve,reject){var tx=db.transaction("kv","readwrite");tx.objectStore("kv").put(value,key);tx.oncomplete=function(){db.close();resolve()};tx.onerror=function(){db.close();reject(tx.error)}})}
+async function dbGet(key){var db=await openProjectDb();return new Promise(function(resolve,reject){var tx=db.transaction("kv","readonly"),req=tx.objectStore("kv").get(key);req.onsuccess=function(){db.close();resolve(req.result)};req.onerror=function(){db.close();reject(req.error)}})}
+function scheduleDbSave(){if(!dbReady)return;clearTimeout(dbSaveTimer);dbSaveTimer=setTimeout(function(){dbPut("project-v3",{updatedAt:Date.now(),project:projectPayload()}).catch(function(){})},500)};
 var saved=loadJson("card-studio-project-v2",null)||loadJson("card-studio-project",null);
 var cards=saved&&saved.cards&&saved.cards.length?saved.cards:sample;
 var selected=saved&&saved.selected&&cards.some(function(c){return c.id===saved.selected})?saved.selected:cards[0].id;
@@ -124,14 +135,17 @@ var recordHistory=function(){
 var updateHistoryButtons=function(){$("#undoBtn").disabled=!history.length;$("#redoBtn").disabled=!future.length};
 var persist=function(){
   try{
-    localStorage.setItem("card-studio-project-v2",JSON.stringify({cards:cards,selected:selected}));
+    var lightCards=cards.map(function(c){var x=Object.assign({},c);x.art="";return x});
+    var lightAssets=userAssets.map(function(a){var x=Object.assign({},a);x.dataUrl="";return x});
+    localStorage.setItem("card-studio-project-v2",JSON.stringify({cards:lightCards,selected:selected}));
     localStorage.setItem("card-studio-skins",JSON.stringify(skins));
     localStorage.setItem("card-studio-favorite-assets",JSON.stringify(favoriteAssets));
-    localStorage.setItem("card-studio-snapshots",JSON.stringify(snapshots.slice(0,12)));
-    localStorage.setItem("card-studio-user-assets",JSON.stringify(userAssets));
+    localStorage.setItem("card-studio-snapshots",JSON.stringify(snapshots.slice(0,12).map(function(x){return {id:x.id,time:x.time,label:x.label,state:x.state}})));
+    localStorage.setItem("card-studio-user-assets",JSON.stringify(lightAssets));
     localStorage.setItem("card-studio-custom-templates",JSON.stringify(customTemplates));
     localStorage.setItem("card-studio-ai-style",JSON.stringify($("#aiStyle")?$("#aiStyle").value:aiStyle));
   }catch(e){}
+  scheduleDbSave();
 };
 var setStatus=function(t){$("#status").textContent=t};
 
@@ -430,7 +444,7 @@ $("#batchPdf").onclick=batchPdf;$("#batchPdfTop").onclick=batchPdf;
 function safeFilename(name){return String(name||"card").replace(/[\\/:*?"<>|]/g,"_").trim()||"card"}
 function normalizeName(name){return String(name||"").replace(/\\.[^.]+$/,"").replace(/[\\s_\\-]+/g,"").toLowerCase()}
 function fileToDataUrl(file){return new Promise(function(resolve,reject){var rr=new FileReader();rr.onload=function(){resolve(String(rr.result||""))};rr.onerror=reject;rr.readAsDataURL(file)})}
-function projectPayload(){return {format:"card-assembly-studio",version:3,exportedAt:new Date().toISOString(),cards:cards,skins:skins,userAssets:userAssets,customTemplates:customTemplates,favoriteAssets:favoriteAssets,aiStyle:$("#aiStyle").value}}
+function projectPayload(){return {format:"card-assembly-studio",version:3,exportedAt:new Date().toISOString(),cards:cards,selected:selected,skins:skins,userAssets:userAssets,customTemplates:customTemplates,favoriteAssets:favoriteAssets,aiStyle:$("#aiStyle").value}}
 function downloadText(text,name,type){var blob=new Blob([text],{type:type||"text/plain;charset=utf-8"}),url=URL.createObjectURL(blob);download(url,name);setTimeout(function(){URL.revokeObjectURL(url)},1000)}
 
 $("#projectExport").onclick=function(){downloadText(JSON.stringify(projectPayload(),null,2),"card-studio-project.cardstudio","application/json");setStatus("项目文件已保存，包含卡牌、皮肤、模板与图片素材")};
@@ -531,4 +545,16 @@ $("#batchPngZip").onclick=async function(){
 };
 
 renderAll();
+dbGet("project-v3").then(function(savedDb){
+  dbReady=true;
+  if(savedDb&&savedDb.project&&Array.isArray(savedDb.project.cards)&&savedDb.project.cards.length){
+    var p=savedDb.project;
+    cards=p.cards.map(normalizeCard);skins=(p.skins||skins).map(function(x){x.appearance=normalizeAppearance(x.appearance);return x});
+    userAssets=p.userAssets||[];customTemplates=p.customTemplates||{};favoriteAssets=p.favoriteAssets||[];
+    TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);
+    selected=p.selected&&cards.some(function(c){return c.id===p.selected})?p.selected:cards[0].id;
+    if(p.aiStyle)$("#aiStyle").value=p.aiStyle;
+    renderAll();setStatus("已恢复完整项目（含图片）");
+  }else{scheduleDbSave()}
+}).catch(function(){dbReady=true;scheduleDbSave()});
 })();
