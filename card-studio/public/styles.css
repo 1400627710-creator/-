@@ -42,3 +42,10 @@
 .checkline input{width:auto!important;margin:0!important}
 .title{white-space:normal!important;overflow-wrap:anywhere;max-height:50px;overflow:hidden}
 #textColor{height:35px;padding:3px}
+
+.card .title{font-size:var(--title-size)!important;color:var(--title-color)!important;text-align:var(--title-align)!important;font-weight:var(--title-weight)!important}
+.card .effect{font-size:var(--effect-size)!important;color:var(--effect-color)!important;text-align:var(--effect-align)!important;font-weight:var(--effect-weight)!important}
+.card .meta,.card .faction{font-size:var(--meta-size)!important;color:var(--meta-color)!important;text-align:var(--meta-align)!important;font-weight:var(--meta-weight)!important}
+.card .stat strong{font-size:var(--stats-size)!important;color:var(--stats-color)!important;text-align:var(--stats-align)!important;font-weight:var(--stats-weight)!important}
+.card .cost-badge{font-size:var(--cost-size)!important;color:var(--cost-color)!important;text-align:var(--cost-align)!important;font-weight:var(--cost-weight)!important}
+.api-key-box{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:end;margin-bottom:9px;padding:8px;border:1px solid #e1e5ea;border-radius:8px;background:#f8fafc}.api-key-box label{margin:0}.api-key-box button{height:34px}.api-key-box small{grid-column:1/-1;color:#7a8594}
