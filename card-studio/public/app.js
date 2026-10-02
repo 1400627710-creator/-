@@ -237,9 +237,15 @@ function refreshElementPanel(){
   $("#elementText").disabled=m.type!=="extra";$("#elementText").value=m.type==="extra"?(m.element.text||""):"";
   if(node)node.classList.add("selected");
 }
-function setLayoutMode(on){
-  layoutEditing=!!on;$("#preview").classList.toggle("layout-editing",layoutEditing);$("#safeMode").classList.toggle("active",!layoutEditing);$("#layoutMode").classList.toggle("active",layoutEditing);
-  $("#layoutModeLabel").textContent=layoutEditing?"自由布局":"安全编辑";$("#stageHint").textContent=layoutEditing?"自由布局：点击元素后拖动；右下角缩放；上方圆点旋转；方向键微调。":"安全编辑：直接填写内容，不会误移动版式。切到“自由布局”后可像 PPT 一样移动、缩放和旋转元素。";
+function setLayoutMode(on,focusPanel){
+  layoutEditing=!!on;
+  $("#preview").classList.toggle("layout-editing",layoutEditing);document.body.classList.toggle("layout-mode-on",layoutEditing);
+  $("#safeMode").classList.toggle("active",!layoutEditing);$("#layoutMode").classList.toggle("active",layoutEditing);$("#layoutQuickButton").classList.toggle("active",layoutEditing);
+  $("#layoutModeLabel").textContent=layoutEditing?"自由布局":"普通制卡";
+  $("#layoutQuickButton").textContent=layoutEditing?"✓ 自由布局已开启":"✥ 进入自由布局";
+  $("#stageHint").textContent=layoutEditing?"自由布局已开启：直接点击费用、稀有度、标题等元素后拖动；右下角缩放；上方圆点旋转；方向键微调。":"普通制卡：直接填写内容，不会误移动版式。要调整费用、稀有度等位置，请点击顶部醒目的“自由布局”。";
+  $("#layoutPanel").classList.toggle("mode-focus",layoutEditing);
+  if(layoutEditing&&focusPanel!==false)setTimeout(function(){$("#layoutPanel").scrollIntoView({behavior:"smooth",block:"center"})},80);
   if(!layoutEditing){selectedElement=null;refreshElementPanel()}
 }
 function selectLayoutNode(node){
@@ -397,7 +403,8 @@ var setTemplate=function(id){
 };
 
 $("#safeMode").onclick=function(){setLayoutMode(false)};
-$("#layoutMode").onclick=function(){setLayoutMode(true)};
+$("#layoutMode").onclick=function(){setLayoutMode(true,true)};
+$("#layoutQuickButton").onclick=function(){setLayoutMode(!layoutEditing,true)};
 $("#preview").addEventListener("pointerdown",function(e){
   if(!layoutEditing)return;var handle=e.target.closest("[data-handle]"),node=e.target.closest(".layout-node");if(!node)return;
   beginLayoutPointer(e,node,handle?handle.getAttribute("data-handle"):"move");
@@ -415,6 +422,10 @@ $("#deleteElement").onclick=function(){if(!selectedElement||selectedElement.type
 $("#duplicateElement").onclick=function(){var n=findSelectedNode(),m=getElementModel(current(),n);if(!m)return;recordHistory();if(m.type==="extra"){var x=clone(m.element);x.id=uid();x.layout.x+=3;x.layout.y+=3;current().extraElements.push(x);selectedElement={type:"extra",id:x.id}}else{var x={id:uid(),kind:"text",text:"{"+(m.id==="cost"?"费用":m.id==="head"?"名称":m.id==="rarity"?"稀有度":"名称")+"}",fontSize:12,color:current().appearance.text,align:"left",layout:clone(m.layout)};x.layout.x+=3;x.layout.y+=3;x.layout.z=45;current().extraElements.push(x);selectedElement={type:"extra",id:x.id}}renderPreviewOnly();refreshElementPanel();persist()};
 $("#resetLayout").onclick=function(){recordHistory();current().layout=makeLayout();renderPreviewOnly();selectedElement=null;refreshElementPanel();persist();setStatus("已恢复当前卡牌的模板默认布局")};
 $("#copyLayoutAll").onclick=function(){var c=current(),tid=c.templateId;recordHistory();cards.forEach(function(x){if(x.templateId===tid&&x.id!==c.id)x.layout=clone(c.layout)});renderAll();setStatus("布局已应用到同模板卡牌")};
+window.addEventListener("keydown",function(e){
+  var tag=document.activeElement&&document.activeElement.tagName;
+  if((e.key==="l"||e.key==="L")&&["INPUT","TEXTAREA","SELECT"].indexOf(tag)<0){e.preventDefault();setLayoutMode(!layoutEditing,true);return}
+});
 window.addEventListener("keydown",function(e){if(!layoutEditing||!selectedElement||["INPUT","TEXTAREA"].indexOf(document.activeElement.tagName)>=0)return;var n=findSelectedNode(),m=getElementModel(current(),n);if(!m||m.layout.locked)return;if(e.key==="Delete"&&selectedElement.type==="extra"){$("#deleteElement").click();return}var step=e.shiftKey?1:0.2,used=true;if(e.key==="ArrowLeft")m.layout.x-=step;else if(e.key==="ArrowRight")m.layout.x+=step;else if(e.key==="ArrowUp")m.layout.y-=step;else if(e.key==="ArrowDown")m.layout.y+=step;else used=false;if(used){e.preventDefault();renderPreviewOnly();refreshElementPanel();persist()}});
 $("#preview").addEventListener("focusin",function(e){
   var f=e.target&&e.target.getAttribute&&e.target.getAttribute("data-edit");
