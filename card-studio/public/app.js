@@ -218,9 +218,60 @@ var setArt=function(root,card){
   var art=root.querySelector(".art");
   if(art&&card.art)art.style.backgroundImage='url("'+String(card.art).replace(/"/g,"%22")+'")';
 };
+var layoutEditing=false,selectedElement=null,dragState=null;
+function getElementModel(card,node){
+  if(!node)return null;
+  var extraId=node.getAttribute("data-extra-id");
+  if(extraId){var el=(card.extraElements||[]).find(function(x){return x.id===extraId});return el?{type:"extra",id:extraId,layout:el.layout,element:el}:null}
+  var key=node.getAttribute("data-layout-key");return key&&card.layout[key]?{type:"layout",id:key,layout:card.layout[key]}:null;
+}
+function findSelectedNode(){
+  if(!selectedElement)return null;
+  return selectedElement.type==="extra"?$('#preview [data-extra-id="'+selectedElement.id+'"]'):$('#preview [data-layout-key="'+selectedElement.id+'"]');
+}
+function refreshElementPanel(){
+  var c=current(),node=findSelectedNode(),m=getElementModel(c,node),disabled=!m;
+  ["#elX","#elY","#elW","#elH","#elR","#elZ","#toggleElementLock","#bringFront","#sendBack","#duplicateElement","#deleteElement"].forEach(function(q){var el=$(q);if(el)el.disabled=disabled});
+  if(!m){$("#elementText").value="";$("#elementText").disabled=true;return}
+  $("#elX").value=Math.round(m.layout.x*10)/10;$("#elY").value=Math.round(m.layout.y*10)/10;$("#elW").value=Math.round(m.layout.w*10)/10;$("#elH").value=Math.round(m.layout.h*10)/10;$("#elR").value=Math.round(m.layout.r*10)/10;$("#elZ").value=m.layout.z||20;
+  $("#elementText").disabled=m.type!=="extra";$("#elementText").value=m.type==="extra"?(m.element.text||""):"";
+  if(node)node.classList.add("selected");
+}
+function setLayoutMode(on){
+  layoutEditing=!!on;$("#preview").classList.toggle("layout-editing",layoutEditing);$("#safeMode").classList.toggle("active",!layoutEditing);$("#layoutMode").classList.toggle("active",layoutEditing);
+  $("#layoutModeLabel").textContent=layoutEditing?"自由布局":"安全编辑";$("#stageHint").textContent=layoutEditing?"自由布局：点击元素后拖动；右下角缩放；上方圆点旋转；方向键微调。":"安全编辑：直接填写内容，不会误移动版式。切到“自由布局”后可像 PPT 一样移动、缩放和旋转元素。";
+  if(!layoutEditing){selectedElement=null;refreshElementPanel()}
+}
+function selectLayoutNode(node){
+  $("#preview .layout-node.selected").forEach(function(x){x.classList.remove("selected")});
+  var m=getElementModel(current(),node);if(!m){selectedElement=null;refreshElementPanel();return}
+  selectedElement={type:m.type,id:m.id};node.classList.add("selected");refreshElementPanel();
+}
+function clamp(v,min,max){return Math.max(min,Math.min(max,v))}
+function beginLayoutPointer(e,node,mode){
+  var m=getElementModel(current(),node);if(!m||m.layout.locked)return;
+  e.preventDefault();e.stopPropagation();selectLayoutNode(node);recordHistory();
+  var cardEl=$("#preview .card"),rect=cardEl.getBoundingClientRect(),p=m.layout;
+  dragState={pointerId:e.pointerId,node:node,mode:mode||"move",model:m,rect:rect,startX:e.clientX,startY:e.clientY,start:clone(p)};
+  if(mode==="rotate"){var nr=node.getBoundingClientRect();dragState.cx=nr.left+nr.width/2;dragState.cy=nr.top+nr.height/2;dragState.startAngle=Math.atan2(e.clientY-dragState.cy,e.clientX-dragState.cx)*180/Math.PI}
+  node.setPointerCapture&&node.setPointerCapture(e.pointerId);
+}
+function moveLayoutPointer(e){
+  if(!dragState)return;var d=dragState,p=d.model.layout,dx=(e.clientX-d.startX)/d.rect.width*100,dy=(e.clientY-d.startY)/d.rect.height*100;
+  if(d.mode==="move"){p.x=clamp(d.start.x+dx,-20,120);p.y=clamp(d.start.y+dy,-20,120)}
+  else if(d.mode==="resize"){p.w=clamp(d.start.w+dx,2,140);p.h=clamp(d.start.h+dy,2,140)}
+  else if(d.mode==="rotate"){var a=Math.atan2(e.clientY-d.cy,e.clientX-d.cx)*180/Math.PI;p.r=d.start.r+(a-d.startAngle)}
+  renderPreviewOnly();refreshElementPanel();
+}
+function endLayoutPointer(){if(!dragState)return;dragState=null;persist()}
+function addExtra(kind){
+  recordHistory();var c=current(),n=(c.extraElements||[]).length+1,text=kind==="number"?(c.cardNumber||("CARD-"+String(n).padStart(3,"0"))):"双击或在右侧编辑文本";
+  var el={id:uid(),kind:kind,text:text,fontSize:kind==="number"?10:12,color:c.appearance.text,align:kind==="number"?"center":"left",layout:{x:kind==="number"?68:15,y:kind==="number"?94:50,w:kind==="number"?27:45,h:kind==="number"?4:9,r:0,z:45,locked:false}};
+  c.extraElements.push(el);renderPreviewOnly();selectedElement={type:"extra",id:el.id};refreshElementPanel();persist();
+}
 var renderPreviewOnly=function(){
   var c=current(),t=TEMPLATES[c.templateId];
-  $("#preview").innerHTML=cardHtml(c,true);setArt($("#preview"),c);
+  $("#preview").innerHTML=cardHtml(c,true);setArt($("#preview"),c);$("#preview").classList.toggle("layout-editing",layoutEditing);
   $("#templateName").textContent=t.name;
 };
 var TEXT_TARGETS={title:"title",effect:"effect",meta:"meta",stats:"stats",cost:"cost"};
@@ -244,7 +295,7 @@ var renderCard=function(){
   $("#description").value=c.description||"";
   $("#dynamicStats").innerHTML=t.stats.map(function(s){return '<label>'+s[2]+'<input type="number" data-stat="'+s[0]+'" value="'+esc(c[s[0]])+'"></label>'}).join("");
   $$("[data-color]").forEach(function(el){el.value=c.appearance[el.getAttribute("data-color")]});
-  refreshTextControls();
+  refreshTextControls();refreshElementPanel();
   renderTemplates();renderAssets();renderSkins();
 };
 var renderExport=function(card){$("#exportCard").innerHTML=cardHtml(card,false);setArt($("#exportCard"),card)};
@@ -345,6 +396,26 @@ var setTemplate=function(id){
   renderAll();setStatus("已切换为"+TEMPLATES[id].name+"，布局自动适配");
 };
 
+$("#safeMode").onclick=function(){setLayoutMode(false)};
+$("#layoutMode").onclick=function(){setLayoutMode(true)};
+$("#preview").addEventListener("pointerdown",function(e){
+  if(!layoutEditing)return;var handle=e.target.closest("[data-handle]"),node=e.target.closest(".layout-node");if(!node)return;
+  beginLayoutPointer(e,node,handle?handle.getAttribute("data-handle"):"move");
+});
+window.addEventListener("pointermove",moveLayoutPointer);window.addEventListener("pointerup",endLayoutPointer);window.addEventListener("pointercancel",endLayoutPointer);
+$("#preview").addEventListener("click",function(e){if(layoutEditing){var n=e.target.closest(".layout-node");if(n){e.preventDefault();e.stopPropagation();selectLayoutNode(n)}}});
+["X","Y","W","H","R","Z"].forEach(function(k){$("#el"+k).addEventListener("change",function(){var n=findSelectedNode(),m=getElementModel(current(),n);if(!m)return;recordHistory();var map={X:"x",Y:"y",W:"w",H:"h",R:"r",Z:"z"};m.layout[map[k]]=num(this.value,m.layout[map[k]]);renderPreviewOnly();refreshElementPanel();persist()})});
+$("#addTextElement").onclick=function(){setLayoutMode(true);addExtra("text")};$("#addNumberElement").onclick=function(){setLayoutMode(true);addExtra("number")};
+$("#elementText").addEventListener("input",function(){var n=findSelectedNode(),m=getElementModel(current(),n);if(m&&m.type==="extra"){m.element.text=this.value;renderPreviewOnly();persist()}});
+$("#elementText").addEventListener("focus",function(){if(!this.disabled)recordHistory()});
+$("#toggleElementLock").onclick=function(){var n=findSelectedNode(),m=getElementModel(current(),n);if(!m)return;recordHistory();m.layout.locked=!m.layout.locked;renderPreviewOnly();refreshElementPanel();persist()};
+$("#bringFront").onclick=function(){var n=findSelectedNode(),m=getElementModel(current(),n);if(!m)return;recordHistory();m.layout.z=99;renderPreviewOnly();refreshElementPanel();persist()};
+$("#sendBack").onclick=function(){var n=findSelectedNode(),m=getElementModel(current(),n);if(!m)return;recordHistory();m.layout.z=2;renderPreviewOnly();refreshElementPanel();persist()};
+$("#deleteElement").onclick=function(){if(!selectedElement||selectedElement.type!=="extra"){setStatus("模板字段不能删除，可锁定或移出画布；只有自定义元素可以删除");return}recordHistory();current().extraElements=current().extraElements.filter(function(x){return x.id!==selectedElement.id});selectedElement=null;renderPreviewOnly();refreshElementPanel();persist()};
+$("#duplicateElement").onclick=function(){var n=findSelectedNode(),m=getElementModel(current(),n);if(!m)return;recordHistory();if(m.type==="extra"){var x=clone(m.element);x.id=uid();x.layout.x+=3;x.layout.y+=3;current().extraElements.push(x);selectedElement={type:"extra",id:x.id}}else{var x={id:uid(),kind:"text",text:"{"+(m.id==="cost"?"费用":m.id==="head"?"名称":m.id==="rarity"?"稀有度":"名称")+"}",fontSize:12,color:current().appearance.text,align:"left",layout:clone(m.layout)};x.layout.x+=3;x.layout.y+=3;x.layout.z=45;current().extraElements.push(x);selectedElement={type:"extra",id:x.id}}renderPreviewOnly();refreshElementPanel();persist()};
+$("#resetLayout").onclick=function(){recordHistory();current().layout=makeLayout();renderPreviewOnly();selectedElement=null;refreshElementPanel();persist();setStatus("已恢复当前卡牌的模板默认布局")};
+$("#copyLayoutAll").onclick=function(){var c=current(),tid=c.templateId;recordHistory();cards.forEach(function(x){if(x.templateId===tid&&x.id!==c.id)x.layout=clone(c.layout)});renderAll();setStatus("布局已应用到同模板卡牌")};
+window.addEventListener("keydown",function(e){if(!layoutEditing||!selectedElement||["INPUT","TEXTAREA"].indexOf(document.activeElement.tagName)>=0)return;var n=findSelectedNode(),m=getElementModel(current(),n);if(!m||m.layout.locked)return;if(e.key==="Delete"&&selectedElement.type==="extra"){$("#deleteElement").click();return}var step=e.shiftKey?1:0.2,used=true;if(e.key==="ArrowLeft")m.layout.x-=step;else if(e.key==="ArrowRight")m.layout.x+=step;else if(e.key==="ArrowUp")m.layout.y-=step;else if(e.key==="ArrowDown")m.layout.y+=step;else used=false;if(used){e.preventDefault();renderPreviewOnly();refreshElementPanel();persist()}});
 $("#preview").addEventListener("focusin",function(e){
   var f=e.target&&e.target.getAttribute&&e.target.getAttribute("data-edit");
   if(f==="description")e.target.textContent=current().description||"";
