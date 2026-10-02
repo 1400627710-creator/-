@@ -23,3 +23,23 @@ jobs:
           node-version: "22"
       - run: npm install
       - run: npm run check
+
+  windows-package:
+    needs: syntax-and-smoke
+    if: github.event_name == 'push'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare Windows package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path package/CardStudio -Force | Out-Null
+          Copy-Item card-studio/* package/CardStudio -Recurse -Force
+          Remove-Item package/CardStudio/node_modules -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item package/CardStudio/.env -Force -ErrorAction SilentlyContinue
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CardStudio-Windows-1.0
+          path: package/CardStudio
+          if-no-files-found: error
+          retention-days: 30
