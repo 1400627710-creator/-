@@ -291,7 +291,7 @@ $("#preview").addEventListener("focusout",function(e){
 });
 $("#cardList").addEventListener("click",function(e){var b=e.target.closest("[data-id]");if(!b)return;selected=b.getAttribute("data-id");renderAll()});
 $("#cardSearch").addEventListener("input",renderList);$("#templateFilter").addEventListener("change",renderList);$("#sortCards").addEventListener("change",renderList);
-$("[data-form]").forEach(function(el){
+$$("[data-form]").forEach(function(el){
   el.addEventListener("focus",recordHistory);
   el.addEventListener("change",function(){patch(el.getAttribute("data-form"),el.value,false)});
   el.addEventListener("input",function(){
@@ -386,7 +386,7 @@ $("#skinList").onclick=function(e){
   if(fav){var s=skins.find(function(x){return x.id===fav.getAttribute("data-skin-fav")});if(s){s.favorite=!s.favorite;renderSkins();persist()}return}
   if(main){var skin=skins.find(function(x){return x.id===main.getAttribute("data-skin")});if(skin){recordHistory();current().appearance=clone(skin.appearance);renderCard();persist();setStatus("已应用皮肤："+skin.name)}}
 };
-$("[data-color]").forEach(function(el){
+$$("[data-color]").forEach(function(el){
   el.addEventListener("focus",recordHistory);
   el.onchange=function(){current().appearance[el.getAttribute("data-color")]=el.value;renderCard();persist()};
   el.oninput=function(){current().appearance[el.getAttribute("data-color")]=el.value;renderPreviewOnly();persist()};
