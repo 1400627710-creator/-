@@ -11,7 +11,7 @@ new vm.Script(app);
 const requiredIds = [
   "projectName","preview","cardList","cardSearch","templateFilter","factionFilter","rarityFilter","sortCards","templateCards",
   "dynamicStats","description","textTarget","textSize","textColor","textAlign","textBold","applyTextAll",
-  "aiPrompt","aiStyle","aiQuality","aiGenerate","aiRedraw","apiKeyInput","saveApiKey","apiKeyStatus",
+  "aiPrompt","aiStyle","resetAiStyle","aiQuality","aiGenerate","aiRedraw","apiKeyInput","saveApiKey","apiKeyStatus",
   "assetList","customAssetList","skinList","projectExport","projectImport","projectFile",
   "batchImages","batchAI","batchImageFiles","uploadAssetBtn","customAssetFile",
   "batchRename","exportManifest","exportJsonList","batchPngZip","batchJpgZip",
@@ -41,12 +41,12 @@ if (badSelectors.length) throw new Error("querySelector used where querySelector
 
 for (const id of [
   "projectExport","projectImport","batchImages","batchAI","uploadAssetBtn","batchRename",
-  "batchPngZip","batchJpgZip","saveApiKey","aiRedraw","applyTextAll","sheetSize","cropMarks","layoutMode","addImageElement","addImageLabel","detachImageLabel","addTextElement","addNumberElement","resetLayout","openCardSearch","exportTTS","markRuleTerm","openRuleTerms","saveRuleTerm","insertRuleTerm"
+  "batchPngZip","batchJpgZip","saveApiKey","aiRedraw","resetAiStyle","applyTextAll","sheetSize","cropMarks","layoutMode","addImageElement","addImageLabel","detachImageLabel","addTextElement","addNumberElement","resetLayout","openCardSearch","exportTTS","markRuleTerm","openRuleTerms","saveRuleTerm","insertRuleTerm"
 ]) {
   if (!app.includes('$("#' + id + '")')) throw new Error("Missing handler reference for #" + id);
 }
 
-for (const marker of ["indexedDB.open", "projectPayload", "customTemplates", "userAssets", "SHEETS", "factionFilter", "rarityFilter", "DEFAULT_LAYOUT", "extraElements", "addFreeImage", "addLabelToSelectedImage", "parentId", "renderCardLibrary", "ttsCard", "renderRichText", "extractRuleTerms", "ruleTerms", "byTerm"]) {
+for (const marker of ["indexedDB.open", "projectPayload", "customTemplates", "userAssets", "SHEETS", "factionFilter", "rarityFilter", "DEFAULT_LAYOUT", "extraElements", "addFreeImage", "addLabelToSelectedImage", "parentId", "renderCardLibrary", "ttsCard", "renderRichText", "extractRuleTerms", "ruleTerms", "byTerm", "botanical", "canvas", "classical", "DEFAULT_AI_STYLE"]) {
   if (!app.includes(marker)) throw new Error("Missing implemented feature marker: " + marker);
 }
 
@@ -57,7 +57,8 @@ for (const endpoint of ["/api/health","/api/settings/api-key","/api/generate-ima
 if (!server.includes('app.use("/vendor"')) throw new Error("node_modules vendor route is missing.");
 if (!server.includes('"127.0.0.1"')) throw new Error("Server must bind to localhost only.");
 if (!server.includes("OPENAI_IMAGE_EDIT_MODEL")) throw new Error("Dedicated image edit model setting is missing.");
+if (!server.includes("DEFAULT_CARD_ART_DIRECTION")) throw new Error("Classical painterly AI art direction is missing.");
 
 console.log("Card Studio smoke check passed.");
 
-if (app.includes('\n  $("#preview .layout-node.selected").forEach')) fail("single-selector helper used for layout selection list");
+if (app.includes('\n  $("#preview .layout-node.selected").forEach')) throw new Error("single-selector helper used for layout selection list");
