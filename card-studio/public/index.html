@@ -60,11 +60,11 @@
 
   <main class="stage">
     <div class="stagebar">
-      <span>模板：<b id="templateName">标准单位卡</b> · 布局锁定</span>
+      <span>模板：<b id="templateName">标准单位卡</b> · <b id="layoutModeLabel">安全编辑</b></span><div class="stage-mode"><button id="safeMode" class="active">安全编辑</button><button id="layoutMode">自由布局</button></div>
       <span id="status" class="status">就绪</span>
     </div>
     <div class="checker"><div id="preview"></div></div>
-    <p class="hint">卡面文字可直接点击修改；结构、对齐与安全区由系统锁定。</p>
+    <p class="hint" id="stageHint">安全编辑：直接填写内容，不会误移动版式。切到“自由布局”后可像 PPT 一样移动、缩放和旋转元素。</p>
     <div class="export-actions">
       <button id="png">PNG 300dpi</button>
       <button id="jpg">JPG 300dpi</button>
@@ -96,7 +96,36 @@
     </section>
 
     <section>
-      <h3>3. 文字样式</h3>
+      <h3>3. 自由布局</h3>
+      <div class="layout-actions">
+        <button id="addTextElement">＋ 自定义文本</button>
+        <button id="addNumberElement">＋ 卡牌编号</button>
+        <button id="duplicateElement">复制元素</button>
+        <button id="deleteElement">删除元素</button>
+      </div>
+      <div class="grid">
+        <label>X<input id="elX" type="number" step="1"></label>
+        <label>Y<input id="elY" type="number" step="1"></label>
+        <label>宽<input id="elW" type="number" step="1" min="10"></label>
+        <label>高<input id="elH" type="number" step="1" min="10"></label>
+        <label>角度<input id="elR" type="number" step="1"></label>
+        <label>层级<input id="elZ" type="number" step="1"></label>
+      </div>
+      <div class="row">
+        <button id="toggleElementLock">锁定 / 解锁</button>
+        <button id="bringFront">置顶</button>
+        <button id="sendBack">置底</button>
+      </div>
+      <div class="row top-gap">
+        <button id="resetLayout">恢复模板布局</button>
+        <button id="copyLayoutAll">布局应用到同模板</button>
+      </div>
+      <label class="top-gap">元素文字<textarea id="elementText" rows="2" placeholder="选中自由文本或编号后编辑"></textarea></label>
+      <p class="micro-help">自由布局模式：拖动元素；右下角缩放；上方圆点旋转；方向键微调。模板字段和自定义元素都可调整。</p>
+    </section>
+
+    <section>
+      <h3>4. 文字样式</h3>
       <div class="grid">
         <label>区域<select id="textTarget"><option value="title">标题</option><option value="effect">效果正文</option><option value="meta">系别 / 类型</option><option value="stats">数值</option><option value="cost">费用</option></select></label>
         <label>字号<input id="textSize" type="number" min="8" max="40"></label>
@@ -108,7 +137,7 @@
     </section>
 
     <section>
-      <h3>4. 插画</h3>
+      <h3>5. 插画</h3>
       <div class="row">
         <button id="uploadArt">上传图片</button>
         <button id="clearArt">清空</button>
@@ -128,7 +157,7 @@
     </section>
 
     <section>
-      <h3>5. 素材库</h3>
+      <h3>6. 素材库</h3>
       <div class="tool-row">
         <input id="assetSearch" class="search" placeholder="搜索边框 / 底纹 / 标记 / 字体">
         <select id="assetCategory">
@@ -147,7 +176,7 @@
     </section>
 
     <section>
-      <h3>6. 皮肤</h3>
+      <h3>7. 皮肤</h3>
       <input id="skinSearch" class="search" placeholder="搜索皮肤">
       <div id="skinList" class="skin-list"></div>
       <div class="colors">
@@ -163,7 +192,7 @@
     </section>
 
     <section>
-      <h3>7. 批量与项目</h3>
+      <h3>8. 批量与项目</h3>
       <div class="grid">
         <label>批量前缀<input id="namePrefix" placeholder="例如 UNIT-"></label>
         <label>起始编号<input id="nameStart" type="number" value="1"></label>
@@ -181,7 +210,16 @@
     </section>
 
     <section>
-      <h3>8. 打印设置</h3>
+      <h3>9. 标签化卡查 / TTS</h3>
+      <label>卡牌编号<input data-form="cardNumber" placeholder="例如 SET01-001"></label>
+      <label>标签<input data-form="tags" placeholder="单位,王国,守备,长枪"></label>
+      <label>规则关键词<input data-form="rulesKeywords" placeholder="部署,守备,相邻据点"></label>
+      <div class="row top-gap"><button id="openCardSearch">打开卡查</button><button id="exportTTS">导出 TTS 数据</button></div>
+      <p class="micro-help">卡查会索引名称、编号、标签、系别、类型、稀有度、效果文字与规则关键词；TTS 导出会保留这些字段供未来模组脚本使用。</p>
+    </section>
+
+    <section>
+      <h3>10. 打印设置</h3>
       <div class="grid">
         <label>纸张<select id="sheetSize"><option value="a4">A4</option><option value="a3">A3</option><option value="letter">Letter</option></select></label>
         <label>DPI<input value="300" disabled></label>
@@ -192,6 +230,21 @@
       <p class="micro-help">导出卡面为 69 × 94 mm（含出血），拼版会按纸张自动计算每页数量。</p>
     </section>
   </aside>
+</div>
+
+<div id="cardSearchModal" class="modal-backdrop" hidden>
+  <div class="card-search-dialog">
+    <div class="modal-head"><div><b>标签化卡查</b><small>为未来 TTS 模组准备的卡牌数据库</small></div><button id="closeCardSearch">关闭</button></div>
+    <div class="card-search-toolbar">
+      <input id="librarySearch" class="search" placeholder="搜索名称 / 编号 / 标签 / 效果 / 规则关键词">
+      <select id="libraryFaction"><option value="all">全部系别</option></select>
+      <select id="libraryType"><option value="all">全部类型</option></select>
+      <select id="libraryRarity"><option value="all">全部稀有度</option></select>
+    </div>
+    <div id="tagCloud" class="tag-cloud"></div>
+    <div id="libraryCount" class="library-count"></div>
+    <div id="libraryResults" class="library-results"></div>
+  </div>
 </div>
 
 <div class="hidden-export"><div id="exportCard"></div></div>
