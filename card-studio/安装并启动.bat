@@ -1,7 +1,9 @@
 @echo off
 setlocal
 chcp 65001 >nul
-title Card Studio 安装并启动
+title Card Studio 2.0.1 安装并启动
+set "CARD_STUDIO_PORT=8791"
+set "PORT=%CARD_STUDIO_PORT%"
 cd /d "%~dp0"
 
 where node >nul 2>nul
@@ -54,7 +56,8 @@ if not exist node_modules (
 )
 
 echo.
-echo [Card Studio] 正在启动...
-start "" cmd /c "timeout /t 2 /nobreak >nul & start http://localhost:8787"
+echo [Card Studio 2.0.1] 正在启动，新版专用端口 %CARD_STUDIO_PORT% ...
+echo 浏览器打开后，顶部应显示“v2.0.1 · 自由布局版”。
+start "" cmd /c "timeout /t 2 /nobreak >nul & start http://localhost:%CARD_STUDIO_PORT%/?v=2.0.1"
 call npm start
 pause
