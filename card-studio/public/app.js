@@ -199,6 +199,19 @@ var renderPreviewOnly=function(){
   $("#preview").innerHTML=cardHtml(c,true);setArt($("#preview"),c);
   $("#templateName").textContent=t.name;
 };
+var TEXT_TARGETS={title:"title",effect:"effect",meta:"meta",stats:"stats",cost:"cost"};
+function refreshTextControls(){
+  var target=$("#textTarget")?$("#textTarget").value:"title",prefix=TEXT_TARGETS[target]||"title",a=current().appearance;
+  if($("#textSize"))$("#textSize").value=a[prefix+"Size"];
+  if($("#textColor"))$("#textColor").value=a[prefix+"Color"];
+  if($("#textAlign"))$("#textAlign").value=a[prefix+"Align"];
+  if($("#textBold"))$("#textBold").checked=!!a[prefix+"Bold"];
+}
+function setTextStyleValue(suffix,value,record){
+  var prefix=TEXT_TARGETS[$("#textTarget").value]||"title";
+  if(record!==false)recordHistory();
+  current().appearance[prefix+suffix]=value;renderPreviewOnly();persist();
+}
 var renderCard=function(){
   var c=current(),t=TEMPLATES[c.templateId];
   renderPreviewOnly();
@@ -206,7 +219,8 @@ var renderCard=function(){
   $$("[data-form]").forEach(function(el){var f=el.getAttribute("data-form");el.value=c[f]==null?"":c[f]});
   $("#description").value=c.description||"";
   $("#dynamicStats").innerHTML=t.stats.map(function(s){return '<label>'+s[2]+'<input type="number" data-stat="'+s[0]+'" value="'+esc(c[s[0]])+'"></label>'}).join("");
-  $$("[data-color]").forEach(function(el){el.value=c.appearance[el.getAttribute("data-color")]});
+  $("[data-color]").forEach(function(el){el.value=c.appearance[el.getAttribute("data-color")]});
+  refreshTextControls();
   renderTemplates();renderAssets();renderSkins();
 };
 var renderExport=function(card){$("#exportCard").innerHTML=cardHtml(card,false);setArt($("#exportCard"),card)};
@@ -327,6 +341,17 @@ $("#description").addEventListener("change",function(){patch("description",this.
 $("#description").addEventListener("input",function(){current().description=this.value;renderPreviewOnly();persist()});
 Object.keys(vars).forEach(function(v){var b=document.createElement("button");b.textContent="{"+v+"}";b.onclick=function(){patch("description",(current().description||"")+"{"+v+"}",true)};$("#variables").appendChild(b)});
 
+$("#textTarget").addEventListener("change",refreshTextControls);
+$("#textSize").addEventListener("change",function(){setTextStyleValue("Size",Math.max(8,Math.min(40,num(this.value,13))),true)});
+$("#textColor").addEventListener("change",function(){setTextStyleValue("Color",this.value,true)});
+$("#textAlign").addEventListener("change",function(){setTextStyleValue("Align",this.value,true)});
+$("#textBold").addEventListener("change",function(){setTextStyleValue("Bold",this.checked,true)});
+$("#applyTextAll").onclick=function(){
+  var prefix=TEXT_TARGETS[$("#textTarget").value]||"title",src=current().appearance;recordHistory();
+  cards.forEach(function(c){c.appearance[prefix+"Size"]=src[prefix+"Size"];c.appearance[prefix+"Color"]=src[prefix+"Color"];c.appearance[prefix+"Align"]=src[prefix+"Align"];c.appearance[prefix+"Bold"]=src[prefix+"Bold"]});
+  renderAll();setStatus("当前文字样式已应用到全部卡牌");
+};
+
 $("#templateCards").addEventListener("click",function(e){var b=e.target.closest("[data-template]");if(b)setTemplate(b.getAttribute("data-template"))});
 $("#newCard").onclick=function(){recordHistory();var c=makeCard(current().templateId);c.appearance=clone(current().appearance);cards.push(c);selected=c.id;renderAll();setStatus("已创建"+TEMPLATES[c.templateId].name)};
 $("#duplicate").onclick=function(){recordHistory();var c=clone(current());c.id=uid();c.name=current().name+" - 副本";cards.push(c);selected=c.id;renderAll();setStatus("已复制卡牌")};
@@ -378,12 +403,35 @@ $("#aiGenerate").onclick=async function(){
   var c=current(),btn=this,prompt=$("#aiPrompt").value.trim();if(!prompt)return;
   btn.disabled=true;setStatus("AI 正在生成插画...");
   try{
-    var res=await fetch("/api/generate-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:prompt,style:$("#aiStyle").value,cardName:c.name,faction:c.faction,cardType:TEMPLATES[c.templateId].name})});
+    var res=await fetch("/api/generate-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:prompt,style:$("#aiStyle").value,cardName:c.name,faction:c.faction,cardType:TEMPLATES[c.templateId].name,quality:$("#aiQuality").value})});
     var data=await res.json();if(!res.ok)throw new Error(data.error||"生成失败");
     patch("art",data.image,true);setStatus("AI 插画已自动适配卡面");
   }catch(err){setStatus("AI 生成失败："+(err.message||"未知错误"))}
   btn.disabled=false;
 };
+
+async function refreshAiKeyStatus(){
+  try{var res=await fetch("/api/health"),data=await res.json();$("#apiKeyStatus").textContent=data.aiConfigured?"AI 已配置，可直接生成":"尚未配置 AI Key";$("#apiKeyStatus").dataset.ready=data.aiConfigured?"1":"0"}catch(e){$("#apiKeyStatus").textContent="无法检查 AI 配置"}
+}
+$("#saveApiKey").onclick=async function(){
+  var key=$("#apiKeyInput").value.trim(),btn=this;btn.disabled=true;$("#apiKeyStatus").textContent="正在保存...";
+  try{
+    var res=await fetch("/api/settings/api-key",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({apiKey:key})}),data=await res.json();
+    if(!res.ok)throw new Error(data.error||"保存失败");
+    $("#apiKeyInput").value="";$("#apiKeyStatus").textContent=data.aiConfigured?"AI Key 已保存在本机":"AI Key 已清除";setStatus($("#apiKeyStatus").textContent);
+  }catch(e){$("#apiKeyStatus").textContent="保存失败："+e.message}
+  btn.disabled=false;
+};
+$("#aiRedraw").onclick=async function(){
+  var c=current(),prompt=$("#aiPrompt").value.trim();if(!c.art){setStatus("请先上传或生成一张插画，再进行现图重绘");return}if(!prompt)return;
+  var btn=this;btn.disabled=true;setStatus("AI 正在基于现图重绘...");
+  try{
+    var res=await fetch("/api/redraw-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:c.art,prompt:prompt,style:$("#aiStyle").value,cardName:c.name,faction:c.faction,cardType:TEMPLATES[c.templateId].name,quality:$("#aiQuality").value})});
+    var data=await res.json();if(!res.ok)throw new Error(data.error||"重绘失败");patch("art",data.image,true);setStatus("现图重绘完成");
+  }catch(e){setStatus("AI 重绘失败："+e.message)}
+  btn.disabled=false;
+};
+refreshAiKeyStatus();
 
 $("#assetSearch").oninput=function(){renderAssets();renderCustomAssets()};$("#assetCategory").onchange=function(){renderAssets();renderCustomAssets()};
 $("#assetList").onclick=function(e){
@@ -495,7 +543,7 @@ $("#batchImageFiles").onchange=async function(){
 };
 
 async function generateForCard(c,promptText){
-  var res=await fetch("/api/generate-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:promptText,style:$("#aiStyle").value,cardName:c.name,faction:c.faction,cardType:TEMPLATES[c.templateId].name})});
+  var res=await fetch("/api/generate-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:promptText,style:$("#aiStyle").value,cardName:c.name,faction:c.faction,cardType:TEMPLATES[c.templateId].name,quality:$("#aiQuality").value})});
   var data=await res.json();if(!res.ok)throw new Error(data.error||"生成失败");c.art=data.image;
 }
 $("#batchAI").onclick=async function(){
