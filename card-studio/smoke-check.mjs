@@ -23,8 +23,8 @@ const requiredIds = [
   "markRuleTerm","openRuleTerms","termQuickColor","termQuickList","ruleTermsModal","termSearch","termList","termName","termColor","termCategory","termTags","termDescription","saveRuleTerm","insertRuleTerm"
 ];
 
-if (!html.includes("v2.1.0 · 自由布局版")) throw new Error("Visible 2.1.0 version badge is missing.");
-if (!html.includes("自由布局（拖拽编辑）")) throw new Error("High-visibility free-layout wording is missing.");
+if (!html.includes("v2.1.0 · 独立图层自由布局")) throw new Error("Visible 2.1.0 version badge is missing.");
+if (!html.includes("自由布局（独立图层）")) throw new Error("High-visibility free-layout wording is missing.");
 if (!html.includes("styles.css?v=2.1.0") || !html.includes("app.js?v=2.1.0")) throw new Error("2.1.0 browser cache busting is missing.");
 if (!launcher.includes("CARD_STUDIO_PORT=8792") || !quickLauncher.includes("CARD_STUDIO_PORT=8792")) throw new Error("Launchers must use the dedicated 2.1.0 port.");
 if (!launcher.includes("?v=2.1.0") || !quickLauncher.includes("?v=2.1.0")) throw new Error("Launchers must open the cache-busted 2.1.0 URL.");
