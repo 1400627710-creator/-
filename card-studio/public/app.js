@@ -263,6 +263,29 @@ var cardHtml=function(card,editable){
     node("effect","effect",'<span data-edit="description"'+ce+'>'+desc+'</span>')+
     statNodes+node("tags","tags",esc(card.tags))+extras+'</div>';
 };
+var LAYOUT_LABELS={art:"插画",cost:"费用",title:"名称",faction:"系别",rarityMark:"稀有度标记",type:"类型",rarityText:"稀有度文字",effect:"效果文本",tags:"检索标签",stat_attack:"攻击",stat_health:"血量",stat_move:"移速",stat_range:"射程"};
+function layerLabel(card,type,id,element){
+  if(type==="extra"){if(element&&element.kind==="image")return "图片："+(element.name||"小素材");if(element&&element.kind==="number")return "编号："+(element.text||"{编号}");return "文字："+String(element&&element.text||"自定义文本").slice(0,12)}
+  var t=TEMPLATES[card.templateId]||TEMPLATES.unit;if(id.indexOf("stat_")===0){var field=id.slice(5),st=(t.stats||[]).find(function(x){return x[0]===field});if(st)return st[2]}
+  return LAYOUT_LABELS[id]||id;
+}
+function fixedLayerKeys(card){
+  var t=TEMPLATES[card.templateId]||TEMPLATES.unit,keys=["art","cost","title","faction","rarityMark","type","rarityText","effect"];
+  (t.stats||[]).forEach(function(st){keys.push("stat_"+st[0])});keys.push("tags");return keys;
+}
+function allLayerModels(card){
+  var out=fixedLayerKeys(card).map(function(k){return {type:"layout",id:k,layout:card.layout[k],label:layerLabel(card,"layout",k)}});
+  (card.extraElements||[]).forEach(function(el){out.push({type:"extra",id:el.id,layout:el.layout,element:el,label:layerLabel(card,"extra",el.id,el)})});
+  return out.filter(function(x){return x.layout}).sort(function(a,b){return (b.layout.z||0)-(a.layout.z||0)});
+}
+function selectedModel(card){
+  if(!selectedElement)return null;if(selectedElement.type==="extra"){var el=(card.extraElements||[]).find(function(x){return x.id===selectedElement.id});return el?{type:"extra",id:el.id,layout:el.layout,element:el,label:layerLabel(card,"extra",el.id,el)}:null}
+  var p=card.layout[selectedElement.id];return p?{type:"layout",id:selectedElement.id,layout:p,label:layerLabel(card,"layout",selectedElement.id)}:null;
+}
+function renderLayerPanel(){
+  var box=$("#layerList");if(!box)return;var c=current(),layers=allLayerModels(c);
+  box.innerHTML=layers.map(function(m){var p=m.layout,sel=selectedElement&&selectedElement.type===m.type&&selectedElement.id===m.id;return '<button class="layer-row '+(sel?"selected ":"")+(p.visible===false?"is-hidden ":"")+'" data-layer-type="'+m.type+'" data-layer-id="'+esc(m.id)+'"><span class="layer-eye">'+(p.visible===false?"○":"●")+'</span><span class="layer-name">'+esc(m.label)+'</span><span class="layer-meta">Z '+(p.z||0)+' · '+Math.round((p.opacity==null?1:p.opacity)*100)+'%</span><span class="layer-lock">'+(p.locked?"🔒":"")+'</span></button>'}).join("");
+}
 var setArt=function(root,card){
   var art=root.querySelector(".art");
   if(art&&card.art)art.style.backgroundImage='url("'+String(card.art).replace(/"/g,"%22")+'")';
@@ -279,15 +302,18 @@ function findSelectedNode(){
   return selectedElement.type==="extra"?$('#preview [data-extra-id="'+selectedElement.id+'"]'):$('#preview [data-layout-key="'+selectedElement.id+'"]');
 }
 function refreshElementPanel(){
-  var c=current(),node=findSelectedNode(),m=getElementModel(c,node),disabled=!m;
-  ["#elX","#elY","#elW","#elH","#elR","#elZ","#toggleElementLock","#bringFront","#sendBack","#duplicateElement","#deleteElement"].forEach(function(q){var el=$(q);if(el)el.disabled=disabled});
-  if(!m){$("#elementText").value="";$("#elementText").disabled=true;$("#addImageLabel").disabled=true;$("#detachImageLabel").disabled=true;$("#imageLabelPosition").disabled=true;$("#imageLabelTools").classList.remove("active");return}
+  var c=current(),node=findSelectedNode(),m=selectedModel(c),disabled=!m;
+  ["#elX","#elY","#elW","#elH","#elR","#elZ","#elOpacity","#toggleElementVisibility","#toggleElementLock","#layerUp","#layerDown","#bringFront","#sendBack","#duplicateElement","#deleteElement"].forEach(function(q){var el=$(q);if(el)el.disabled=disabled});
+  $("#selectedLayerName").textContent=m?m.label:"未选择";
+  if(!m){$("#elementText").value="";$("#elementText").disabled=true;$("#elOpacity").value=100;$("#elOpacityValue").textContent="100%";$("#addImageLabel").disabled=true;$("#detachImageLabel").disabled=true;$("#imageLabelPosition").disabled=true;$("#imageLabelTools").classList.remove("active");renderLayerPanel();return}
   $("#elX").value=Math.round(m.layout.x*10)/10;$("#elY").value=Math.round(m.layout.y*10)/10;$("#elW").value=Math.round(m.layout.w*10)/10;$("#elH").value=Math.round(m.layout.h*10)/10;$("#elR").value=Math.round(m.layout.r*10)/10;$("#elZ").value=m.layout.z||20;
+  var opacity=Math.round((m.layout.opacity==null?1:m.layout.opacity)*100);$("#elOpacity").value=opacity;$("#elOpacityValue").textContent=opacity+"%";
+  $("#toggleElementVisibility").textContent=m.layout.visible===false?"显示模块":"隐藏模块";$("#toggleElementLock").textContent=m.layout.locked?"解锁模块":"锁定模块";
   var isExtra=m.type==="extra",isImage=isExtra&&m.element.kind==="image",isAttached=isExtra&&!!m.element.parentId;
   $("#elementText").disabled=!isExtra||isImage;$("#elementText").value=isExtra&&!isImage?(m.element.text||""):"";
   $("#addImageLabel").disabled=!isImage;$("#detachImageLabel").disabled=!isAttached;$("#imageLabelPosition").disabled=!isImage;
   $("#imageLabelTools").classList.toggle("active",isImage||isAttached);
-  if(node)node.classList.add("selected");
+  if(node)node.classList.add("selected");renderLayerPanel();
 }
 function setLayoutMode(on,focusPanel){
   layoutEditing=!!on;
@@ -347,7 +373,7 @@ function addLabelToSelectedImage(){
 }
 var renderPreviewOnly=function(){
   var c=current(),t=TEMPLATES[c.templateId];
-  $("#preview").innerHTML=cardHtml(c,true);setArt($("#preview"),c);$("#preview").classList.toggle("layout-editing",layoutEditing);
+  $("#preview").innerHTML=cardHtml(c,true);setArt($("#preview"),c);$("#preview").classList.toggle("layout-editing",layoutEditing);renderLayerPanel();
   $("#templateName").textContent=t.name;
 };
 var TEXT_TARGETS={title:"title",effect:"effect",meta:"meta",stats:"stats",cost:"cost"};
