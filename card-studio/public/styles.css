@@ -130,3 +130,27 @@ body.layout-mode-on .layout-panel{border-color:#2563eb;box-shadow:inset 3px 0 0 
 .ai-style-reset{margin:-3px 0 8px;background:#faf7f0!important;border-color:#cbbda6!important;color:#604c32!important}
 
 .version-badge{display:inline-flex;align-items:center;margin-left:8px;padding:3px 7px;border-radius:999px;background:#dc2626;color:#fff!important;font-size:10px!important;font-weight:900;letter-spacing:.02em}.editor-mode-bar{border-top:3px solid #dc2626}.mode-choice.layout-choice{border:2px solid #dc2626;background:#fff7f7}.mode-choice.layout-choice strong{color:#b91c1c;font-size:17px}.mode-choice.layout-choice.active{border-color:#0f766e;background:#ecfdf5}.mode-choice.layout-choice.active strong{color:#0f766e}
+
+/* 2.1 independent-module canvas and layer manager */
+.layout-node{right:auto!important;bottom:auto!important;margin:0!important;max-height:none!important;min-height:0!important}
+.layout-node.art{right:auto!important;height:auto;background-size:cover;background-position:center}
+.layout-node.head.title-layer{right:auto!important;text-shadow:0 2px 8px rgba(0,0,0,.8);display:flex;align-items:flex-start}
+.layout-node.head.title-layer .title{width:100%;height:100%}
+.layout-node.faction-layer{margin:0!important;display:flex;align-items:center;overflow:hidden}
+.layout-node.meta-single{right:auto!important;padding:0 7px;display:flex;align-items:center;justify-content:center;gap:0}
+.layout-node.effect{right:auto!important;min-height:0!important;max-height:none!important;padding:0;overflow:hidden}
+.layout-node.stat-layer{height:auto;display:grid;grid-template-columns:32% 68%;align-items:center;overflow:hidden}
+.layout-node.stat-layer small{font-size:10px;text-align:center;opacity:.68;font-weight:800}
+.layout-node.stat-layer strong{font-size:var(--stats-size);text-align:center;padding:0;color:var(--stats-color);font-weight:var(--stats-weight)}
+.layout-node.tags{right:auto!important;bottom:auto!important}
+.layout-node.rarity-mark{right:auto!important}
+.layout-editing .layout-node{cursor:move}
+.layout-editing .layout-node:hover{outline:1px dashed rgba(37,99,235,.7);outline-offset:2px}
+.layout-editing .layout-node.selected{outline:2px solid #2563eb!important;outline-offset:3px;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.selected-layer-head{display:flex;flex-direction:column;gap:2px;margin:9px 0;padding:8px 10px;border-radius:8px;background:#eff6ff;border:1px solid #bfdbfe}.selected-layer-head b{font-size:12px;color:#1e3a8a}.selected-layer-head small{font-size:10px;color:#64748b}
+.opacity-control{display:grid!important;grid-template-columns:1fr!important;gap:5px!important;margin:9px 0!important;padding:8px 10px!important;border:1px solid #dbe3ee;border-radius:8px;background:#f8fafc}.opacity-control span{display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#475569}.opacity-control input{width:100%;padding:0;border:0}
+.layer-command-row{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:5px!important}.layer-command-row button{font-size:10px;padding:6px 4px}
+.layer-manager{margin-top:10px;border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;background:#f8fafc}.layer-manager-head{display:flex;justify-content:space-between;align-items:center;padding:8px 9px;background:#e9eef5;border-bottom:1px solid #cbd5e1}.layer-manager-head b{font-size:12px}.layer-manager-head small{font-size:9px;color:#64748b}
+.layer-list{max-height:260px;overflow:auto;padding:5px;display:flex;flex-direction:column;gap:3px}
+.layer-row{width:100%;display:grid;grid-template-columns:18px minmax(0,1fr) auto 20px;align-items:center;gap:5px;padding:6px 7px!important;text-align:left!important;border:1px solid transparent!important;background:#fff!important;border-radius:6px!important;color:#334155!important}
+.layer-row:hover{border-color:#93c5fd!important;background:#eff6ff!important}.layer-row.selected{border-color:#2563eb!important;background:#dbeafe!important;box-shadow:inset 3px 0 0 #2563eb}.layer-row.is-hidden{opacity:.52}.layer-eye{font-size:10px;text-align:center}.layer-name{font-size:11px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.layer-meta{font-size:9px;color:#64748b;white-space:nowrap}.layer-lock{font-size:10px;text-align:center}
