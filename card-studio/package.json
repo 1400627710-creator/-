@@ -12,5 +12,8 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "openai": "latest"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }
