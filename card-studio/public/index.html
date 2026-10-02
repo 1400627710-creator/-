@@ -8,7 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>\n<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -32,7 +32,7 @@
       <div><b>卡牌集</b><small id="count"></small></div>
       <button id="newCard">＋ 新卡</button>
     </div>
-    <input id="cardSearch" class="search" placeholder="搜索名称 / 模板 / 系别 / 关键词">
+    <input id="cardSearch" class="search" placeholder="搜索名称 / 模板 / 系别 / 关键词">\n    <div class="left-tools"><select id="templateFilter"><option value="all">全部模板</option></select><select id="sortCards"><option value="manual">当前顺序</option><option value="name">按名称</option><option value="cost">按费用</option><option value="faction">按系别</option><option value="rarity">按稀有度</option><option value="template">按模板</option></select></div>
     <div id="cardList" class="card-list"></div>
     <div class="row">
       <button id="duplicate">复制</button>
@@ -66,7 +66,7 @@
   <aside class="right">
     <section>
       <h3>1. 模板</h3>
-      <div id="templateCards" class="template-cards"></div>
+      <div id="templateCards" class="template-cards"></div>\n      <div class="row mini-gap"><button id="cloneTemplate">另存为自定义模板</button><button id="deleteTemplate">删除自定义模板</button></div>
     </section>
 
     <section>
@@ -93,7 +93,7 @@
       </div>
       <label>AI 关键词<textarea id="aiPrompt" rows="3">战场中的主体，动态构图，环境叙事丰富</textarea></label>
       <label>整套统一风格<textarea id="aiStyle" rows="3">统一的东方奇幻桌游插画，厚涂，电影光影，材质细腻，不出现文字</textarea></label>
-      <button id="aiGenerate" class="wide primary">AI 生成并自动适配</button>
+      <button id="aiGenerate" class="wide primary">AI 生成并自动适配</button>\n      <div class="row mini-gap"><button id="batchImages">批量导入图片</button><button id="batchAI">缺图卡牌批量 AI</button></div>\n      <input id="batchImageFiles" type="file" accept="image/*" multiple hidden>
     </section>
 
     <section>
@@ -109,7 +109,7 @@
           <option value="font">字体样式</option>
         </select>
       </div>
-      <div id="assetList" class="asset-list"></div>
+      <div id="assetList" class="asset-list"></div>\n      <div class="upload-asset-box"><select id="uploadAssetCategory"><option value="icon">卡面图标</option><option value="frameImage">图片边框</option><option value="textureImage">图片底纹</option></select><button id="uploadAssetBtn">上传自定义素材</button><input id="customAssetFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden></div>\n      <div id="customAssetList" class="custom-assets"></div>
     </section>
 
     <section>
