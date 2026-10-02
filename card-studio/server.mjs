@@ -8,7 +8,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 const app = express();
 const root = dirname(fileURLToPath(import.meta.url));
 
-app.use(express.json({ limit: "3mb" }));
+app.use(express.json({ limit: "20mb" }));
 app.use(express.static(join(root, "public")));
 
 app.get("/api/health", (_req, res) => {
