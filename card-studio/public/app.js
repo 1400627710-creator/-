@@ -427,5 +427,40 @@ var batchPdf=async function(){
 };
 $("#batchPdf").onclick=batchPdf;$("#batchPdfTop").onclick=batchPdf;
 
+function safeFilename(name){return String(name||"card").replace(/[\\/:*?"<>|]/g,"_").trim()||"card"}
+function normalizeName(name){return String(name||"").replace(/\\.[^.]+$/,"").replace(/[\\s_\\-]+/g,"").toLowerCase()}
+function fileToDataUrl(file){return new Promise(function(resolve,reject){var rr=new FileReader();rr.onload=function(){resolve(String(rr.result||""))};rr.onerror=reject;rr.readAsDataURL(file)})}
+function projectPayload(){return {format:"card-assembly-studio",version:3,exportedAt:new Date().toISOString(),cards:cards,skins:skins,userAssets:userAssets,customTemplates:customTemplates,favoriteAssets:favoriteAssets,aiStyle:$("#aiStyle").value}}
+function downloadText(text,name,type){var blob=new Blob([text],{type:type||"text/plain;charset=utf-8"}),url=URL.createObjectURL(blob);download(url,name);setTimeout(function(){URL.revokeObjectURL(url)},1000)}
+
+$("#projectExport").onclick=function(){downloadText(JSON.stringify(projectPayload(),null,2),"card-studio-project.cardstudio","application/json");setStatus("项目文件已保存，包含卡牌、皮肤、模板与图片素材")};
+$("#projectImport").onclick=function(){$("#projectFile").click()};
+$("#projectFile").onchange=async function(){
+  var file=this.files&&this.files[0];if(!file)return;
+  try{
+    var p=JSON.parse(await file.text());if(p.format!=="card-assembly-studio"&&!Array.isArray(p.cards))throw new Error("不是有效的卡牌项目文件");
+    recordHistory();cards=(p.cards||[]).map(normalizeCard);if(!cards.length)throw new Error("项目中没有卡牌");
+    skins=(p.skins||BASE_SKINS).map(function(x){x.appearance=normalizeAppearance(x.appearance);return x});
+    userAssets=p.userAssets||[];customTemplates=p.customTemplates||{};favoriteAssets=p.favoriteAssets||[];
+    TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);selected=cards[0].id;if(p.aiStyle)$("#aiStyle").value=p.aiStyle;
+    renderAll();setStatus("项目已打开："+cards.length+" 张卡牌");
+  }catch(e){setStatus("打开项目失败："+e.message)}
+  this.value="";
+};
+
+$("#cloneTemplate").onclick=function(){
+  var base=TEMPLATES[current().templateId],name=prompt("新模板名称",base.name+" - 自定义");if(!name)return;
+  var typeLabel=prompt("这一栏叫什么？",base.typeLabel)||base.typeLabel;
+  var statText=prompt("保留哪些数值？可填：攻击,血量,移速,射程，用逗号分隔",base.stats.map(function(x){return x[2]}).join(","));if(statText==null)return;
+  var map={攻击:["attack","攻","攻击"],威力:["attack","威","威力"],火力:["attack","火","火力"],血量:["health","血","血量"],耐久:["health","耐","耐久"],移速:["move","移","移速"],射程:["range","射","射程"]};
+  var stats=statText.split(/[,，]/).map(function(x){return x.trim()}).filter(Boolean).map(function(x){return map[x]||null}).filter(Boolean);
+  var id="custom-"+uid();customTemplates[id]={id:id,name:name,short:name.slice(0,4),hint:stats.length?stats.map(function(x){return x[2]}).join(" / "):"大文本区",typeLabel:typeLabel,stats:stats,baseLayout:base.baseLayout||base.id};
+  TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);recordHistory();current().templateId=id;renderAll();setStatus("已创建自定义模板："+name);
+};
+$("#deleteTemplate").onclick=function(){
+  var id=current().templateId;if(!customTemplates[id]){setStatus("内置模板不能删除");return}
+  recordHistory();cards.forEach(function(c){if(c.templateId===id)c.templateId="unit"});delete customTemplates[id];TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);current().templateId="unit";renderAll();setStatus("自定义模板已删除，相关卡牌改为标准单位卡");
+};
+
 renderAll();
 })();
