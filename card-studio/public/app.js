@@ -117,6 +117,7 @@ var skins=loadJson("card-studio-skins",BASE_SKINS);
 var favoriteAssets=loadJson("card-studio-favorite-assets",[]);
 var snapshots=loadJson("card-studio-snapshots",[]);
 var userAssets=loadJson("card-studio-user-assets",[]);
+var ruleTerms=loadJson("card-studio-rule-terms",[]);
 var aiStyle=loadJson("card-studio-ai-style","统一的东方奇幻桌游插画，厚涂，电影光影，材质细腻，不出现文字");
 var projectName=saved&&saved.projectName?saved.projectName:"未命名卡牌项目";
 var aiQuality="low";
@@ -142,13 +143,14 @@ skins=skins.map(function(s){s.appearance=normalizeAppearance(s.appearance);retur
 
 var history=[],future=[],historyLimit=12;
 var current=function(){return cards.find(function(c){return c.id===selected})||cards[0]};
-var stateSnapshot=function(){return JSON.stringify({projectName:projectName,cards:cards,selected:selected,skins:skins,favoriteAssets:favoriteAssets,userAssets:userAssets,customTemplates:customTemplates,aiStyle:$("#aiStyle")?$("#aiStyle").value:aiStyle,aiQuality:aiQuality,printSettings:printSettings})};
+var stateSnapshot=function(){return JSON.stringify({projectName:projectName,cards:cards,selected:selected,skins:skins,favoriteAssets:favoriteAssets,ruleTerms:ruleTerms,userAssets:userAssets,customTemplates:customTemplates,aiStyle:$("#aiStyle")?$("#aiStyle").value:aiStyle,aiQuality:aiQuality,printSettings:printSettings})};
 var restoreState=function(raw){
   var s=typeof raw==="string"?JSON.parse(raw):clone(raw);
   cards=(s.cards||[]).map(normalizeCard);selected=s.selected&&cards.some(function(c){return c.id===s.selected})?s.selected:(cards[0]&&cards[0].id);
   skins=(s.skins||skins).map(function(x){x.appearance=normalizeAppearance(x.appearance);return x});
   favoriteAssets=s.favoriteAssets||favoriteAssets;
   userAssets=s.userAssets||userAssets;
+  ruleTerms=s.ruleTerms||ruleTerms;
   customTemplates=s.customTemplates||customTemplates;TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);
   if(s.projectName)projectName=s.projectName;if(s.aiStyle)aiStyle=s.aiStyle;if(s.aiQuality)aiQuality=s.aiQuality;if(s.printSettings)printSettings=Object.assign({sheet:"a4",crop:true},s.printSettings);
   renderAll();
@@ -167,6 +169,7 @@ var persist=function(){
     localStorage.setItem("card-studio-favorite-assets",JSON.stringify(favoriteAssets));
     localStorage.removeItem("card-studio-snapshots");
     localStorage.setItem("card-studio-user-assets",JSON.stringify(lightAssets));
+    localStorage.setItem("card-studio-rule-terms",JSON.stringify(ruleTerms));
     localStorage.setItem("card-studio-custom-templates",JSON.stringify(customTemplates));
     localStorage.setItem("card-studio-ai-style",JSON.stringify($("#aiStyle")?$("#aiStyle").value:aiStyle));
   }catch(e){}
@@ -180,6 +183,13 @@ var resolveVars=function(text,card){
     return field?String(card[field]==null?"":card[field]):all;
   });
 };
+function termByName(name){var n=String(name||"").trim().toLowerCase();return ruleTerms.find(function(t){return String(t.name||"").trim().toLowerCase()===n})}
+function extractRuleTerms(text){var out=[],seen={};String(text||"").replace(/\[\[([^\]]+)\]\]/g,function(_,name){name=String(name).trim();if(name&&!seen[name.toLowerCase()]){seen[name.toLowerCase()]=1;out.push(name)}return _});return out}
+function renderRichText(text,card){
+  var raw=resolveVars(text,card),out="",last=0,re=/\[\[([^\]]+)\]\]/g,m;
+  while((m=re.exec(raw))){out+=esc(raw.slice(last,m.index));var name=String(m[1]).trim(),term=termByName(name),color=term&&term.color?term.color:"#38bdf8",tip=term&&term.description?term.description:"规则词条："+name;out+='<span class="rule-term" data-rule-term="'+esc(name)+'" title="'+esc(tip)+'" style="color:'+esc(color)+'">'+esc(name)+'</span>';last=re.lastIndex}
+  out+=esc(raw.slice(last));return out.replace(/\n/g,"<br>");
+}
 var raritySymbol=function(style){
   if(style==="dot")return "●";
   if(style==="gem")return "◆";
@@ -189,7 +199,7 @@ var raritySymbol=function(style){
 var assetById=function(id){return userAssets.find(function(x){return x.id===id})};
 var cardHtml=function(card,editable){
   var t=TEMPLATES[card.templateId]||TEMPLATES.unit,a=normalizeAppearance(card.appearance),ce=editable?' contenteditable="true"':"";
-  var desc=esc(resolveVars(card.description,card)).replace(/\n/g,"<br>");
+  var desc=renderRichText(card.description,card);
   var artEmpty=card.art?"":'<div class="art-empty">插画区域<br><small>上传图片或使用 AI 生成</small></div>';
   var stats=t.stats.map(function(s){
     return '<div class="stat"><small>'+s[1]+'</small><strong data-edit="'+s[0]+'"'+ce+'>'+esc(card[s[0]])+'</strong></div>';
@@ -301,7 +311,7 @@ var renderCard=function(){
   $("#description").value=c.description||"";
   $("#dynamicStats").innerHTML=t.stats.map(function(s){return '<label>'+s[2]+'<input type="number" data-stat="'+s[0]+'" value="'+esc(c[s[0]])+'"></label>'}).join("");
   $$("[data-color]").forEach(function(el){el.value=c.appearance[el.getAttribute("data-color")]});
-  refreshTextControls();refreshElementPanel();
+  refreshTextControls();refreshElementPanel();renderTermQuickList();
   renderTemplates();renderAssets();renderSkins();
 };
 var renderExport=function(card){$("#exportCard").innerHTML=cardHtml(card,false);setArt($("#exportCard"),card);$("#exportCard").classList.remove("layout-editing")}
@@ -613,7 +623,7 @@ $("#cropMarks").onchange=function(){printSettings.crop=this.checked;persist()};
 function safeFilename(name){return String(name||"card").replace(/[\\/:*?"<>|]/g,"_").trim()||"card"}
 function normalizeName(name){return String(name||"").replace(/\\.[^.]+$/,"").replace(/[\\s_\\-]+/g,"").toLowerCase()}
 function fileToDataUrl(file){return new Promise(function(resolve,reject){var rr=new FileReader();rr.onload=function(){resolve(String(rr.result||""))};rr.onerror=reject;rr.readAsDataURL(file)})}
-function projectPayload(){return {format:"card-assembly-studio",version:4,exportedAt:new Date().toISOString(),projectName:projectName,cards:cards,selected:selected,skins:skins,userAssets:userAssets,customTemplates:customTemplates,favoriteAssets:favoriteAssets,snapshots:snapshots,aiStyle:$("#aiStyle").value,aiQuality:aiQuality,printSettings:printSettings}}
+function projectPayload(){return {format:"card-assembly-studio",version:4,exportedAt:new Date().toISOString(),projectName:projectName,cards:cards,selected:selected,skins:skins,ruleTerms:ruleTerms,userAssets:userAssets,customTemplates:customTemplates,favoriteAssets:favoriteAssets,snapshots:snapshots,aiStyle:$("#aiStyle").value,aiQuality:aiQuality,printSettings:printSettings}}
 function downloadText(text,name,type){var blob=new Blob([text],{type:type||"text/plain;charset=utf-8"}),url=URL.createObjectURL(blob);download(url,name);setTimeout(function(){URL.revokeObjectURL(url)},1000)}
 
 $("#projectExport").onclick=function(){downloadText(JSON.stringify(projectPayload(),null,2),safeFilename(projectName)+".cardstudio","application/json");setStatus("项目文件已保存，包含卡牌、皮肤、模板与图片素材")};
@@ -624,7 +634,7 @@ $("#projectFile").onchange=async function(){
     var p=JSON.parse(await file.text());if(p.format!=="card-assembly-studio"&&!Array.isArray(p.cards))throw new Error("不是有效的卡牌项目文件");
     recordHistory();cards=(p.cards||[]).map(normalizeCard);if(!cards.length)throw new Error("项目中没有卡牌");
     skins=(p.skins||BASE_SKINS).map(function(x){x.appearance=normalizeAppearance(x.appearance);return x});
-    userAssets=p.userAssets||[];customTemplates=p.customTemplates||{};favoriteAssets=p.favoriteAssets||[];snapshots=p.snapshots||[];
+    userAssets=p.userAssets||[];ruleTerms=p.ruleTerms||[];customTemplates=p.customTemplates||{};favoriteAssets=p.favoriteAssets||[];snapshots=p.snapshots||[];
     TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);selected=cards[0].id;if(p.aiStyle){aiStyle=p.aiStyle;$("#aiStyle").value=p.aiStyle}if(p.projectName)projectName=p.projectName;if(p.aiQuality)aiQuality=p.aiQuality;if(p.printSettings)printSettings=Object.assign({sheet:"a4",crop:true},p.printSettings);
     renderAll();setStatus("项目已打开："+cards.length+" 张卡牌");
   }catch(e){setStatus("打开项目失败："+e.message)}
@@ -700,7 +710,7 @@ $("#exportJsonList").onclick=function(){downloadText(JSON.stringify(manifestRows
 
 var activeLibraryTag="";
 function splitTags(v){return String(v||"").split(/[,，;；|]/).map(function(x){return x.trim()}).filter(Boolean)}
-function searchableText(c){var t=TEMPLATES[c.templateId]||TEMPLATES.unit;return [c.cardNumber,c.name,t.name,c.faction,c.unitType,c.rarity,c.tags,c.rulesKeywords,c.description,c.cost,c.attack,c.health,c.move,c.range].join(" ").toLowerCase()}
+function searchableText(c){var t=TEMPLATES[c.templateId]||TEMPLATES.unit,termText=extractRuleTerms(c.description).map(function(n){var x=termByName(n);return x?[x.name,x.category,x.tags,x.description].join(" "):n}).join(" ");return [c.cardNumber,c.name,t.name,c.faction,c.unitType,c.rarity,c.tags,c.rulesKeywords,c.description,termText,c.cost,c.attack,c.health,c.move,c.range].join(" ").toLowerCase()}
 function renderCardLibrary(){
   var q=$("#librarySearch").value.trim().toLowerCase(),f=$("#libraryFaction").value,ty=$("#libraryType").value,r=$("#libraryRarity").value;
   var allTags={};cards.forEach(function(c){splitTags(c.tags).concat(splitTags(c.rulesKeywords)).forEach(function(t){allTags[t]=(allTags[t]||0)+1})});
@@ -720,13 +730,14 @@ $("#cardSearchModal").addEventListener("click",function(e){if(e.target===this)th
 ["#librarySearch","#libraryFaction","#libraryType","#libraryRarity"].forEach(function(q){$(q).addEventListener(q==="#librarySearch"?"input":"change",renderCardLibrary)});
 $("#tagCloud").onclick=function(e){var b=e.target.closest("[data-library-tag]");if(!b)return;var t=b.getAttribute("data-library-tag");activeLibraryTag=activeLibraryTag===t?"":t;renderCardLibrary()};
 $("#libraryResults").onclick=function(e){var b=e.target.closest("[data-library-card]");if(!b)return;selected=b.getAttribute("data-library-card");$("#cardSearchModal").hidden=true;renderAll();setStatus("已从卡查定位："+current().name)};
-function ttsCard(c,index){return {id:c.id,number:c.cardNumber||String(index+1).padStart(3,"0"),name:c.name,template:c.templateId,faction:c.faction,type:c.unitType,rarity:c.rarity,cost:c.cost,stats:{attack:c.attack,health:c.health,move:c.move,range:c.range},tags:splitTags(c.tags),rulesKeywords:splitTags(c.rulesKeywords),text:c.description,searchText:searchableText(c),imageFile:String(index+1).padStart(3,"0")+"-"+safeFilename(c.name)+".png"}}
+function ttsCard(c,index){return {id:c.id,number:c.cardNumber||String(index+1).padStart(3,"0"),name:c.name,template:c.templateId,faction:c.faction,type:c.unitType,rarity:c.rarity,cost:c.cost,stats:{attack:c.attack,health:c.health,move:c.move,range:c.range},tags:splitTags(c.tags),rulesKeywords:splitTags(c.rulesKeywords),text:c.description,termRefs:extractRuleTerms(c.description),searchText:searchableText(c),imageFile:String(index+1).padStart(3,"0")+"-"+safeFilename(c.name)+".png"}}
 $("#exportTTS").onclick=async function(){
   var btn=this;btn.disabled=true;setStatus("正在生成 TTS 模组数据...");
   try{
     var zip=new JSZip(),data=cards.map(ttsCard),byTag={},byNumber={},byId={};
     data.forEach(function(c){byId[c.id]=c.number;byNumber[c.number]=c.id;c.tags.concat(c.rulesKeywords).forEach(function(t){if(!byTag[t])byTag[t]=[];byTag[t].push(c.id)})});
-    zip.file("cards.json",JSON.stringify({format:"card-studio-tts",version:1,project:projectName,cards:data},null,2));
+    zip.file("cards.json",JSON.stringify({format:"card-studio-tts",version:2,project:projectName,cards:data},null,2));
+    zip.file("glossary.json",JSON.stringify({version:1,terms:ruleTerms},null,2));
     zip.file("index.json",JSON.stringify({byId:byId,byNumber:byNumber,byTag:byTag},null,2));
     zip.file("manifest.csv","\uFEFF"+Papa.unparse(manifestRows()));
     zip.file("README-TTS.txt","Card Studio TTS 数据包\\n\\ncards.json：完整卡牌数据库\\nindex.json：按稳定 ID、编号、标签建立的索引\\nmanifest.csv：人工查看用清单\\n\\n未来 TTS Lua 模组可读取同结构数据，并以 card.id 作为稳定主键。");
@@ -771,7 +782,7 @@ dbGet("project-v3").then(function(savedDb){
   if(savedDb&&savedDb.project&&Array.isArray(savedDb.project.cards)&&savedDb.project.cards.length){
     var p=savedDb.project;
     cards=p.cards.map(normalizeCard);skins=(p.skins||skins).map(function(x){x.appearance=normalizeAppearance(x.appearance);return x});
-    userAssets=p.userAssets||[];customTemplates=p.customTemplates||{};favoriteAssets=p.favoriteAssets||[];snapshots=p.snapshots||[];
+    userAssets=p.userAssets||[];ruleTerms=p.ruleTerms||[];customTemplates=p.customTemplates||{};favoriteAssets=p.favoriteAssets||[];snapshots=p.snapshots||[];
     TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);
     selected=p.selected&&cards.some(function(c){return c.id===p.selected})?p.selected:cards[0].id;
     if(p.aiStyle){aiStyle=p.aiStyle;$("#aiStyle").value=p.aiStyle}if(p.projectName)projectName=p.projectName;if(p.aiQuality)aiQuality=p.aiQuality;if(p.printSettings)printSettings=Object.assign({sheet:"a4",crop:true},p.printSettings);
