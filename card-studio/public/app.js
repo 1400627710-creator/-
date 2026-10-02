@@ -502,6 +502,32 @@ $("#customAssetList").onclick=function(e){
   userAssets=userAssets.filter(function(a){return a.id!==id});cards.forEach(function(c){["iconAssetId","frameImageAssetId","textureImageAssetId"].forEach(function(k){if(c.appearance[k]===id)c.appearance[k]=""})});
   renderAll();setStatus("自定义素材已删除");
 };
+$("#batchRename").onclick=function(){
+  var list=getVisibleCards(),prefix=$("#namePrefix").value,start=num($("#nameStart").value,1);if(!list.length)return;recordHistory();
+  list.forEach(function(c,i){c.name=prefix+String(start+i).padStart(3,"0")});renderAll();setStatus("已批量命名 "+list.length+" 张可见卡牌");
+};
+$("#clearAllArt").onclick=function(){recordHistory();cards.forEach(function(c){c.art=""});renderAll();setStatus("已清空全部插画")};
+
+function manifestRows(){
+  return cards.map(function(c,i){var t=TEMPLATES[c.templateId]||TEMPLATES.unit;return {序号:i+1,名称:c.name,模板:t.name,费用:c.cost,系别:c.faction,类型:c.unitType,稀有度:c.rarity,攻击:c.attack,血量:c.health,移速:c.move,射程:c.range,关键词:c.tags,效果:c.description,有插画:c.art?"是":"否"}})
+}
+$("#exportManifest").onclick=function(){var csv="\uFEFF"+Papa.unparse(manifestRows());downloadText(csv,"卡牌导出清单.csv","text/csv;charset=utf-8");setStatus("CSV 清单已导出")};
+$("#exportJsonList").onclick=function(){downloadText(JSON.stringify(manifestRows(),null,2),"卡牌导出清单.json","application/json");setStatus("JSON 清单已导出")};
+
+$("#batchPngZip").onclick=async function(){
+  var list=getVisibleCards();if(!list.length)return;var btn=this;btn.disabled=true;setStatus("正在打包 PNG...");
+  try{
+    var zip=new JSZip();
+    for(var i=0;i<list.length;i++){
+      setStatus("PNG 打包 "+(i+1)+"/"+list.length);
+      var data=await capture(list[i],"png");
+      zip.file(String(i+1).padStart(3,"0")+"-"+safeFilename(list[i].name)+".png",data.split(",")[1],{base64:true});
+    }
+    zip.file("manifest.csv","\uFEFF"+Papa.unparse(manifestRows()));
+    var blob=await zip.generateAsync({type:"blob"}),url=URL.createObjectURL(blob);download(url,"卡牌PNG-300dpi.zip");setTimeout(function(){URL.revokeObjectURL(url)},1000);setStatus("PNG ZIP 完成："+list.length+" 张");
+  }catch(e){setStatus("PNG ZIP 失败："+e.message)}
+  btn.disabled=false;
+};
 
 renderAll();
 })();
