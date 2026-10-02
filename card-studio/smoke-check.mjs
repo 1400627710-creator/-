@@ -5,6 +5,8 @@ const html = fs.readFileSync(new URL("./public/index.html", import.meta.url), "u
 const app = fs.readFileSync(new URL("./public/app.js", import.meta.url), "utf8");
 const server = fs.readFileSync(new URL("./server.mjs", import.meta.url), "utf8");
 const pkg = JSON.parse(fs.readFileSync(new URL("./package.json", import.meta.url), "utf8"));
+const launcher = fs.readFileSync(new URL("./安装并启动.bat", import.meta.url), "utf8");
+const quickLauncher = fs.readFileSync(new URL("./启动卡牌工具.bat", import.meta.url), "utf8");
 
 new vm.Script(app);
 
@@ -20,6 +22,13 @@ const requiredIds = [
   "openCardSearch","cardSearchModal","librarySearch","libraryResults","tagCloud","exportTTS",
   "markRuleTerm","openRuleTerms","termQuickColor","termQuickList","ruleTermsModal","termSearch","termList","termName","termColor","termCategory","termTags","termDescription","saveRuleTerm","insertRuleTerm"
 ];
+
+if (!html.includes("v2.0.1 · 自由布局版")) throw new Error("Visible 2.0.1 version badge is missing.");
+if (!html.includes("自由布局（拖拽编辑）")) throw new Error("High-visibility free-layout wording is missing.");
+if (!html.includes("styles.css?v=2.0.1") || !html.includes("app.js?v=2.0.1")) throw new Error("2.0.1 browser cache busting is missing.");
+if (!launcher.includes("CARD_STUDIO_PORT=8791") || !quickLauncher.includes("CARD_STUDIO_PORT=8791")) throw new Error("Launchers must use the dedicated 2.0.1 port.");
+if (!launcher.includes("?v=2.0.1") || !quickLauncher.includes("?v=2.0.1")) throw new Error("Launchers must open the cache-busted 2.0.1 URL.");
+if (pkg.version !== "2.0.1") throw new Error("Package version must be 2.0.1.");
 
 const missing = requiredIds.filter((id) => !html.includes('id="' + id + '"'));
 if (missing.length) throw new Error("Missing required DOM ids: " + missing.join(", "));
@@ -58,6 +67,7 @@ if (!server.includes('app.use("/vendor"')) throw new Error("node_modules vendor 
 if (!server.includes('"127.0.0.1"')) throw new Error("Server must bind to localhost only.");
 if (!server.includes("OPENAI_IMAGE_EDIT_MODEL")) throw new Error("Dedicated image edit model setting is missing.");
 if (!server.includes("DEFAULT_CARD_ART_DIRECTION")) throw new Error("Classical painterly AI art direction is missing.");
+if (!server.includes('APP_VERSION = "2.0.1"')) throw new Error("Server runtime version marker is missing.");
 
 console.log("Card Studio smoke check passed.");
 
