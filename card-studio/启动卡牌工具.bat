@@ -1,6 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
+
 where node >nul 2>nul
 if errorlevel 1 (
   echo.
@@ -11,15 +12,30 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
+
+for /f "delims=" %%v in ('node -p "process.versions.node.split('.')[0]"') do set NODE_MAJOR=%%v
+if %NODE_MAJOR% LSS 22 (
+  echo.
+  echo [Card Studio] 当前 Node.js 版本过旧。
+  node --version
+  echo 请安装 Node.js 22 或更高版本。
+  echo https://nodejs.org/
+  echo.
+  pause
+  exit /b 1
+)
+
 if not exist node_modules (
   echo [Card Studio] 第一次启动，正在安装依赖...
   call npm install
   if errorlevel 1 (
+    echo.
     echo 依赖安装失败，请检查网络后重试。
     pause
     exit /b 1
   )
 )
+
 start "" cmd /c "timeout /t 2 /nobreak >nul & start http://localhost:8787"
 echo [Card Studio] 正在启动，浏览器将自动打开...
 call npm start
