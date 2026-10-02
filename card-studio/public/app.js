@@ -702,6 +702,7 @@ function refreshLibraryFilters(){
   function opts(arr,label){return '<option value="all">'+label+'</option>'+Array.from(new Set(arr.filter(Boolean))).sort().map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>'}).join("")}
   $("#libraryFaction").innerHTML=opts(cards.map(function(c){return c.faction}),"全部系别");$("#libraryType").innerHTML=opts(cards.map(function(c){return c.unitType}),"全部类型");$("#libraryRarity").innerHTML=opts(cards.map(function(c){return c.rarity}),"全部稀有度");
 }
+$("#batchNumber").onclick=function(){var prefix=$("#numberPrefix").value,start=num($("#numberStart").value,1),list=getVisibleCards();if(!list.length)return;recordHistory();list.forEach(function(c,i){c.cardNumber=prefix+String(start+i).padStart(3,"0")});renderAll();setStatus("已生成 "+list.length+" 个稳定卡号")};
 $("#openCardSearch").onclick=function(){activeLibraryTag="";refreshLibraryFilters();renderCardLibrary();$("#cardSearchModal").hidden=false};
 $("#closeCardSearch").onclick=function(){$("#cardSearchModal").hidden=true};
 $("#cardSearchModal").addEventListener("click",function(e){if(e.target===this)this.hidden=true});
