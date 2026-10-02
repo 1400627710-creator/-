@@ -15,7 +15,9 @@ const requiredIds = [
   "assetList","customAssetList","skinList","projectExport","projectImport","projectFile",
   "batchImages","batchAI","batchImageFiles","uploadAssetBtn","customAssetFile",
   "batchRename","exportManifest","exportJsonList","batchPngZip","batchJpgZip",
-  "sheetSize","cropMarks","singlePdf","batchPdf","batchPdfTop","exportCard"
+  "sheetSize","cropMarks","singlePdf","batchPdf","batchPdfTop","exportCard",
+  "safeMode","layoutMode","addTextElement","addNumberElement","elX","elY","elW","elH","elR","elZ","resetLayout","copyLayoutAll",
+  "openCardSearch","cardSearchModal","librarySearch","libraryResults","tagCloud","exportTTS"
 ];
 
 const missing = requiredIds.filter((id) => !html.includes('id="' + id + '"'));
@@ -38,12 +40,12 @@ if (badSelectors.length) throw new Error("querySelector used where querySelector
 
 for (const id of [
   "projectExport","projectImport","batchImages","batchAI","uploadAssetBtn","batchRename",
-  "batchPngZip","batchJpgZip","saveApiKey","aiRedraw","applyTextAll","sheetSize","cropMarks"
+  "batchPngZip","batchJpgZip","saveApiKey","aiRedraw","applyTextAll","sheetSize","cropMarks","layoutMode","addTextElement","addNumberElement","resetLayout","openCardSearch","exportTTS"
 ]) {
   if (!app.includes('$("#' + id + '")')) throw new Error("Missing handler reference for #" + id);
 }
 
-for (const marker of ["indexedDB.open", "projectPayload", "customTemplates", "userAssets", "SHEETS", "factionFilter", "rarityFilter"]) {
+for (const marker of ["indexedDB.open", "projectPayload", "customTemplates", "userAssets", "SHEETS", "factionFilter", "rarityFilter", "DEFAULT_LAYOUT", "extraElements", "renderCardLibrary", "ttsCard"]) {
   if (!app.includes(marker)) throw new Error("Missing implemented feature marker: " + marker);
 }
 
