@@ -5,6 +5,14 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
+const DEFAULT_CARD_ART_DIRECTION = [
+  "Use a traditional hand-painted fantasy oil illustration aesthetic.",
+  "Show natural bristle brushwork, layered pigment, subtle canvas tooth, hand-mixed color variation, and painterly edges.",
+  "Favor restrained antique-book color harmony, atmospheric chiaroscuro, and believable material texture.",
+  "The result should feel authored by a human painter rather than glossy digital concept art.",
+  "Avoid photorealism, plastic 3D rendering, neon cyberpunk lighting, vector-flat graphics, anime cel shading, typography, logos, frames, and UI."
+].join(" ");
+
 const app = express();
 const root = dirname(fileURLToPath(import.meta.url));
 
@@ -58,6 +66,7 @@ app.post("/api/generate-image", async (req, res) => {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const fullPrompt = [
       "Create a vertical tabletop card illustration background.",
+      DEFAULT_CARD_ART_DIRECTION,
       "No text, no letters, no logo, no border, no UI.",
       "Full-bleed artwork with a strong central focal point and readable silhouette.",
       "Leave calmer visual areas near the top and bottom for card text overlays.",
@@ -116,6 +125,7 @@ app.post("/api/redraw-image", async (req, res) => {
     const bytes = Buffer.from(match[2], "base64");
     const fullPrompt = [
       "Edit this existing vertical tabletop card illustration.",
+      DEFAULT_CARD_ART_DIRECTION,
       "Preserve the main subject identity and overall composition unless the request explicitly asks to change them.",
       "No text, no letters, no logo, no border, no UI.",
       cardType ? "Card template type: " + cardType + "." : "",
