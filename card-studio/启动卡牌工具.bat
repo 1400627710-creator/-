@@ -5,7 +5,7 @@ where node >nul 2>nul
 if errorlevel 1 (
   echo.
   echo [Card Studio] 未检测到 Node.js。
-  echo 请先安装 Node.js 18 或更高版本，然后重新双击此文件。
+  echo 请先安装 Node.js 22 或更高版本，然后重新双击此文件。
   echo https://nodejs.org/
   echo.
   pause
