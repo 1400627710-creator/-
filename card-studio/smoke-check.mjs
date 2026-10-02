@@ -16,7 +16,7 @@ const requiredIds = [
   "batchImages","batchAI","batchImageFiles","uploadAssetBtn","customAssetFile",
   "batchRename","exportManifest","exportJsonList","batchPngZip","batchJpgZip",
   "sheetSize","cropMarks","singlePdf","batchPdf","batchPdfTop","exportCard",
-  "safeMode","layoutMode","addTextElement","addNumberElement","elX","elY","elW","elH","elR","elZ","resetLayout","copyLayoutAll",
+  "safeMode","layoutMode","layoutQuickButton","layoutPanel","addTextElement","addNumberElement","elX","elY","elW","elH","elR","elZ","resetLayout","copyLayoutAll",
   "openCardSearch","cardSearchModal","librarySearch","libraryResults","tagCloud","exportTTS"
 ];
 
