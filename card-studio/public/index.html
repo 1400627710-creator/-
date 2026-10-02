@@ -100,10 +100,10 @@
       <div class="term-toolbar">
         <input id="termQuickColor" type="color" value="#38bdf8" title="词条颜色">
         <button id="markRuleTerm" class="term-primary">选中文字 → 设为规则词条</button>
-        <button id="openRuleTerms">词条库</button>
+        <button id="insertKnownTerm">＋ 插入已有词条</button><button id="autoMarkTerms">自动识别词条</button><button id="openRuleTerms">📚 词条库</button>
       </div>
       <div id="termQuickList" class="term-quick-list"></div>
-      <p class="micro-help">选中效果中的一个词再点“设为规则词条”。卡面只显示彩色短词，完整解释保存在词条库。</p>
+      <p class="micro-help">三种方式：①选中文字直接建词条；②从词条库插入；③先正常输入，再点“自动识别词条”。卡面只显示彩色短词，完整解释保存在词条库。</p>
       <div id="variables" class="variables"></div>
       <label>检索关键词<input data-form="tags" placeholder="快速,远程,守备"></label>
     </section>
@@ -247,7 +247,7 @@
 
 <div id="ruleTermsModal" class="modal-backdrop" hidden>
   <div class="term-library-dialog">
-    <div class="modal-head"><div><b>规则词条库</b><small>特殊效果的统一定义、颜色与检索仓库</small></div><button id="closeRuleTerms">关闭</button></div>
+    <div class="modal-head"><div><b>规则词条库</b><small>特殊效果的统一定义、颜色与检索仓库</small></div><div class="term-modal-actions"><button id="autoMarkAllCards">全卡组自动识别</button><button id="closeRuleTerms">关闭</button></div></div>
     <div class="term-library-body">
       <aside class="term-library-list">
         <div class="term-search-row"><input id="termSearch" class="search" placeholder="搜索词条 / 分类 / 标签 / 说明"><button id="newRuleTerm">＋ 新词条</button></div>
