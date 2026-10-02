@@ -152,7 +152,7 @@ var normalizeCard=function(c){
   if(oldLayout.stats){var stats=t.stats||[],gap=2,totalW=oldLayout.stats.w||86,n=Math.max(1,stats.length),cell=(totalW-gap*(n-1))/n;stats.forEach(function(st,i){var key="stat_"+st[0];if(!oldLayout[key])nextLayout[key]=legacy(nextLayout[key],{x:(oldLayout.stats.x||7)+i*(cell+gap),y:oldLayout.stats.y,w:cell,h:oldLayout.stats.h,r:oldLayout.stats.r,z:oldLayout.stats.z,locked:oldLayout.stats.locked,opacity:oldLayout.stats.opacity,visible:oldLayout.stats.visible})})}
   Object.keys(oldLayout).forEach(function(k){if(DEFAULT_LAYOUT[k])nextLayout[k]=Object.assign({},nextLayout[k],oldLayout[k])});
   c.layout=nextLayout;Object.keys(c.layout).forEach(function(k){c.layout[k]=Object.assign({},DEFAULT_LAYOUT[k]||{x:10,y:10,w:30,h:10,r:0,z:40,locked:false,opacity:1,visible:true},c.layout[k]||{});if(c.layout[k].opacity==null)c.layout[k].opacity=1;if(c.layout[k].visible==null)c.layout[k].visible=true});
-  if(!Array.isArray(c.extraElements))c.extraElements=[];c.extraElements.forEach(function(el){el.layout=Object.assign({x:10,y:10,w:30,h:8,r:0,z:40,locked:false,opacity:1,visible:true},el.layout||{});if(el.layout.opacity==null)el.layout.opacity=1;if(el.layout.visible==null)el.layout.visible=true});
+  if(!Array.isArray(c.extraElements))c.extraElements=[];c.extraElements.forEach(function(el){var wasLegacy=el.layout&&el.layout.opacity==null,oldZ=el.layout&&el.layout.z;el.layout=Object.assign({x:10,y:10,w:30,h:8,r:0,z:40,locked:false,opacity:1,visible:true},el.layout||{});if(wasLegacy&&el.kind==="image"&&oldZ===46)el.layout.z=18;if(el.layout.opacity==null)el.layout.opacity=1;if(el.layout.visible==null)el.layout.visible=true});
   if(c.art==null)c.art="";
   return c;
 };
