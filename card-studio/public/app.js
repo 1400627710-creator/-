@@ -612,6 +612,21 @@ $("#batchPngZip").onclick=async function(){
   btn.disabled=false;
 };
 
+$("#batchJpgZip").onclick=async function(){
+  var list=getVisibleCards();if(!list.length)return;var btn=this;btn.disabled=true;setStatus("正在打包 JPG...");
+  try{
+    var zip=new JSZip();
+    for(var i=0;i<list.length;i++){
+      setStatus("JPG 打包 "+(i+1)+"/"+list.length);
+      var data=await capture(list[i],"jpeg");
+      zip.file(String(i+1).padStart(3,"0")+"-"+safeFilename(list[i].name)+".jpg",data.split(",")[1],{base64:true});
+    }
+    zip.file("manifest.csv","\uFEFF"+Papa.unparse(manifestRows()));
+    var blob=await zip.generateAsync({type:"blob"}),url=URL.createObjectURL(blob);download(url,safeFilename(projectName)+"-JPG-300dpi.zip");setTimeout(function(){URL.revokeObjectURL(url)},1000);setStatus("JPG ZIP 完成："+list.length+" 张");
+  }catch(e){setStatus("JPG ZIP 失败："+e.message)}
+  btn.disabled=false;
+};
+
 renderAll();
 dbGet("project-v3").then(function(savedDb){
   dbReady=true;
