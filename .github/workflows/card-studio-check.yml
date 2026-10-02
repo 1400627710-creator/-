@@ -11,7 +11,7 @@ on:
       - ".github/workflows/card-studio-check.yml"
 
 jobs:
-  syntax-check:
+  syntax-and-smoke:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -21,7 +21,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: card-studio/package-lock.json
       - run: npm install
       - run: npm run check
