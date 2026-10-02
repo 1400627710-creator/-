@@ -224,7 +224,7 @@ var renderCard=function(){
   $$("[data-form]").forEach(function(el){var f=el.getAttribute("data-form");el.value=c[f]==null?"":c[f]});
   $("#description").value=c.description||"";
   $("#dynamicStats").innerHTML=t.stats.map(function(s){return '<label>'+s[2]+'<input type="number" data-stat="'+s[0]+'" value="'+esc(c[s[0]])+'"></label>'}).join("");
-  $("[data-color]").forEach(function(el){el.value=c.appearance[el.getAttribute("data-color")]});
+  $$("[data-color]").forEach(function(el){el.value=c.appearance[el.getAttribute("data-color")]});
   refreshTextControls();
   renderTemplates();renderAssets();renderSkins();
 };
