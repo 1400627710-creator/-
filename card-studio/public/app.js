@@ -234,9 +234,6 @@ var cardHtml=function(card,editable){
   var t=TEMPLATES[card.templateId]||TEMPLATES.unit,a=normalizeAppearance(card.appearance),ce=editable?' contenteditable="true"':"";
   var desc=renderRichText(card.description,card);
   var artEmpty=card.art?"":'<div class="art-empty">插画区域<br><small>上传图片或使用 AI 生成</small></div>';
-  var stats=t.stats.map(function(s){
-    return '<div class="stat"><small>'+s[1]+'</small><strong data-edit="'+s[0]+'"'+ce+'>'+esc(card[s[0]])+'</strong></div>';
-  }).join("");
   var layoutId=t.baseLayout||t.id;
   var classes=["card","tpl-"+layoutId,"frame-"+a.frameStyle,"texture-"+a.textureStyle,"cost-"+a.costStyle,"rarity-"+a.rarityStyle,"font-"+a.fontStyle].join(" ");
   var style="--p:"+a.primary+";--s:"+a.secondary+";--a:"+a.accent+";--f:"+a.frame+";--t:"+a.text+";--stats-count:"+Math.max(1,t.stats.length)+";--title-size:"+a.titleSize+"px;--title-color:"+a.titleColor+";--title-align:"+a.titleAlign+";--title-weight:"+(a.titleBold?900:500)+";--effect-size:"+a.effectSize+"px;--effect-color:"+a.effectColor+";--effect-align:"+a.effectAlign+";--effect-weight:"+(a.effectBold?800:400)+";--meta-size:"+a.metaSize+"px;--meta-color:"+a.metaColor+";--meta-align:"+a.metaAlign+";--meta-weight:"+(a.metaBold?800:500)+";--stats-size:"+a.statsSize+"px;--stats-color:"+a.statsColor+";--stats-align:"+a.statsAlign+";--stats-weight:"+(a.statsBold?900:500)+";--cost-size:"+a.costSize+"px;--cost-color:"+a.costColor+";--cost-align:"+a.costAlign+";--cost-weight:"+(a.costBold?900:500);
@@ -244,23 +241,27 @@ var cardHtml=function(card,editable){
   var customFrame=frameAsset?'<img class="custom-frame-layer" src="'+esc(frameAsset.dataUrl)+'">':"";
   var customTexture=textureAsset?'<img class="custom-texture-layer" src="'+esc(textureAsset.dataUrl)+'">':"";
   var customIcon=iconAsset?'<img class="card-custom-icon" src="'+esc(iconAsset.dataUrl)+'">':"";
-  function lp(key){var p=(card.layout&&card.layout[key])||DEFAULT_LAYOUT[key]||{x:0,y:0,w:10,h:10,r:0,z:20};return 'left:'+p.x+'%;top:'+p.y+'%;width:'+p.w+'%;height:'+p.h+'%;z-index:'+p.z+';transform:rotate('+p.r+'deg)'}
-  function handles(key){return editable?'<i class="layout-handle resize" data-handle="resize"></i><i class="layout-handle rotate" data-handle="rotate"></i>':""}
-  function node(key,cls,inner,attrs){var p=(card.layout&&card.layout[key])||DEFAULT_LAYOUT[key]||{};return '<div class="layout-node '+cls+(p.locked?' locked':'')+'" data-layout-key="'+key+'" style="'+lp(key)+'" '+(attrs||"")+'>'+inner+handles(key)+'</div>'}
+  function lp(key){var p=(card.layout&&card.layout[key])||DEFAULT_LAYOUT[key]||{x:0,y:0,w:10,h:10,r:0,z:20,opacity:1,visible:true};return 'left:'+p.x+'%;top:'+p.y+'%;width:'+p.w+'%;height:'+p.h+'%;z-index:'+p.z+';opacity:'+(p.opacity==null?1:p.opacity)+';transform:rotate('+p.r+'deg)'}
+  function handles(){return editable?'<i class="layout-handle resize" data-handle="resize"></i><i class="layout-handle rotate" data-handle="rotate"></i>':""}
+  function node(key,cls,inner,attrs){var p=(card.layout&&card.layout[key])||DEFAULT_LAYOUT[key]||{};if(p.visible===false)return "";return '<div class="layout-node '+cls+(p.locked?' locked':'')+'" data-layout-key="'+key+'" style="'+lp(key)+'" '+(attrs||"")+'>'+inner+handles()+'</div>'}
+  var statNodes=(t.stats||[]).map(function(st){return node("stat_"+st[0],"stat stat-layer",'<small>'+st[1]+'</small><strong data-edit="'+st[0]+'"'+ce+'>'+esc(card[st[0]])+'</strong>')}).join("");
   var extras=(card.extraElements||[]).map(function(el){
-    var p=el.layout||{x:10,y:10,w:30,h:8,r:0,z:45,locked:false},base='left:'+p.x+'%;top:'+p.y+'%;width:'+p.w+'%;height:'+p.h+'%;z-index:'+p.z+';transform:rotate('+p.r+'deg);';
-    if(el.kind==="image"){var asset=el.assetId&&assetById(el.assetId),src=el.src||(asset&&asset.dataUrl)||"";return '<div class="layout-node free-image-element '+(p.locked?"locked":"")+'" data-extra-id="'+el.id+'" style="'+base+'"><img src="'+esc(src)+'" alt="'+esc(el.name||"自由素材")+'" draggable="false">'+handles("extra")+'</div>'}
+    var p=el.layout||{x:10,y:10,w:30,h:8,r:0,z:18,locked:false,opacity:1,visible:true};if(p.visible===false)return "";
+    var base='left:'+p.x+'%;top:'+p.y+'%;width:'+p.w+'%;height:'+p.h+'%;z-index:'+p.z+';opacity:'+(p.opacity==null?1:p.opacity)+';transform:rotate('+p.r+'deg);';
+    if(el.kind==="image"){var asset=el.assetId&&assetById(el.assetId),src=el.src||(asset&&asset.dataUrl)||"";return '<div class="layout-node free-image-element '+(p.locked?"locked":"")+'" data-extra-id="'+el.id+'" style="'+base+'"><img src="'+esc(src)+'" alt="'+esc(el.name||"自由素材")+'" draggable="false">'+handles()+'</div>'}
     var inner=esc(resolveVars(el.text||"",card)).replace(/\\n/g,"<br>");
-    return '<div class="layout-node free-text-element '+(el.kind==="number"?"number-element ":"")+(el.parentId?"attached-label ":"")+(p.locked?"locked":"")+'" data-extra-id="'+el.id+'" data-parent-id="'+esc(el.parentId||"")+'" style="'+base+'font-size:'+(el.fontSize||11)+'px;color:'+(el.color||a.text)+';text-align:'+(el.align||"left")+'">'+inner+handles("extra")+'</div>'
+    return '<div class="layout-node free-text-element '+(el.kind==="number"?"number-element ":"")+(el.parentId?"attached-label ":"")+(p.locked?"locked":"")+'" data-extra-id="'+el.id+'" data-parent-id="'+esc(el.parentId||"")+'" style="'+base+'font-size:'+(el.fontSize||11)+'px;color:'+(el.color||a.text)+';text-align:'+(el.align||"left")+'">'+inner+handles()+'</div>'
   }).join("");
   return '<div class="'+classes+'" style="'+style+'">'+customFrame+customTexture+customIcon+
     node("art","art",artEmpty)+ '<div class="shade"></div><div class="texture-layer"></div><div class="trim"></div>'+
     node("cost","cost-badge",'<span data-edit="cost"'+ce+'>'+esc(card.cost)+'</span>')+
-    node("head","head",'<div class="title" data-edit="name"'+ce+'>'+esc(card.name)+'</div><div class="faction" data-edit="faction"'+ce+'>'+esc(card.faction)+'</div>')+
-    node("rarity","rarity-mark rarity-"+a.rarityStyle,raritySymbol(a.rarityStyle),'title="'+esc(card.rarity)+'"')+
-    node("meta","meta",'<span data-edit="unitType"'+ce+'>'+esc(card.unitType)+'</span><span>·</span><span data-edit="rarity"'+ce+'>'+esc(card.rarity)+'</span>')+
+    node("title","head title-layer",'<div class="title" data-edit="name"'+ce+'>'+esc(card.name)+'</div>')+
+    node("faction","faction faction-layer",'<span data-edit="faction"'+ce+'>'+esc(card.faction)+'</span>')+
+    node("rarityMark","rarity-mark rarity-"+a.rarityStyle,raritySymbol(a.rarityStyle),'title="'+esc(card.rarity)+'"')+
+    node("type","meta meta-single type-layer",'<span data-edit="unitType"'+ce+'>'+esc(card.unitType)+'</span>')+
+    node("rarityText","meta meta-single rarity-text-layer",'<span data-edit="rarity"'+ce+'>'+esc(card.rarity)+'</span>')+
     node("effect","effect",'<span data-edit="description"'+ce+'>'+desc+'</span>')+
-    node("stats","stats",stats)+node("tags","tags",esc(card.tags))+extras+'</div>';
+    statNodes+node("tags","tags",esc(card.tags))+extras+'</div>';
 };
 var setArt=function(root,card){
   var art=root.querySelector(".art");
@@ -324,20 +325,20 @@ function moveLayoutPointer(e){
 function endLayoutPointer(){if(!dragState)return;dragState=null;persist()}
 function addExtra(kind){
   recordHistory();var c=current(),n=(c.extraElements||[]).length+1,text=kind==="number"?(c.cardNumber||("CARD-"+String(n).padStart(3,"0"))):"双击或在右侧编辑文本";
-  var el={id:uid(),kind:kind,text:kind==="number"?"{编号}":text,fontSize:kind==="number"?10:12,color:c.appearance.text,align:kind==="number"?"center":"left",layout:{x:kind==="number"?68:15,y:kind==="number"?94:50,w:kind==="number"?27:45,h:kind==="number"?4:9,r:0,z:45,locked:false}};
+  var el={id:uid(),kind:kind,text:kind==="number"?"{编号}":text,fontSize:kind==="number"?10:12,color:c.appearance.text,align:kind==="number"?"center":"left",layout:{x:kind==="number"?68:15,y:kind==="number"?94:50,w:kind==="number"?27:45,h:kind==="number"?4:9,r:0,z:45,locked:false,opacity:1,visible:true}};
   c.extraElements.push(el);renderPreviewOnly();selectedElement={type:"extra",id:el.id};refreshElementPanel();persist();
 }
 function addFreeImage(asset){
   recordHistory();if(!asset.id)asset.id=uid();if(!userAssets.some(function(x){return x.id===asset.id}))userAssets.push(asset);
-  var c=current(),el={id:uid(),kind:"image",name:asset.name||"图标",assetId:asset.id,src:asset.dataUrl||"",layout:{x:40,y:42,w:20,h:20,r:0,z:46,locked:false}};
+  var c=current(),el={id:uid(),kind:"image",name:asset.name||"图标",assetId:asset.id,src:asset.dataUrl||"",layout:{x:40,y:42,w:20,h:20,r:0,z:18,locked:false,opacity:1,visible:true}};
   c.extraElements.push(el);renderAll();selectedElement={type:"extra",id:el.id};refreshElementPanel();persist();setStatus("小素材已放到卡面：拖动、缩放或旋转即可");
 }
 function labelLayoutForImage(p,pos){
-  var h=6,g=1;if(pos==="center")return {x:p.x,y:p.y+p.h/2-h/2,w:p.w,h:h,r:0,z:(p.z||46)+1,locked:false};
-  if(pos==="top")return {x:p.x-5,y:p.y-h-g,w:p.w+10,h:h,r:0,z:(p.z||46)+1,locked:false};
-  if(pos==="bottom")return {x:p.x-5,y:p.y+p.h+g,w:p.w+10,h:h,r:0,z:(p.z||46)+1,locked:false};
-  if(pos==="left")return {x:p.x-22-g,y:p.y+p.h/2-h/2,w:22,h:h,r:0,z:(p.z||46)+1,locked:false};
-  return {x:p.x+p.w+g,y:p.y+p.h/2-h/2,w:22,h:h,r:0,z:(p.z||46)+1,locked:false};
+  var h=6,g=1;if(pos==="center")return {x:p.x,y:p.y+p.h/2-h/2,w:p.w,h:h,r:0,z:(p.z||18)+1,locked:false,opacity:1,visible:true};
+  if(pos==="top")return {x:p.x-5,y:p.y-h-g,w:p.w+10,h:h,r:0,z:(p.z||18)+1,locked:false,opacity:1,visible:true};
+  if(pos==="bottom")return {x:p.x-5,y:p.y+p.h+g,w:p.w+10,h:h,r:0,z:(p.z||18)+1,locked:false,opacity:1,visible:true};
+  if(pos==="left")return {x:p.x-22-g,y:p.y+p.h/2-h/2,w:22,h:h,r:0,z:(p.z||18)+1,locked:false,opacity:1,visible:true};
+  return {x:p.x+p.w+g,y:p.y+p.h/2-h/2,w:22,h:h,r:0,z:(p.z||18)+1,locked:false,opacity:1,visible:true};
 }
 function addLabelToSelectedImage(){
   var n=findSelectedNode(),m=getElementModel(current(),n);if(!m||m.type!=="extra"||m.element.kind!=="image"){setStatus("请先在卡面选中一个图标或小素材");return}
