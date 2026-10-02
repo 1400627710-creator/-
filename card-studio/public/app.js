@@ -185,6 +185,21 @@ var resolveVars=function(text,card){
 };
 function termByName(name){var n=String(name||"").trim().toLowerCase();return ruleTerms.find(function(t){return String(t.name||"").trim().toLowerCase()===n})}
 function extractRuleTerms(text){var out=[],seen={};String(text||"").replace(/\[\[([^\]]+)\]\]/g,function(_,name){name=String(name).trim();if(name&&!seen[name.toLowerCase()]){seen[name.toLowerCase()]=1;out.push(name)}return _});return out}
+function escapeRegExp(s){return String(s).replace(/[.*+?^$\{\}()|[\]\\]/g,"\\function renderRichText(text,card){")}
+function autoMarkKnownTerms(text){
+  var raw=String(text||""),protectedRanges=[];raw.replace(/\[\[([^\]]+)\]\]/g,function(m,n,offset){protectedRanges.push([offset,offset+m.length]);return m});
+  var names=ruleTerms.map(function(t){return t.name}).filter(Boolean).sort(function(a,b){return b.length-a.length});
+  names.forEach(function(name){
+    var re=new RegExp(escapeRegExp(name),"gi"),m,out="",last=0,changed=false;
+    while((m=re.exec(raw))){
+      var inside=protectedRanges.some(function(r){return m.index>=r[0]&&m.index<r[1]});
+      if(inside){continue}
+      out+=raw.slice(last,m.index)+"[["+raw.slice(m.index,m.index+m[0].length)+"]]";last=m.index+m[0].length;changed=true;
+    }
+    if(changed){out+=raw.slice(last);raw=out;protectedRanges=[];raw.replace(/\[\[([^\]]+)\]\]/g,function(mm,n,offset){protectedRanges.push([offset,offset+mm.length]);return mm})}
+  });
+  return raw;
+}
 function renderRichText(text,card){
   var raw=resolveVars(text,card),out="",last=0,re=/\[\[([^\]]+)\]\]/g,m;
   while((m=re.exec(raw))){out+=esc(raw.slice(last,m.index));var name=String(m[1]).trim(),term=termByName(name),color=term&&term.color?term.color:"#38bdf8",tip=term&&term.description?term.description:"规则词条："+name;out+='<span class="rule-term" data-rule-term="'+esc(name)+'" title="'+esc(tip)+'" style="color:'+esc(color)+'">'+esc(name)+'</span>';last=re.lastIndex}
@@ -503,6 +518,9 @@ $("#markRuleTerm").onclick=function(){
   var token="[["+name+"]]",raw=ta.value;ta.value=raw.slice(0,start)+token+raw.slice(end);current().description=ta.value;selectedRuleTermId=term.id;renderPreviewOnly();renderTermQuickList();persist();setStatus("已标记规则词条："+name);ta.focus();ta.setSelectionRange(start+token.length,start+token.length);
 };
 $("#termQuickList").onclick=function(e){var b=e.target.closest("[data-quick-term]");if(!b)return;var t=ruleTerms.find(function(x){return x.id===b.getAttribute("data-quick-term")});if(t)insertDescriptionToken(t.name)};
+$("#insertKnownTerm").onclick=function(){if(!ruleTerms.length){openTermLibrary();setStatus("词条库还是空的，请先建立一个规则词条");return}openTermLibrary()};
+$("#autoMarkTerms").onclick=function(){var before=current().description,after=autoMarkKnownTerms(before);if(after===before){setStatus("当前效果中没有发现尚未标记的已知词条");return}recordHistory();current().description=after;$("#description").value=after;renderPreviewOnly();persist();setStatus("已自动识别当前卡牌中的规则词条")};
+$("#autoMarkAllCards").onclick=function(){if(!ruleTerms.length)return;recordHistory();var changed=0;cards.forEach(function(c){var x=autoMarkKnownTerms(c.description);if(x!==c.description){c.description=x;changed++}});renderAll();renderRuleTermLibrary();setStatus("已自动识别 "+changed+" 张卡牌中的规则词条")};
 $("#openRuleTerms").onclick=function(){openTermLibrary()};
 $("#closeRuleTerms").onclick=function(){$("#ruleTermsModal").hidden=true};
 $("#ruleTermsModal").addEventListener("click",function(e){if(e.target===this)this.hidden=true});
