@@ -266,7 +266,7 @@ function moveLayoutPointer(e){
 function endLayoutPointer(){if(!dragState)return;dragState=null;persist()}
 function addExtra(kind){
   recordHistory();var c=current(),n=(c.extraElements||[]).length+1,text=kind==="number"?(c.cardNumber||("CARD-"+String(n).padStart(3,"0"))):"双击或在右侧编辑文本";
-  var el={id:uid(),kind:kind,text:text,fontSize:kind==="number"?10:12,color:c.appearance.text,align:kind==="number"?"center":"left",layout:{x:kind==="number"?68:15,y:kind==="number"?94:50,w:kind==="number"?27:45,h:kind==="number"?4:9,r:0,z:45,locked:false}};
+  var el={id:uid(),kind:kind,text:kind==="number"?"{编号}":text,fontSize:kind==="number"?10:12,color:c.appearance.text,align:kind==="number"?"center":"left",layout:{x:kind==="number"?68:15,y:kind==="number"?94:50,w:kind==="number"?27:45,h:kind==="number"?4:9,r:0,z:45,locked:false}};
   c.extraElements.push(el);renderPreviewOnly();selectedElement={type:"extra",id:el.id};refreshElementPanel();persist();
 }
 var renderPreviewOnly=function(){
@@ -298,7 +298,7 @@ var renderCard=function(){
   refreshTextControls();refreshElementPanel();
   renderTemplates();renderAssets();renderSkins();
 };
-var renderExport=function(card){$("#exportCard").innerHTML=cardHtml(card,false);setArt($("#exportCard"),card)};
+var renderExport=function(card){$("#exportCard").innerHTML=cardHtml(card,false);setArt($("#exportCard"),card);$("#exportCard").classList.remove("layout-editing")}
 var getVisibleCards=function(){
   var q=$("#cardSearch").value.trim().toLowerCase(),filter=$("#templateFilter").value,faction=$("#factionFilter").value,rarity=$("#rarityFilter").value,sort=$("#sortCards").value;
   var list=cards.filter(function(c){
