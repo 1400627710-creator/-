@@ -303,7 +303,7 @@ var getVisibleCards=function(){
   var q=$("#cardSearch").value.trim().toLowerCase(),filter=$("#templateFilter").value,faction=$("#factionFilter").value,rarity=$("#rarityFilter").value,sort=$("#sortCards").value;
   var list=cards.filter(function(c){
     var t=TEMPLATES[c.templateId]||TEMPLATES.unit;
-    return (filter==="all"||c.templateId===filter)&&(faction==="all"||c.faction===faction)&&(rarity==="all"||c.rarity===rarity)&&(!q||[c.name,t.name,c.faction,c.unitType,c.rarity,c.tags].join(" ").toLowerCase().indexOf(q)>=0);
+    return (filter==="all"||c.templateId===filter)&&(faction==="all"||c.faction===faction)&&(rarity==="all"||c.rarity===rarity)&&(!q||[c.cardNumber,c.name,t.name,c.faction,c.unitType,c.rarity,c.tags,c.rulesKeywords,c.description].join(" ").toLowerCase().indexOf(q)>=0);
   });
   if(sort!=="manual")list=list.slice().sort(function(a,b){
     var av,bv;
@@ -487,7 +487,7 @@ $("#importFile").onchange=async function(){
       c.description=String(pick(r,["description","描述","效果","卡牌效果"],""));c.attack=num(pick(r,["attack","攻击","威力","火力"],0));
       c.health=num(pick(r,["health","血量","生命","耐久"],0));c.move=num(pick(r,["move","移速","移动"],0));c.range=num(pick(r,["range","射程"],0));
       c.unitType=String(pick(r,["unitType","兵种","类型","法术类型","建筑类型","事件类型"],TEMPLATES[tid].short));
-      c.rarity=String(pick(r,["rarity","稀有度"],"普通"));c.tags=String(pick(r,["tags","关键词","标签"],""));c.art=String(pick(r,["art","插画","图片","背景"],""));
+      c.rarity=String(pick(r,["rarity","稀有度"],"普通"));c.tags=String(pick(r,["tags","关键词","标签"],""));c.rulesKeywords=String(pick(r,["rulesKeywords","规则关键词","规则标签"],""));c.cardNumber=String(pick(r,["cardNumber","编号","卡号","ID"],""));c.art=String(pick(r,["art","插画","图片","背景"],""));
       c.appearance=clone(current().appearance);return c;
     }).filter(function(c){return c.name});
     if(!imported.length)throw new Error("没有读取到卡牌数据");
@@ -682,10 +682,46 @@ $("#batchRename").onclick=function(){
 $("#clearAllArt").onclick=function(){recordHistory();cards.forEach(function(c){c.art=""});renderAll();setStatus("已清空全部插画")};
 
 function manifestRows(){
-  return cards.map(function(c,i){var t=TEMPLATES[c.templateId]||TEMPLATES.unit;return {序号:i+1,名称:c.name,模板:t.name,费用:c.cost,系别:c.faction,类型:c.unitType,稀有度:c.rarity,攻击:c.attack,血量:c.health,移速:c.move,射程:c.range,关键词:c.tags,效果:c.description,有插画:c.art?"是":"否"}})
+  return cards.map(function(c,i){var t=TEMPLATES[c.templateId]||TEMPLATES.unit;return {序号:i+1,编号:c.cardNumber,名称:c.name,模板:t.name,费用:c.cost,系别:c.faction,类型:c.unitType,稀有度:c.rarity,攻击:c.attack,血量:c.health,移速:c.move,射程:c.range,标签:c.tags,规则关键词:c.rulesKeywords,效果:c.description,有插画:c.art?"是":"否"}})
 }
 $("#exportManifest").onclick=function(){var csv="\uFEFF"+Papa.unparse(manifestRows());downloadText(csv,"卡牌导出清单.csv","text/csv;charset=utf-8");setStatus("CSV 清单已导出")};
 $("#exportJsonList").onclick=function(){downloadText(JSON.stringify(manifestRows(),null,2),"卡牌导出清单.json","application/json");setStatus("JSON 清单已导出")};
+
+var activeLibraryTag="";
+function splitTags(v){return String(v||"").split(/[,，;；|]/).map(function(x){return x.trim()}).filter(Boolean)}
+function searchableText(c){var t=TEMPLATES[c.templateId]||TEMPLATES.unit;return [c.cardNumber,c.name,t.name,c.faction,c.unitType,c.rarity,c.tags,c.rulesKeywords,c.description,c.cost,c.attack,c.health,c.move,c.range].join(" ").toLowerCase()}
+function renderCardLibrary(){
+  var q=$("#librarySearch").value.trim().toLowerCase(),f=$("#libraryFaction").value,ty=$("#libraryType").value,r=$("#libraryRarity").value;
+  var allTags={};cards.forEach(function(c){splitTags(c.tags).concat(splitTags(c.rulesKeywords)).forEach(function(t){allTags[t]=(allTags[t]||0)+1})});
+  $("#tagCloud").innerHTML=Object.keys(allTags).sort(function(a,b){return allTags[b]-allTags[a]||a.localeCompare(b,"zh-CN")}).slice(0,40).map(function(t){return '<button class="'+(activeLibraryTag===t?"active":"")+'" data-library-tag="'+esc(t)+'">'+esc(t)+' <small>'+allTags[t]+'</small></button>'}).join("");
+  var list=cards.filter(function(c){return (f==="all"||c.faction===f)&&(ty==="all"||c.unitType===ty)&&(r==="all"||c.rarity===r)&&(!activeLibraryTag||splitTags(c.tags).concat(splitTags(c.rulesKeywords)).indexOf(activeLibraryTag)>=0)&&(!q||searchableText(c).indexOf(q)>=0)});
+  $("#libraryCount").textContent="找到 "+list.length+" / "+cards.length+" 张卡牌";
+  $("#libraryResults").innerHTML=list.map(function(c){var tags=splitTags(c.tags).concat(splitTags(c.rulesKeywords));return '<button class="library-card" data-library-card="'+c.id+'"><div class="lib-head"><strong>'+esc(c.name)+'</strong><span class="lib-number">'+esc(c.cardNumber||"未编号")+'</span></div><div class="lib-meta">'+esc(c.faction)+' · '+esc(c.unitType)+' · '+esc(c.rarity)+' · 费用 '+esc(c.cost)+'</div><div class="lib-effect">'+esc(resolveVars(c.description,c))+'</div><div class="lib-tags">'+tags.slice(0,10).map(function(t){return '<span>'+esc(t)+'</span>'}).join("")+'</div></button>'}).join("");
+}
+function refreshLibraryFilters(){
+  function opts(arr,label){return '<option value="all">'+label+'</option>'+Array.from(new Set(arr.filter(Boolean))).sort().map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>'}).join("")}
+  $("#libraryFaction").innerHTML=opts(cards.map(function(c){return c.faction}),"全部系别");$("#libraryType").innerHTML=opts(cards.map(function(c){return c.unitType}),"全部类型");$("#libraryRarity").innerHTML=opts(cards.map(function(c){return c.rarity}),"全部稀有度");
+}
+$("#openCardSearch").onclick=function(){activeLibraryTag="";refreshLibraryFilters();renderCardLibrary();$("#cardSearchModal").hidden=false};
+$("#closeCardSearch").onclick=function(){$("#cardSearchModal").hidden=true};
+$("#cardSearchModal").addEventListener("click",function(e){if(e.target===this)this.hidden=true});
+["#librarySearch","#libraryFaction","#libraryType","#libraryRarity"].forEach(function(q){$(q).addEventListener(q==="#librarySearch"?"input":"change",renderCardLibrary)});
+$("#tagCloud").onclick=function(e){var b=e.target.closest("[data-library-tag]");if(!b)return;var t=b.getAttribute("data-library-tag");activeLibraryTag=activeLibraryTag===t?"":t;renderCardLibrary()};
+$("#libraryResults").onclick=function(e){var b=e.target.closest("[data-library-card]");if(!b)return;selected=b.getAttribute("data-library-card");$("#cardSearchModal").hidden=true;renderAll();setStatus("已从卡查定位："+current().name)};
+function ttsCard(c,index){return {id:c.id,number:c.cardNumber||String(index+1).padStart(3,"0"),name:c.name,template:c.templateId,faction:c.faction,type:c.unitType,rarity:c.rarity,cost:c.cost,stats:{attack:c.attack,health:c.health,move:c.move,range:c.range},tags:splitTags(c.tags),rulesKeywords:splitTags(c.rulesKeywords),text:c.description,searchText:searchableText(c),imageFile:String(index+1).padStart(3,"0")+"-"+safeFilename(c.name)+".png"}}
+$("#exportTTS").onclick=async function(){
+  var btn=this;btn.disabled=true;setStatus("正在生成 TTS 模组数据...");
+  try{
+    var zip=new JSZip(),data=cards.map(ttsCard),byTag={},byNumber={},byId={};
+    data.forEach(function(c){byId[c.id]=c.number;byNumber[c.number]=c.id;c.tags.concat(c.rulesKeywords).forEach(function(t){if(!byTag[t])byTag[t]=[];byTag[t].push(c.id)})});
+    zip.file("cards.json",JSON.stringify({format:"card-studio-tts",version:1,project:projectName,cards:data},null,2));
+    zip.file("index.json",JSON.stringify({byId:byId,byNumber:byNumber,byTag:byTag},null,2));
+    zip.file("manifest.csv","\uFEFF"+Papa.unparse(manifestRows()));
+    zip.file("README-TTS.txt","Card Studio TTS 数据包\\n\\ncards.json：完整卡牌数据库\\nindex.json：按稳定 ID、编号、标签建立的索引\\nmanifest.csv：人工查看用清单\\n\\n未来 TTS Lua 模组可读取同结构数据，并以 card.id 作为稳定主键。");
+    var blob=await zip.generateAsync({type:"blob"}),url=URL.createObjectURL(blob);download(url,safeFilename(projectName)+"-TTS-data.zip");setTimeout(function(){URL.revokeObjectURL(url)},1000);setStatus("TTS 数据包已导出："+cards.length+" 张");
+  }catch(e){setStatus("TTS 导出失败："+e.message)}
+  btn.disabled=false;
+};
 
 $("#batchPngZip").onclick=async function(){
   var list=getVisibleCards();if(!list.length)return;var btn=this;btn.disabled=true;setStatus("正在打包 PNG...");
