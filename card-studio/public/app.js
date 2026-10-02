@@ -147,6 +147,7 @@ var raritySymbol=function(style){
   if(style==="bars")return "▮▮▮";
   return "★";
 };
+var assetById=function(id){return userAssets.find(function(x){return x.id===id})};
 var cardHtml=function(card,editable){
   var t=TEMPLATES[card.templateId]||TEMPLATES.unit,a=normalizeAppearance(card.appearance),ce=editable?' contenteditable="true"':"";
   var desc=esc(resolveVars(card.description,card)).replace(/\n/g,"<br>");
@@ -154,9 +155,14 @@ var cardHtml=function(card,editable){
   var stats=t.stats.map(function(s){
     return '<div class="stat"><small>'+s[1]+'</small><strong data-edit="'+s[0]+'"'+ce+'>'+esc(card[s[0]])+'</strong></div>';
   }).join("");
-  var classes=["card","tpl-"+t.id,"frame-"+a.frameStyle,"texture-"+a.textureStyle,"cost-"+a.costStyle,"rarity-"+a.rarityStyle,"font-"+a.fontStyle].join(" ");
+  var layoutId=t.baseLayout||t.id;
+  var classes=["card","tpl-"+layoutId,"frame-"+a.frameStyle,"texture-"+a.textureStyle,"cost-"+a.costStyle,"rarity-"+a.rarityStyle,"font-"+a.fontStyle].join(" ");
   var style="--p:"+a.primary+";--s:"+a.secondary+";--a:"+a.accent+";--f:"+a.frame+";--t:"+a.text+";--stats-count:"+Math.max(1,t.stats.length);
-  return '<div class="'+classes+'" style="'+style+'">'+
+  var frameAsset=assetById(a.frameImageAssetId),textureAsset=assetById(a.textureImageAssetId),iconAsset=assetById(a.iconAssetId);
+  var customFrame=frameAsset?'<img class="custom-frame-layer" src="'+esc(frameAsset.dataUrl)+'">':"";
+  var customTexture=textureAsset?'<img class="custom-texture-layer" src="'+esc(textureAsset.dataUrl)+'">':"";
+  var customIcon=iconAsset?'<img class="card-custom-icon" src="'+esc(iconAsset.dataUrl)+'">':"";
+  return '<div class="'+classes+'" style="'+style+'">'+customFrame+customTexture+customIcon+
     '<div class="art">'+artEmpty+'</div><div class="shade"></div><div class="texture-layer"></div><div class="trim"></div>'+
     '<div class="cost-badge" data-edit="cost"'+ce+'><span>'+esc(card.cost)+'</span></div>'+
     '<div class="head"><div class="title" data-edit="name"'+ce+'>'+esc(card.name)+'</div><div class="faction" data-edit="faction"'+ce+'>'+esc(card.faction)+'</div></div>'+
