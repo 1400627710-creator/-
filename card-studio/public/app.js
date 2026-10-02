@@ -310,8 +310,9 @@ function addExtra(kind){
   c.extraElements.push(el);renderPreviewOnly();selectedElement={type:"extra",id:el.id};refreshElementPanel();persist();
 }
 function addFreeImage(asset){
-  recordHistory();var c=current(),el={id:uid(),kind:"image",name:asset.name||"图标",assetId:asset.id||"",src:asset.dataUrl||"",layout:{x:40,y:42,w:20,h:20,r:0,z:46,locked:false}};
-  c.extraElements.push(el);renderPreviewOnly();selectedElement={type:"extra",id:el.id};refreshElementPanel();persist();setStatus("小素材已放到卡面：拖动、缩放或旋转即可");
+  recordHistory();if(!asset.id)asset.id=uid();if(!userAssets.some(function(x){return x.id===asset.id}))userAssets.push(asset);
+  var c=current(),el={id:uid(),kind:"image",name:asset.name||"图标",assetId:asset.id,src:asset.dataUrl||"",layout:{x:40,y:42,w:20,h:20,r:0,z:46,locked:false}};
+  c.extraElements.push(el);renderAll();selectedElement={type:"extra",id:el.id};refreshElementPanel();persist();setStatus("小素材已放到卡面：拖动、缩放或旋转即可");
 }
 function labelLayoutForImage(p,pos){
   var h=6,g=1;if(pos==="center")return {x:p.x,y:p.y+p.h/2-h/2,w:p.w,h:h,r:0,z:(p.z||46)+1,locked:false};
@@ -463,13 +464,17 @@ window.addEventListener("pointermove",moveLayoutPointer);window.addEventListener
 $("#preview").addEventListener("click",function(e){if(layoutEditing){var n=e.target.closest(".layout-node");if(n){e.preventDefault();e.stopPropagation();selectLayoutNode(n)}}});
 ["X","Y","W","H","R","Z"].forEach(function(k){$("#el"+k).addEventListener("change",function(){var n=findSelectedNode(),m=getElementModel(current(),n);if(!m)return;recordHistory();var map={X:"x",Y:"y",W:"w",H:"h",R:"r",Z:"z"};m.layout[map[k]]=num(this.value,m.layout[map[k]]);renderPreviewOnly();refreshElementPanel();persist()})});
 $("#addTextElement").onclick=function(){setLayoutMode(true);addExtra("text")};$("#addNumberElement").onclick=function(){setLayoutMode(true);addExtra("number")};
+$("#addImageElement").onclick=function(){setLayoutMode(true,false);$("#freeImageFile").click()};
+$("#freeImageFile").onchange=async function(){var f=this.files&&this.files[0];if(!f)return;try{var asset={id:uid(),name:f.name.replace(/\.[^.]+$/,""),category:"icon",dataUrl:await fileToDataUrl(f)};addFreeImage(asset)}catch(e){setStatus("导入小素材失败："+e.message)}this.value=""};
+$("#addImageLabel").onclick=addLabelToSelectedImage;
+$("#detachImageLabel").onclick=function(){var n=findSelectedNode(),m=getElementModel(current(),n);if(!m||m.type!=="extra"||!m.element.parentId)return;recordHistory();m.element.parentId="";m.element.labelPosition="";renderPreviewOnly();refreshElementPanel();persist();setStatus("文字已解除跟随，现在可以完全独立摆放")};
 $("#elementText").addEventListener("input",function(){var n=findSelectedNode(),m=getElementModel(current(),n);if(m&&m.type==="extra"){m.element.text=this.value;renderPreviewOnly();persist()}});
 $("#elementText").addEventListener("focus",function(){if(!this.disabled)recordHistory()});
 $("#toggleElementLock").onclick=function(){var n=findSelectedNode(),m=getElementModel(current(),n);if(!m)return;recordHistory();m.layout.locked=!m.layout.locked;renderPreviewOnly();refreshElementPanel();persist()};
 $("#bringFront").onclick=function(){var n=findSelectedNode(),m=getElementModel(current(),n);if(!m)return;recordHistory();m.layout.z=99;renderPreviewOnly();refreshElementPanel();persist()};
 $("#sendBack").onclick=function(){var n=findSelectedNode(),m=getElementModel(current(),n);if(!m)return;recordHistory();m.layout.z=2;renderPreviewOnly();refreshElementPanel();persist()};
-$("#deleteElement").onclick=function(){if(!selectedElement||selectedElement.type!=="extra"){setStatus("模板字段不能删除，可锁定或移出画布；只有自定义元素可以删除");return}recordHistory();current().extraElements=current().extraElements.filter(function(x){return x.id!==selectedElement.id});selectedElement=null;renderPreviewOnly();refreshElementPanel();persist()};
-$("#duplicateElement").onclick=function(){var n=findSelectedNode(),m=getElementModel(current(),n);if(!m)return;recordHistory();if(m.type==="extra"){var x=clone(m.element);x.id=uid();x.layout.x+=3;x.layout.y+=3;current().extraElements.push(x);selectedElement={type:"extra",id:x.id}}else{var x={id:uid(),kind:"text",text:"{"+(m.id==="cost"?"费用":m.id==="head"?"名称":m.id==="rarity"?"稀有度":"名称")+"}",fontSize:12,color:current().appearance.text,align:"left",layout:clone(m.layout)};x.layout.x+=3;x.layout.y+=3;x.layout.z=45;current().extraElements.push(x);selectedElement={type:"extra",id:x.id}}renderPreviewOnly();refreshElementPanel();persist()};
+$("#deleteElement").onclick=function(){if(!selectedElement||selectedElement.type!=="extra"){setStatus("模板字段不能删除，可锁定或移出画布；只有自定义元素可以删除");return}recordHistory();var id=selectedElement.id,el=current().extraElements.find(function(x){return x.id===id});current().extraElements=current().extraElements.filter(function(x){return x.id!==id&&!(el&&el.kind==="image"&&x.parentId===id)});selectedElement=null;renderPreviewOnly();refreshElementPanel();persist()};
+$("#duplicateElement").onclick=function(){var n=findSelectedNode(),m=getElementModel(current(),n);if(!m)return;recordHistory();if(m.type==="extra"){var x=clone(m.element),oldId=x.id;x.id=uid();x.layout.x+=3;x.layout.y+=3;current().extraElements.push(x);if(x.kind==="image"){current().extraElements.filter(function(e){return e.parentId===oldId}).forEach(function(e){var y=clone(e);y.id=uid();y.parentId=x.id;y.layout.x+=3;y.layout.y+=3;current().extraElements.push(y)})}selectedElement={type:"extra",id:x.id}}else{var x={id:uid(),kind:"text",text:"{"+(m.id==="cost"?"费用":m.id==="head"?"名称":m.id==="rarity"?"稀有度":"名称")+"}",fontSize:12,color:current().appearance.text,align:"left",layout:clone(m.layout)};x.layout.x+=3;x.layout.y+=3;x.layout.z=45;current().extraElements.push(x);selectedElement={type:"extra",id:x.id}}renderPreviewOnly();refreshElementPanel();persist()};
 $("#resetLayout").onclick=function(){recordHistory();current().layout=makeLayout();renderPreviewOnly();selectedElement=null;refreshElementPanel();persist();setStatus("已恢复当前卡牌的模板默认布局")};
 $("#copyLayoutAll").onclick=function(){var c=current(),tid=c.templateId;recordHistory();cards.forEach(function(x){if(x.templateId===tid&&x.id!==c.id)x.layout=clone(c.layout)});renderAll();setStatus("布局已应用到同模板卡牌")};
 window.addEventListener("keydown",function(e){
@@ -562,6 +567,7 @@ $("#deleteRuleTerm").onclick=function(){var term=ruleTerms.find(function(x){retu
 $("#insertRuleTerm").onclick=function(){var term=ruleTerms.find(function(x){return x.id===selectedRuleTermId});if(!term)return;insertDescriptionToken(term.name);$("#ruleTermsModal").hidden=true;setStatus("已插入词条："+term.name)};
 $("#termUsage").onclick=function(e){var b=e.target.closest("[data-term-card]");if(!b)return;selected=b.getAttribute("data-term-card");$("#ruleTermsModal").hidden=true;renderAll();setStatus("已定位使用该词条的卡牌："+current().name)};
 $("#preview").addEventListener("dblclick",function(e){var span=e.target.closest(".rule-term");if(!span)return;var term=termByName(span.getAttribute("data-rule-term"));if(term)openTermLibrary(term)});
+$("#preview").addEventListener("dblclick",function(e){if(!layoutEditing)return;var node=e.target.closest(".free-image-element");if(!node)return;e.preventDefault();selectLayoutNode(node);addLabelToSelectedImage()});
 $("#textTarget").addEventListener("change",refreshTextControls);
 $("#textSize").addEventListener("change",function(){setTextStyleValue("Size",Math.max(8,Math.min(40,num(this.value,13))),true)});
 $("#textColor").addEventListener("change",function(){setTextStyleValue("Color",this.value,true)});
