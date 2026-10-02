@@ -88,14 +88,14 @@ var DEFAULT_LAYOUT={
   stat_range:{x:73,y:87,w:20,h:10,r:0,z:25,locked:false,opacity:1,visible:true},
   tags:{x:8,y:58,w:70,h:5,r:0,z:20,locked:false,opacity:1,visible:true}
 };
-var makeLayout=function(){return clone(DEFAULT_LAYOUT)};
+var makeLayout=function(templateId){var out=clone(DEFAULT_LAYOUT),t=TEMPLATES[templateId]||TEMPLATES.unit,stats=t.stats||[],gap=2,totalW=86,n=Math.max(1,stats.length),cell=(totalW-gap*(n-1))/n;stats.forEach(function(st,i){var key="stat_"+st[0];out[key].x=7+i*(cell+gap);out[key].w=cell});return out};
 var makeCard=function(templateId,name){
   var t=TEMPLATES[templateId]||TEMPLATES.unit;
   return {
     id:uid(),templateId:t.id,name:name||("新"+t.short+"卡"),cost:1,faction:"中立",
     description:"在这里填写卡牌效果。可使用 {费用}、{攻击} 等变量。",
     attack:t.id==="event"?0:1,health:t.id==="event"?0:1,move:t.id==="unit"?2:0,range:t.id==="unit"?1:0,
-    unitType:t.short,rarity:"普通",tags:"",rulesKeywords:"",cardNumber:"",art:"",appearance:clone(DEFAULT_APPEARANCE),layout:makeLayout(),extraElements:[]
+    unitType:t.short,rarity:"普通",tags:"",rulesKeywords:"",cardNumber:"",art:"",appearance:clone(DEFAULT_APPEARANCE),layout:makeLayout(t.id),extraElements:[]
   };
 };
 var sample=[
@@ -144,7 +144,7 @@ var normalizeCard=function(c){
   if(c.tags==null)c.tags="";
   if(c.rulesKeywords==null)c.rulesKeywords="";
   if(c.cardNumber==null)c.cardNumber="";
-  var oldLayout=c.layout||{},t=TEMPLATES[c.templateId]||TEMPLATES.unit,nextLayout=makeLayout();
+  var oldLayout=c.layout||{},t=TEMPLATES[c.templateId]||TEMPLATES.unit,nextLayout=makeLayout(c.templateId);
   function legacy(base,patch){return Object.assign({},base||{},patch||{})}
   if(oldLayout.head&&!oldLayout.title){nextLayout.title=legacy(nextLayout.title,{x:oldLayout.head.x,y:oldLayout.head.y,w:oldLayout.head.w,h:Math.max(6,(oldLayout.head.h||17)*.58),r:oldLayout.head.r,z:oldLayout.head.z,locked:oldLayout.head.locked,opacity:oldLayout.head.opacity,visible:oldLayout.head.visible});nextLayout.faction=legacy(nextLayout.faction,{x:oldLayout.head.x,y:(oldLayout.head.y||0)+Math.max(7,(oldLayout.head.h||17)*.58),w:Math.max(30,(oldLayout.head.w||80)*.78),h:Math.max(4,(oldLayout.head.h||17)*.3),r:oldLayout.head.r,z:oldLayout.head.z,locked:oldLayout.head.locked,opacity:oldLayout.head.opacity,visible:oldLayout.head.visible})}
   if(oldLayout.meta&&!oldLayout.type){nextLayout.type=legacy(nextLayout.type,{x:oldLayout.meta.x,y:oldLayout.meta.y,w:(oldLayout.meta.w||84)*.46,h:oldLayout.meta.h,r:oldLayout.meta.r,z:oldLayout.meta.z,locked:oldLayout.meta.locked,opacity:oldLayout.meta.opacity,visible:oldLayout.meta.visible});nextLayout.rarityText=legacy(nextLayout.rarityText,{x:(oldLayout.meta.x||8)+(oldLayout.meta.w||84)*.54,y:oldLayout.meta.y,w:(oldLayout.meta.w||84)*.46,h:oldLayout.meta.h,r:oldLayout.meta.r,z:oldLayout.meta.z,locked:oldLayout.meta.locked,opacity:oldLayout.meta.opacity,visible:oldLayout.meta.visible})}
@@ -320,8 +320,8 @@ function setLayoutMode(on,focusPanel){
   $("#preview").classList.toggle("layout-editing",layoutEditing);document.body.classList.toggle("layout-mode-on",layoutEditing);
   $("#safeMode").classList.toggle("active",!layoutEditing);$("#layoutMode").classList.toggle("active",layoutEditing);$("#layoutQuickButton").classList.toggle("active",layoutEditing);
   $("#layoutModeLabel").textContent=layoutEditing?"自由布局":"普通制卡";
-  $("#layoutQuickButton").textContent=layoutEditing?"✓ 自由布局已开启":"✥ 进入自由布局";
-  $("#stageHint").textContent=layoutEditing?"自由布局已开启：直接点击费用、稀有度、标题等元素后拖动；右下角缩放；上方圆点旋转；方向键微调。":"普通制卡：直接填写内容，不会误移动版式。要调整费用、稀有度等位置，请点击顶部醒目的“自由布局”。";
+  $("#layoutQuickButton").textContent=layoutEditing?"✓ 自由布局已开启 · 点图层精调":"✥ 进入自由布局（独立模块）";
+  $("#stageHint").textContent=layoutEditing?"自由布局已开启：名称、系别、费用、攻击、血量等均可独立拖动；右侧图层可排序、隐藏、锁定和调透明度。":"普通制卡：直接填写内容，不会误移动版式。要调整费用、稀有度等位置，请点击顶部醒目的“自由布局”。";
   $("#layoutPanel").classList.toggle("mode-focus",layoutEditing);
   if(layoutEditing&&focusPanel!==false)setTimeout(function(){$("#layoutPanel").scrollIntoView({behavior:"smooth",block:"center"})},80);
   if(!layoutEditing){selectedElement=null;refreshElementPanel()}
@@ -524,7 +524,7 @@ $("#bringFront").onclick=function(){var m=selectedModel(current());if(!m)return;
 $("#sendBack").onclick=function(){var m=selectedModel(current());if(!m)return;recordHistory();m.layout.z=2;renderPreviewOnly();refreshElementPanel();persist()};
 $("#deleteElement").onclick=function(){if(!selectedElement||selectedElement.type!=="extra"){setStatus("模板字段不能删除，可锁定或移出画布；只有自定义元素可以删除");return}recordHistory();var id=selectedElement.id,el=current().extraElements.find(function(x){return x.id===id});current().extraElements=current().extraElements.filter(function(x){return x.id!==id&&!(el&&el.kind==="image"&&x.parentId===id)});selectedElement=null;renderPreviewOnly();refreshElementPanel();persist()};
 $("#duplicateElement").onclick=function(){var m=selectedModel(current());if(!m)return;recordHistory();if(m.type==="extra"){var x=clone(m.element),oldId=x.id;x.id=uid();x.layout.x+=3;x.layout.y+=3;current().extraElements.push(x);if(x.kind==="image"){current().extraElements.filter(function(e){return e.parentId===oldId}).forEach(function(e){var y=clone(e);y.id=uid();y.parentId=x.id;y.layout.x+=3;y.layout.y+=3;current().extraElements.push(y)})}selectedElement={type:"extra",id:x.id}}else{var tokenMap={cost:"费用",title:"名称",faction:"系别",rarityText:"稀有度",type:"兵种",stat_attack:"攻击",stat_health:"血量",stat_move:"移速",stat_range:"射程"},x={id:uid(),kind:"text",text:"{"+(tokenMap[m.id]||"名称")+"}",fontSize:12,color:current().appearance.text,align:"left",layout:clone(m.layout)};x.layout.x+=3;x.layout.y+=3;x.layout.z=45;current().extraElements.push(x);selectedElement={type:"extra",id:x.id}}renderPreviewOnly();refreshElementPanel();persist()};
-$("#resetLayout").onclick=function(){recordHistory();current().layout=makeLayout();renderPreviewOnly();selectedElement=null;refreshElementPanel();persist();setStatus("已恢复当前卡牌的模板默认布局")};
+$("#resetLayout").onclick=function(){recordHistory();current().layout=makeLayout(current().templateId);renderPreviewOnly();selectedElement=null;refreshElementPanel();persist();setStatus("已恢复当前卡牌的模板默认布局")};
 $("#copyLayoutAll").onclick=function(){var c=current(),tid=c.templateId;recordHistory();cards.forEach(function(x){if(x.templateId===tid&&x.id!==c.id)x.layout=clone(c.layout)});renderAll();setStatus("布局已应用到同模板卡牌")};
 window.addEventListener("keydown",function(e){
   var tag=document.activeElement&&document.activeElement.tagName;
@@ -777,7 +777,7 @@ $("#cropMarks").onchange=function(){printSettings.crop=this.checked;persist()};
 function safeFilename(name){return String(name||"card").replace(/[\\/:*?"<>|]/g,"_").trim()||"card"}
 function normalizeName(name){return String(name||"").replace(/\\.[^.]+$/,"").replace(/[\\s_\\-]+/g,"").toLowerCase()}
 function fileToDataUrl(file){return new Promise(function(resolve,reject){var rr=new FileReader();rr.onload=function(){resolve(String(rr.result||""))};rr.onerror=reject;rr.readAsDataURL(file)})}
-function projectPayload(){return {format:"card-assembly-studio",version:5,exportedAt:new Date().toISOString(),projectName:projectName,cards:cards,selected:selected,skins:skins,ruleTerms:ruleTerms,userAssets:userAssets,customTemplates:customTemplates,favoriteAssets:favoriteAssets,snapshots:snapshots,aiStyle:$("#aiStyle").value,aiQuality:aiQuality,printSettings:printSettings}}
+function projectPayload(){return {format:"card-assembly-studio",version:6,exportedAt:new Date().toISOString(),projectName:projectName,cards:cards,selected:selected,skins:skins,ruleTerms:ruleTerms,userAssets:userAssets,customTemplates:customTemplates,favoriteAssets:favoriteAssets,snapshots:snapshots,aiStyle:$("#aiStyle").value,aiQuality:aiQuality,printSettings:printSettings}}
 function downloadText(text,name,type){var blob=new Blob([text],{type:type||"text/plain;charset=utf-8"}),url=URL.createObjectURL(blob);download(url,name);setTimeout(function(){URL.revokeObjectURL(url)},1000)}
 
 $("#projectExport").onclick=function(){downloadText(JSON.stringify(projectPayload(),null,2),safeFilename(projectName)+".cardstudio","application/json");setStatus("项目文件已保存，包含卡牌、规则词条、皮肤、模板与图片素材")};
