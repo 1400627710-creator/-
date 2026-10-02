@@ -284,7 +284,7 @@ function selectedModel(card){
 }
 function renderLayerPanel(){
   var box=$("#layerList");if(!box)return;var c=current(),layers=allLayerModels(c);
-  box.innerHTML=layers.map(function(m){var p=m.layout,sel=selectedElement&&selectedElement.type===m.type&&selectedElement.id===m.id;return '<button class="layer-row '+(sel?"selected ":"")+(p.visible===false?"is-hidden ":"")+'" data-layer-type="'+m.type+'" data-layer-id="'+esc(m.id)+'"><span class="layer-eye">'+(p.visible===false?"○":"●")+'</span><span class="layer-name">'+esc(m.label)+'</span><span class="layer-meta">Z '+(p.z||0)+' · '+Math.round((p.opacity==null?1:p.opacity)*100)+'%</span><span class="layer-lock">'+(p.locked?"🔒":"")+'</span></button>'}).join("");
+  box.innerHTML=layers.map(function(m){var p=m.layout,sel=selectedElement&&selectedElement.type===m.type&&selectedElement.id===m.id;return '<button class="layer-row '+(sel?"selected ":"")+(p.visible===false?"is-hidden ":"")+'" data-layer-type="'+m.type+'" data-layer-id="'+esc(m.id)+'"><span class="layer-eye" data-layer-eye title="显示/隐藏">'+(p.visible===false?"○":"●")+'</span><span class="layer-name">'+esc(m.label)+'</span><span class="layer-meta">Z '+(p.z||0)+' · '+Math.round((p.opacity==null?1:p.opacity)*100)+'%</span><span class="layer-lock" data-layer-lock title="锁定/解锁">'+(p.locked?"🔒":"🔓")+'</span></button>'}).join("");
 }
 var setArt=function(root,card){
   var art=root.querySelector(".art");
@@ -538,7 +538,7 @@ $("#preview").addEventListener("focusin",function(e){
 $("#preview").addEventListener("focusout",function(e){
   var f=e.target&&e.target.getAttribute&&e.target.getAttribute("data-edit");if(f)patch(f,e.target.innerText.trim(),true);
 });
-$("#layerList").addEventListener("click",function(e){var row=e.target.closest("[data-layer-id]");if(!row)return;setLayoutMode(true,false);selectedElement={type:row.getAttribute("data-layer-type"),id:row.getAttribute("data-layer-id")};$("#preview .layout-node.selected").forEach(function(x){x.classList.remove("selected")});var node=findSelectedNode();if(node)node.classList.add("selected");refreshElementPanel()});
+$("#layerList").addEventListener("click",function(e){var row=e.target.closest("[data-layer-id]");if(!row)return;setLayoutMode(true,false);selectedElement={type:row.getAttribute("data-layer-type"),id:row.getAttribute("data-layer-id")};var m=selectedModel(current());if(!m)return;if(e.target.closest("[data-layer-eye]")){recordHistory();m.layout.visible=m.layout.visible===false?true:false;renderPreviewOnly();refreshElementPanel();persist();return}if(e.target.closest("[data-layer-lock]")){recordHistory();m.layout.locked=!m.layout.locked;renderPreviewOnly();refreshElementPanel();persist();return}$("#preview .layout-node.selected").forEach(function(x){x.classList.remove("selected")});var node=findSelectedNode();if(node)node.classList.add("selected");refreshElementPanel()});
 $("#cardList").addEventListener("click",function(e){var b=e.target.closest("[data-id]");if(!b)return;selected=b.getAttribute("data-id");renderAll()});
 $("#projectName").addEventListener("change",function(){projectName=this.value.trim()||"未命名卡牌项目";this.value=projectName;persist()});
 $("#cardSearch").addEventListener("input",renderList);$("#templateFilter").addEventListener("change",renderList);$("#factionFilter").addEventListener("change",renderList);$("#rarityFilter").addEventListener("change",renderList);$("#sortCards").addEventListener("change",renderList);
