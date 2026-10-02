@@ -59,3 +59,5 @@ if (!server.includes('"127.0.0.1"')) throw new Error("Server must bind to localh
 if (!server.includes("OPENAI_IMAGE_EDIT_MODEL")) throw new Error("Dedicated image edit model setting is missing.");
 
 console.log("Card Studio smoke check passed.");
+
+if (app.includes('$("#preview .layout-node.selected").forEach')) fail("single-selector helper used for layout selection list");
