@@ -230,10 +230,10 @@ var renderCard=function(){
 };
 var renderExport=function(card){$("#exportCard").innerHTML=cardHtml(card,false);setArt($("#exportCard"),card)};
 var getVisibleCards=function(){
-  var q=$("#cardSearch").value.trim().toLowerCase(),filter=$("#templateFilter").value,sort=$("#sortCards").value;
+  var q=$("#cardSearch").value.trim().toLowerCase(),filter=$("#templateFilter").value,faction=$("#factionFilter").value,rarity=$("#rarityFilter").value,sort=$("#sortCards").value;
   var list=cards.filter(function(c){
     var t=TEMPLATES[c.templateId]||TEMPLATES.unit;
-    return (filter==="all"||c.templateId===filter)&&(!q||[c.name,t.name,c.faction,c.unitType,c.rarity,c.tags].join(" ").toLowerCase().indexOf(q)>=0);
+    return (filter==="all"||c.templateId===filter)&&(faction==="all"||c.faction===faction)&&(rarity==="all"||c.rarity===rarity)&&(!q||[c.name,t.name,c.faction,c.unitType,c.rarity,c.tags].join(" ").toLowerCase().indexOf(q)>=0);
   });
   if(sort!=="manual")list=list.slice().sort(function(a,b){
     var av,bv;
@@ -253,7 +253,13 @@ var renderList=function(){
   }).join("");
   $("#delete").disabled=cards.length<=1;
 };
-var renderTemplateFilter=function(){var old=$("#templateFilter").value;$("#templateFilter").innerHTML='<option value="all">全部模板</option>'+Object.keys(TEMPLATES).map(function(k){return '<option value="'+k+'">'+esc(TEMPLATES[k].name)+'</option>'}).join("");$("#templateFilter").value=TEMPLATES[old]?old:"all"};
+var renderTemplateFilter=function(){
+  var old=$("#templateFilter").value,oldFaction=$("#factionFilter").value,oldRarity=$("#rarityFilter").value;
+  $("#templateFilter").innerHTML='<option value="all">全部模板</option>'+Object.keys(TEMPLATES).map(function(k){return '<option value="'+k+'">'+esc(TEMPLATES[k].name)+'</option>'}).join("");$("#templateFilter").value=TEMPLATES[old]?old:"all";
+  var factions=Array.from(new Set(cards.map(function(c){return c.faction}).filter(Boolean))).sort(),rarities=Array.from(new Set(cards.map(function(c){return c.rarity}).filter(Boolean))).sort();
+  $("#factionFilter").innerHTML='<option value="all">全部系别</option>'+factions.map(function(x){return '<option>'+esc(x)+'</option>'}).join("");$("#factionFilter").value=factions.indexOf(oldFaction)>=0?oldFaction:"all";
+  $("#rarityFilter").innerHTML='<option value="all">全部稀有度</option>'+rarities.map(function(x){return '<option>'+esc(x)+'</option>'}).join("");$("#rarityFilter").value=rarities.indexOf(oldRarity)>=0?oldRarity:"all";
+};
 var renderTemplates=function(){
   var c=current();
   $("#templateCards").innerHTML=Object.keys(TEMPLATES).map(function(k){
@@ -302,7 +308,7 @@ var renderSnapshots=function(){
   }).join(""):'<div class="empty-note">还没有快照。大改之前点“保存”。</div>';
 };
 var renderCustomAssets=function(){var box=$("#customAssetList");if(!box)return;var q=$("#assetSearch").value.trim().toLowerCase(),cat=$("#assetCategory").value;var list=userAssets.filter(function(a){var catOk=cat==="all"||cat==="custom"||(cat==="frame"&&a.category==="frameImage")||(cat==="texture"&&a.category==="textureImage")||(cat==="icon"&&a.category==="icon");return catOk&&(!q||[a.name,a.category].join(" ").toLowerCase().indexOf(q)>=0)}).slice().sort(function(a,b){return Number(!!b.favorite)-Number(!!a.favorite)});box.innerHTML=list.length?list.map(function(a){var label=a.category==="icon"?"卡面图标":a.category==="frameImage"?"图片边框":"图片底纹";return '<div class="custom-asset"><img src="'+esc(a.dataUrl)+'"><div><strong>'+esc(a.name)+'</strong><small>'+esc(label)+'</small></div><div class="asset-mini-actions"><button data-apply-custom="'+a.id+'">应用</button><button data-fav-custom="'+a.id+'">'+(a.favorite?"★":"☆")+'</button><button data-remove-custom="'+a.id+'">删</button></div></div>'}).join(""):'<div class="empty-note">没有匹配的自定义图片素材。</div>'};
-var renderAll=function(){renderTemplateFilter();renderList();renderCard();renderSnapshots();renderCustomAssets();updateHistoryButtons();persist()};
+var renderAll=function(){$("#projectName").value=projectName;$("#sheetSize").value=printSettings.sheet;$("#cropMarks").checked=!!printSettings.crop;renderTemplateFilter();renderList();renderCard();renderSnapshots();renderCustomAssets();updateHistoryButtons();persist()};
 
 var patch=function(field,value,record){
   var c=current();if(!c)return;
@@ -328,7 +334,8 @@ $("#preview").addEventListener("focusout",function(e){
   var f=e.target&&e.target.getAttribute&&e.target.getAttribute("data-edit");if(f)patch(f,e.target.innerText.trim(),true);
 });
 $("#cardList").addEventListener("click",function(e){var b=e.target.closest("[data-id]");if(!b)return;selected=b.getAttribute("data-id");renderAll()});
-$("#cardSearch").addEventListener("input",renderList);$("#templateFilter").addEventListener("change",renderList);$("#sortCards").addEventListener("change",renderList);
+$("#projectName").addEventListener("change",function(){projectName=this.value.trim()||"未命名卡牌项目";this.value=projectName;persist()});
+$("#cardSearch").addEventListener("input",renderList);$("#templateFilter").addEventListener("change",renderList);$("#factionFilter").addEventListener("change",renderList);$("#rarityFilter").addEventListener("change",renderList);$("#sortCards").addEventListener("change",renderList);
 $$("[data-form]").forEach(function(el){
   el.addEventListener("focus",recordHistory);
   el.addEventListener("change",function(){patch(el.getAttribute("data-form"),el.value,false)});
