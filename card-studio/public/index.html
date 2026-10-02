@@ -117,6 +117,11 @@
       </div>
       <label>AI 关键词<textarea id="aiPrompt" rows="3">战场中的主体，动态构图，环境叙事丰富</textarea></label>
       <label>整套统一风格<textarea id="aiStyle" rows="3">统一的东方奇幻桌游插画，厚涂，电影光影，材质细腻，不出现文字</textarea></label>
+      <div class="api-key-box">
+        <label>AI Key（只保存在本机）<input id="apiKeyInput" type="password" placeholder="粘贴后点保存"></label>
+        <button id="saveApiKey">保存 AI Key</button>
+        <small id="apiKeyStatus">正在检查...</small>
+      </div>
       <label>AI 质量<select id="aiQuality"><option value="low">草稿 / 快速</option><option value="medium">中等</option><option value="high">高质量</option></select></label>
       <div class="row"><button id="aiGenerate" class="primary">生成新图</button><button id="aiRedraw">基于现图重绘</button></div>
       <div class="row mini-gap"><button id="batchImages">批量导入图片</button><button id="batchAI">缺图卡牌批量 AI</button></div>
