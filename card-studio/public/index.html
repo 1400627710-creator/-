@@ -111,10 +111,24 @@
     <section id="layoutPanel" class="layout-panel">
       <h3>3. 自由布局 <span class="mode-required">切换到自由布局后使用</span></h3>
       <div class="layout-actions">
+        <button id="addImageElement" class="image-element-primary">＋ 导入小素材 / 图标</button>
+        <input id="freeImageFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
         <button id="addTextElement">＋ 自定义文本</button>
         <button id="addNumberElement">＋ 卡牌编号</button>
         <button id="duplicateElement">复制元素</button>
         <button id="deleteElement">删除元素</button>
+      </div>
+      <div id="imageLabelTools" class="image-label-tools">
+        <b>图标文字</b>
+        <select id="imageLabelPosition" title="文字相对图标的位置">
+          <option value="center">覆盖在图标中央</option>
+          <option value="top">图标上方</option>
+          <option value="bottom" selected>图标下方</option>
+          <option value="left">图标左侧</option>
+          <option value="right">图标右侧</option>
+        </select>
+        <button id="addImageLabel">给选中图标加文字</button>
+        <button id="detachImageLabel">解除文字跟随</button>
       </div>
       <div class="grid">
         <label>X<input id="elX" type="number" step="1"></label>
@@ -133,8 +147,8 @@
         <button id="resetLayout">恢复模板布局</button>
         <button id="copyLayoutAll">布局应用到同模板</button>
       </div>
-      <label class="top-gap">元素文字<textarea id="elementText" rows="2" placeholder="选中自由文本或编号后编辑"></textarea></label>
-      <p class="micro-help">自由布局模式：拖动元素；右下角缩放；上方圆点旋转；方向键微调。模板字段和自定义元素都可调整。</p>
+      <label class="top-gap">元素文字<textarea id="elementText" rows="2" placeholder="选中文字元素后直接输入；给图标加文字后会自动选中新文字"></textarea></label>
+      <p class="micro-help">自由布局模式：图标、文字和模板字段都能拖动、缩放、旋转。选中图标后可在中央或上下左右添加文字；文字默认跟随图标移动，也可解除跟随。</p>
     </section>
 
     <section>
