@@ -214,7 +214,7 @@
       <label>卡牌编号<input data-form="cardNumber" placeholder="例如 SET01-001"></label>
       <label>标签<input data-form="tags" placeholder="单位,王国,守备,长枪"></label>
       <label>规则关键词<input data-form="rulesKeywords" placeholder="部署,守备,相邻据点"></label>
-      <div class="row top-gap"><button id="openCardSearch">打开卡查</button><button id="exportTTS">导出 TTS 数据</button></div>
+      <div class="grid top-gap"><label>编号前缀<input id="numberPrefix" value="SET01-"></label><label>起始号<input id="numberStart" type="number" value="1"></label></div><div class="row"><button id="batchNumber">批量生成卡号</button><button id="openCardSearch">打开卡查</button><button id="exportTTS">导出 TTS 数据</button></div>
       <p class="micro-help">卡查会索引名称、编号、标签、系别、类型、稀有度、效果文字与规则关键词；TTS 导出会保留这些字段供未来模组脚本使用。</p>
     </section>
 
