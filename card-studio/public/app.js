@@ -98,7 +98,7 @@ function openProjectDb(){
 }
 async function dbPut(key,value){var db=await openProjectDb();return new Promise(function(resolve,reject){var tx=db.transaction("kv","readwrite");tx.objectStore("kv").put(value,key);tx.oncomplete=function(){db.close();resolve()};tx.onerror=function(){db.close();reject(tx.error)}})}
 async function dbGet(key){var db=await openProjectDb();return new Promise(function(resolve,reject){var tx=db.transaction("kv","readonly"),req=tx.objectStore("kv").get(key);req.onsuccess=function(){db.close();resolve(req.result)};req.onerror=function(){db.close();reject(req.error)}})}
-function scheduleDbSave(){if(!dbReady)return;clearTimeout(dbSaveTimer);dbSaveTimer=setTimeout(function(){dbPut("project-v3",{updatedAt:Date.now(),project:projectPayload()}).catch(function(){})},500)};
+function scheduleDbSave(){if(!dbReady)return;clearTimeout(dbSaveTimer);dbSaveTimer=setTimeout(function(){dbPut("project-v3",{updatedAt:Date.now(),project:projectPayload(),snapshots:snapshots}).catch(function(){})},500)};
 var saved=loadJson("card-studio-project-v2",null)||loadJson("card-studio-project",null);
 var cards=saved&&saved.cards&&saved.cards.length?saved.cards:sample;
 var selected=saved&&saved.selected&&cards.some(function(c){return c.id===saved.selected})?saved.selected:cards[0].id;
