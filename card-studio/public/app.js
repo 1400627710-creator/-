@@ -24,13 +24,15 @@ var COMPONENTS={
     {id:"classic",name:"经典双线",keywords:"边框 经典 标准"},
     {id:"minimal",name:"极简细框",keywords:"边框 极简 轻"},
     {id:"heavy",name:"重甲粗框",keywords:"边框 厚重 战争"},
-    {id:"ornate",name:"仪式双框",keywords:"边框 华丽 仪式"}
+    {id:"ornate",name:"仪式双框",keywords:"边框 华丽 仪式"},
+    {id:"botanical",name:"古典花饰线框",keywords:"边框 古典 花卉 植物 卷草 线描 手绘"}
   ],
   texture:[
     {id:"clean",name:"纯净底纹",keywords:"底纹 简洁 无纹理"},
     {id:"grid",name:"战术网格",keywords:"底纹 网格 科技"},
     {id:"diagonal",name:"斜纹织物",keywords:"底纹 斜线 军事"},
-    {id:"parchment",name:"旧纸肌理",keywords:"底纹 羊皮纸 古典"}
+    {id:"parchment",name:"旧纸肌理",keywords:"底纹 羊皮纸 古典"},
+    {id:"canvas",name:"油画画布纹",keywords:"底纹 画布 油画 纤维 手工 纸张"}
   ],
   cost:[
     {id:"circle",name:"圆形费用",keywords:"费用 圆 标记"},
@@ -48,7 +50,8 @@ var COMPONENTS={
     {id:"default",name:"现代无衬线",keywords:"字体 现代 清晰"},
     {id:"serif",name:"典籍衬线",keywords:"字体 古典 衬线"},
     {id:"display",name:"紧凑标题",keywords:"字体 紧凑 标题"},
-    {id:"soft",name:"柔和阅读",keywords:"字体 柔和 易读"}
+    {id:"soft",name:"柔和阅读",keywords:"字体 柔和 易读"},
+    {id:"classical",name:"古典书卷体",keywords:"字体 古典 手写 书卷 楷体 衬线 奇幻"}
   ]
 };
 var CATEGORY_NAMES={frame:"边框",texture:"底纹",cost:"费用标记",rarity:"稀有度",font:"字体"};
@@ -66,7 +69,8 @@ var BASE_SKINS=[
   {id:"obsidian",name:"黑曜战场",favorite:true,appearance:clone(DEFAULT_APPEARANCE)},
   {id:"jade",name:"苍翠古林",appearance:{primary:"#12372a",secondary:"#365e32",accent:"#e8b86d",frame:"#0d281f",text:"#f7f4e9",frameStyle:"ornate",textureStyle:"parchment",costStyle:"hex",rarityStyle:"gem",fontStyle:"serif"}},
   {id:"ember",name:"赤焰军团",appearance:{primary:"#4a1515",secondary:"#8c2f1b",accent:"#ffd166",frame:"#2b0b0b",text:"#fff5e8",frameStyle:"heavy",textureStyle:"diagonal",costStyle:"diamond",rarityStyle:"star",fontStyle:"display"}},
-  {id:"arcane",name:"星界秘仪",appearance:{primary:"#24133f",secondary:"#4c2b73",accent:"#71d6ff",frame:"#120b24",text:"#f4efff",frameStyle:"classic",textureStyle:"grid",costStyle:"hex",rarityStyle:"gem",fontStyle:"soft"}}
+  {id:"arcane",name:"星界秘仪",appearance:{primary:"#24133f",secondary:"#4c2b73",accent:"#71d6ff",frame:"#120b24",text:"#f4efff",frameStyle:"classic",textureStyle:"grid",costStyle:"hex",rarityStyle:"gem",fontStyle:"soft"}},
+  {id:"botanical-classic",name:"古典花饰典藏",favorite:true,appearance:{primary:"#eee8dc",secondary:"#c8b99d",accent:"#a88955",frame:"#2b2118",text:"#2b2118",frameStyle:"botanical",textureStyle:"canvas",costStyle:"circle",rarityStyle:"gem",fontStyle:"classical",titleColor:"#2b2118",effectColor:"#2b2118",metaColor:"#2b2118",statsColor:"#2b2118",costColor:"#2b2118"}}
 ];
 
 var DEFAULT_LAYOUT={
@@ -118,7 +122,9 @@ var favoriteAssets=loadJson("card-studio-favorite-assets",[]);
 var snapshots=loadJson("card-studio-snapshots",[]);
 var userAssets=loadJson("card-studio-user-assets",[]);
 var ruleTerms=loadJson("card-studio-rule-terms",[]);
-var aiStyle=loadJson("card-studio-ai-style","统一的东方奇幻桌游插画，厚涂，电影光影，材质细腻，不出现文字");
+var OLD_AI_STYLE="统一的东方奇幻桌游插画，厚涂，电影光影，材质细腻，不出现文字";
+var DEFAULT_AI_STYLE="古典奇幻桌游插画，传统人工油画质感，亚麻画布纹理，可见而自然的猪鬃笔触与颜料堆叠，柔和的明暗塑形，略带旧画册与十九世纪幻想插画气质，构图清晰、主体明确、色彩克制而丰富；避免现代数码渲染、3D塑料质感、霓虹赛博效果、照片感和任何文字";
+var aiStyle=loadJson("card-studio-ai-style",DEFAULT_AI_STYLE);if(aiStyle===OLD_AI_STYLE)aiStyle=DEFAULT_AI_STYLE;
 var projectName=saved&&saved.projectName?saved.projectName:"未命名卡牌项目";
 var aiQuality="low";
 var printSettings={sheet:"a4",crop:true};
@@ -625,7 +631,7 @@ $("#uploadArt").onclick=function(){$("#artFile").click()};
 $("#artFile").onchange=function(){var file=this.files&&this.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(){patch("art",String(reader.result||""),true)};reader.readAsDataURL(file);this.value=""};
 $("#clearArt").onclick=function(){patch("art","",true)};
 $("#aiStyle").value=aiStyle;
-$("#aiStyle").addEventListener("change",persist);
+$("#aiStyle").addEventListener("change",persist);$("#resetAiStyle").onclick=function(){$("#aiStyle").value=DEFAULT_AI_STYLE;aiStyle=DEFAULT_AI_STYLE;persist();setStatus("已恢复古典油画默认风格")};
 $("#aiGenerate").onclick=async function(){
   var c=current(),btn=this,prompt=$("#aiPrompt").value.trim();if(!prompt)return;
   btn.disabled=true;setStatus("AI 正在生成插画...");
