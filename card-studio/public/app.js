@@ -55,7 +55,12 @@ var CATEGORY_NAMES={frame:"边框",texture:"底纹",cost:"费用标记",rarity:"
 
 var DEFAULT_APPEARANCE={
   primary:"#111827",secondary:"#334155",accent:"#f59e0b",frame:"#0f172a",text:"#f8fafc",
-  frameStyle:"classic",textureStyle:"clean",costStyle:"circle",rarityStyle:"star",fontStyle:"default",frameImageAssetId:"",textureImageAssetId:"",iconAssetId:""
+  frameStyle:"classic",textureStyle:"clean",costStyle:"circle",rarityStyle:"star",fontStyle:"default",frameImageAssetId:"",textureImageAssetId:"",iconAssetId:"",
+  titleSize:22,titleColor:"#f8fafc",titleAlign:"left",titleBold:true,
+  effectSize:13,effectColor:"#f8fafc",effectAlign:"left",effectBold:false,
+  metaSize:11,metaColor:"#f8fafc",metaAlign:"center",metaBold:true,
+  statsSize:21,statsColor:"#f8fafc",statsAlign:"center",statsBold:true,
+  costSize:26,costColor:"#111827",costAlign:"center",costBold:true
 };
 var BASE_SKINS=[
   {id:"obsidian",name:"黑曜战场",favorite:true,appearance:clone(DEFAULT_APPEARANCE)},
@@ -171,7 +176,7 @@ var cardHtml=function(card,editable){
   }).join("");
   var layoutId=t.baseLayout||t.id;
   var classes=["card","tpl-"+layoutId,"frame-"+a.frameStyle,"texture-"+a.textureStyle,"cost-"+a.costStyle,"rarity-"+a.rarityStyle,"font-"+a.fontStyle].join(" ");
-  var style="--p:"+a.primary+";--s:"+a.secondary+";--a:"+a.accent+";--f:"+a.frame+";--t:"+a.text+";--stats-count:"+Math.max(1,t.stats.length);
+  var style="--p:"+a.primary+";--s:"+a.secondary+";--a:"+a.accent+";--f:"+a.frame+";--t:"+a.text+";--stats-count:"+Math.max(1,t.stats.length)+";--title-size:"+a.titleSize+"px;--title-color:"+a.titleColor+";--title-align:"+a.titleAlign+";--title-weight:"+(a.titleBold?900:500)+";--effect-size:"+a.effectSize+"px;--effect-color:"+a.effectColor+";--effect-align:"+a.effectAlign+";--effect-weight:"+(a.effectBold?800:400)+";--meta-size:"+a.metaSize+"px;--meta-color:"+a.metaColor+";--meta-align:"+a.metaAlign+";--meta-weight:"+(a.metaBold?800:500)+";--stats-size:"+a.statsSize+"px;--stats-color:"+a.statsColor+";--stats-align:"+a.statsAlign+";--stats-weight:"+(a.statsBold?900:500)+";--cost-size:"+a.costSize+"px;--cost-color:"+a.costColor+";--cost-align:"+a.costAlign+";--cost-weight:"+(a.costBold?900:500);
   var frameAsset=assetById(a.frameImageAssetId),textureAsset=assetById(a.textureImageAssetId),iconAsset=assetById(a.iconAssetId);
   var customFrame=frameAsset?'<img class="custom-frame-layer" src="'+esc(frameAsset.dataUrl)+'">':"";
   var customTexture=textureAsset?'<img class="custom-texture-layer" src="'+esc(textureAsset.dataUrl)+'">':"";
