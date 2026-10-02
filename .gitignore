@@ -67,3 +67,8 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+
+# Card Studio local secrets & dependencies
+card-studio/.env
+card-studio/node_modules/
