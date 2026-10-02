@@ -3,6 +3,7 @@ import express from "express";
 import OpenAI from "openai";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 const app = express();
 const root = dirname(fileURLToPath(import.meta.url));
@@ -14,10 +15,29 @@ app.get("/api/health", (_req, res) => {
   res.json({ ok: true, aiConfigured: Boolean(process.env.OPENAI_API_KEY) });
 });
 
+function setEnvValue(key, value) {
+  const envPath = join(root, ".env");
+  let text = existsSync(envPath) ? readFileSync(envPath, "utf8") : "";
+  const line = key + "=" + value;
+  const re = new RegExp("^" + key + "=.*$", "m");
+  text = re.test(text) ? text.replace(re, line) : (text.trimEnd() + (text.trim() ? "\n" : "") + line + "\n");
+  writeFileSync(envPath, text, "utf8");
+}
+
+app.post("/api/settings/api-key", (req, res) => {
+  const apiKey = String((req.body && req.body.apiKey) || "").trim();
+  if (apiKey && apiKey.length < 20) {
+    return res.status(400).json({ error: "API Key 看起来不完整。" });
+  }
+  process.env.OPENAI_API_KEY = apiKey;
+  setEnvValue("OPENAI_API_KEY", apiKey);
+  res.json({ ok: true, aiConfigured: Boolean(apiKey) });
+});
+
 app.post("/api/generate-image", async (req, res) => {
   if (!process.env.OPENAI_API_KEY) {
     return res.status(503).json({
-      error: "尚未配置 OPENAI_API_KEY。复制 .env.example 为 .env 后填写 API Key。"
+      error: "尚未配置 AI Key。请在页面的“插画”区域填写并保存。"
     });
   }
 
