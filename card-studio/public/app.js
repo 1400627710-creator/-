@@ -464,6 +464,61 @@ $("#description").addEventListener("change",function(){patch("description",this.
 $("#description").addEventListener("input",function(){current().description=this.value;renderPreviewOnly();persist()});
 Object.keys(vars).forEach(function(v){var b=document.createElement("button");b.textContent="{"+v+"}";b.onclick=function(){patch("description",(current().description||"")+"{"+v+"}",true)};$("#variables").appendChild(b)});
 
+var selectedRuleTermId=null;
+function termUseCount(name){return cards.reduce(function(n,c){return n+extractRuleTerms(c.description).filter(function(x){return x.toLowerCase()===String(name).toLowerCase()}).length},0)}
+function cardsUsingTerm(name){return cards.filter(function(c){return extractRuleTerms(c.description).some(function(x){return x.toLowerCase()===String(name).toLowerCase()})})}
+function renderTermQuickList(){
+  var box=$("#termQuickList");if(!box)return;
+  var list=ruleTerms.slice().sort(function(a,b){return termUseCount(b.name)-termUseCount(a.name)||String(a.name).localeCompare(String(b.name),"zh-CN")}).slice(0,12);
+  box.innerHTML=list.length?list.map(function(t){return '<button data-quick-term="'+t.id+'" title="'+esc(t.description||"点击插入词条")+'" style="color:'+esc(t.color||"#38bdf8")+'">'+esc(t.name)+'</button>'}).join(""):'<span class="empty-note">还没有规则词条。选中效果中的词语后点击“设为规则词条”。</span>';
+}
+function fillTermEditor(term){
+  selectedRuleTermId=term&&term.id||null;$("#termId").value=selectedRuleTermId||"";$("#termName").value=term?term.name:"";$("#termColor").value=term&&term.color?term.color:$("#termQuickColor").value;$("#termCategory").value=term&&term.category||"";$("#termTags").value=term&&term.tags||"";$("#termDescription").value=term&&term.description||"";
+  var usage=term?cardsUsingTerm(term.name):[];$("#termUsage").innerHTML=term?'<b>使用 '+usage.length+' 张卡牌</b><div class="usage-cards">'+usage.slice(0,20).map(function(c){return '<button data-term-card="'+c.id+'">'+esc(c.cardNumber?c.cardNumber+" · "+c.name:c.name)+'</button>'}).join("")+'</div>':"新建词条后，可在这里查看哪些卡牌使用了它。";
+  $("#deleteRuleTerm").disabled=!term;$("#insertRuleTerm").disabled=!term;
+}
+function renderRuleTermLibrary(){
+  var q=$("#termSearch").value.trim().toLowerCase(),list=ruleTerms.filter(function(t){return !q||[t.name,t.category,t.tags,t.description].join(" ").toLowerCase().indexOf(q)>=0}).sort(function(a,b){return String(a.category||"").localeCompare(String(b.category||""),"zh-CN")||String(a.name).localeCompare(String(b.name),"zh-CN")});
+  $("#termLibraryCount").textContent="找到 "+list.length+" / "+ruleTerms.length+" 个词条";
+  $("#termList").innerHTML=list.length?list.map(function(t){return '<button class="term-row '+(t.id===selectedRuleTermId?"active":"")+'" data-term-id="'+t.id+'"><i class="term-dot" style="background:'+esc(t.color||"#38bdf8")+'"></i><span><strong>'+esc(t.name)+'</strong><small>'+esc(t.category||"未分类")+' · '+esc(t.tags||"无标签")+'</small></span><em>'+termUseCount(t.name)+' 卡</em></button>'}).join(""):'<div class="empty-note">没有匹配词条。</div>';
+}
+function openTermLibrary(term){
+  $("#ruleTermsModal").hidden=false;$("#termSearch").value="";
+  fillTermEditor(term||ruleTerms.find(function(t){return t.id===selectedRuleTermId})||ruleTerms[0]||null);renderRuleTermLibrary();
+}
+function insertDescriptionToken(name,start,end){
+  var ta=$("#description"),text=ta.value,token="[[ "+name+" ]]".replace(/\[\[ /,"[[").replace(/ \]\]/,"]]");
+  start=start==null?ta.selectionStart:start;end=end==null?ta.selectionEnd:end;recordHistory();ta.value=text.slice(0,start)+token+text.slice(end);current().description=ta.value;renderPreviewOnly();persist();ta.focus();ta.setSelectionRange(start+token.length,start+token.length);
+}
+function ensureTerm(name,color){
+  name=String(name||"").trim();if(!name)return null;var term=termByName(name);
+  if(term){term.color=color||term.color;return term}
+  term={id:uid(),name:name,color:color||"#38bdf8",category:"",tags:"",description:""};ruleTerms.push(term);return term;
+}
+$("#markRuleTerm").onclick=function(){
+  var ta=$("#description"),start=ta.selectionStart,end=ta.selectionEnd,name=ta.value.slice(start,end).trim();
+  if(!name){setStatus("请先在“卡牌效果”文本框中选中一个词语");ta.focus();return}
+  if(name.length>40||name.indexOf("\n")>=0){setStatus("规则词条应是简短词语，请重新选择");return}
+  name=name.replace(/^\[\[|\]\]$/g,"").trim();recordHistory();var term=ensureTerm(name,$("#termQuickColor").value);
+  var token="[["+name+"]]",raw=ta.value;ta.value=raw.slice(0,start)+token+raw.slice(end);current().description=ta.value;selectedRuleTermId=term.id;renderPreviewOnly();renderTermQuickList();persist();setStatus("已标记规则词条："+name);ta.focus();ta.setSelectionRange(start+token.length,start+token.length);
+};
+$("#termQuickList").onclick=function(e){var b=e.target.closest("[data-quick-term]");if(!b)return;var t=ruleTerms.find(function(x){return x.id===b.getAttribute("data-quick-term")});if(t)insertDescriptionToken(t.name)};
+$("#openRuleTerms").onclick=function(){openTermLibrary()};
+$("#closeRuleTerms").onclick=function(){$("#ruleTermsModal").hidden=true};
+$("#ruleTermsModal").addEventListener("click",function(e){if(e.target===this)this.hidden=true});
+$("#termSearch").addEventListener("input",renderRuleTermLibrary);
+$("#newRuleTerm").onclick=function(){fillTermEditor(null);renderRuleTermLibrary();$("#termName").focus()};
+$("#termList").onclick=function(e){var b=e.target.closest("[data-term-id]");if(!b)return;var t=ruleTerms.find(function(x){return x.id===b.getAttribute("data-term-id")});if(t){fillTermEditor(t);renderRuleTermLibrary()}};
+$("#saveRuleTerm").onclick=function(){
+  var name=$("#termName").value.trim();if(!name){setStatus("词条名称不能为空");return}var old=ruleTerms.find(function(x){return x.id===selectedRuleTermId}),oldName=old&&old.name;
+  recordHistory();var term=old||{id:uid()};term.name=name;term.color=$("#termColor").value;term.category=$("#termCategory").value.trim();term.tags=$("#termTags").value.trim();term.description=$("#termDescription").value.trim();if(!old)ruleTerms.push(term);
+  if(oldName&&oldName!==name){var from="[["+oldName+"]]",to="[["+name+"]]";cards.forEach(function(c){c.description=String(c.description||"").split(from).join(to)})}
+  selectedRuleTermId=term.id;renderAll();fillTermEditor(term);renderRuleTermLibrary();setStatus("词条已保存："+name);
+};
+$("#deleteRuleTerm").onclick=function(){var term=ruleTerms.find(function(x){return x.id===selectedRuleTermId});if(!term)return;recordHistory();var token="[["+term.name+"]]";cards.forEach(function(c){c.description=String(c.description||"").split(token).join(term.name)});ruleTerms=ruleTerms.filter(function(x){return x.id!==term.id});selectedRuleTermId=null;renderAll();fillTermEditor(ruleTerms[0]||null);renderRuleTermLibrary();setStatus("词条已删除，卡牌中的引用已转为普通文字")};
+$("#insertRuleTerm").onclick=function(){var term=ruleTerms.find(function(x){return x.id===selectedRuleTermId});if(!term)return;insertDescriptionToken(term.name);$("#ruleTermsModal").hidden=true;setStatus("已插入词条："+term.name)};
+$("#termUsage").onclick=function(e){var b=e.target.closest("[data-term-card]");if(!b)return;selected=b.getAttribute("data-term-card");$("#ruleTermsModal").hidden=true;renderAll();setStatus("已定位使用该词条的卡牌："+current().name)};
+$("#preview").addEventListener("dblclick",function(e){var span=e.target.closest(".rule-term");if(!span)return;var term=termByName(span.getAttribute("data-rule-term"));if(term)openTermLibrary(term)});
 $("#textTarget").addEventListener("change",refreshTextControls);
 $("#textSize").addEventListener("change",function(){setTextStyleValue("Size",Math.max(8,Math.min(40,num(this.value,13))),true)});
 $("#textColor").addEventListener("change",function(){setTextStyleValue("Color",this.value,true)});
