@@ -282,7 +282,7 @@ function setLayoutMode(on,focusPanel){
   if(!layoutEditing){selectedElement=null;refreshElementPanel()}
 }
 function selectLayoutNode(node){
-  $("#preview .layout-node.selected").forEach(function(x){x.classList.remove("selected")});
+  $$("#preview .layout-node.selected").forEach(function(x){x.classList.remove("selected")});
   var m=getElementModel(current(),node);if(!m){selectedElement=null;refreshElementPanel();return}
   selectedElement={type:m.type,id:m.id};node.classList.add("selected");refreshElementPanel();
 }
