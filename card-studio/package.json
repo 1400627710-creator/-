@@ -11,7 +11,12 @@
   "dependencies": {
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "openai": "latest"
+    "openai": "latest",
+    "html-to-image": "^1.11.13",
+    "jspdf": "^2.5.2",
+    "jszip": "^3.10.1",
+    "papaparse": "^5.4.1",
+    "xlsx": "^0.18.5"
   },
   "engines": {
     "node": ">=22.0.0"
