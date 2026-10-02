@@ -130,25 +130,34 @@
         <button id="addImageLabel">给选中图标加文字</button>
         <button id="detachImageLabel">解除文字跟随</button>
       </div>
+      <div class="selected-layer-head"><b>当前模块：<span id="selectedLayerName">未选择</span></b><small>卡面点击任意模块，或从下方图层列表选择</small></div>
       <div class="grid">
         <label>X<input id="elX" type="number" step="1"></label>
         <label>Y<input id="elY" type="number" step="1"></label>
-        <label>宽<input id="elW" type="number" step="1" min="10"></label>
-        <label>高<input id="elH" type="number" step="1" min="10"></label>
+        <label>宽<input id="elW" type="number" step="1" min="2"></label>
+        <label>高<input id="elH" type="number" step="1" min="2"></label>
         <label>角度<input id="elR" type="number" step="1"></label>
         <label>层级<input id="elZ" type="number" step="1"></label>
       </div>
-      <div class="row">
+      <label class="opacity-control"><span>模块透明度 <b id="elOpacityValue">100%</b></span><input id="elOpacity" type="range" min="0" max="100" step="1" value="100"></label>
+      <div class="row layer-command-row">
+        <button id="toggleElementVisibility">显示 / 隐藏</button>
         <button id="toggleElementLock">锁定 / 解锁</button>
+        <button id="layerUp">上移一层</button>
+        <button id="layerDown">下移一层</button>
         <button id="bringFront">置顶</button>
         <button id="sendBack">置底</button>
+      </div>
+      <div class="layer-manager">
+        <div class="layer-manager-head"><b>图层</b><small>上面的层会遮住下面的层 · 点击即可选中</small></div>
+        <div id="layerList" class="layer-list"></div>
       </div>
       <div class="row top-gap">
         <button id="resetLayout">恢复模板布局</button>
         <button id="copyLayoutAll">布局应用到同模板</button>
       </div>
       <label class="top-gap">元素文字<textarea id="elementText" rows="2" placeholder="选中文字元素后直接输入；给图标加文字后会自动选中新文字"></textarea></label>
-      <p class="micro-help">自由布局模式：图标、文字和模板字段都能拖动、缩放、旋转。选中图标后可在中央或上下左右添加文字；文字默认跟随图标移动，也可解除跟随。</p>
+      <p class="micro-help">自由布局模式：名称、系别、类型、稀有度、费用、攻击、血量、移速、射程、标签、效果、插画全部是独立模块。每层可单独移动、缩放、旋转、调透明度、隐藏、锁定和排序；导入图片默认放在文字层下方。</p>
     </section>
 
     <section>
