@@ -49,3 +49,29 @@
 .card .stat strong{font-size:var(--stats-size)!important;color:var(--stats-color)!important;text-align:var(--stats-align)!important;font-weight:var(--stats-weight)!important}
 .card .cost-badge{font-size:var(--cost-size)!important;color:var(--cost-color)!important;text-align:var(--cost-align)!important;font-weight:var(--cost-weight)!important}
 .api-key-box{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:end;margin-bottom:9px;padding:8px;border:1px solid #e1e5ea;border-radius:8px;background:#f8fafc}.api-key-box label{margin:0}.api-key-box button{height:34px}.api-key-box small{grid-column:1/-1;color:#7a8594}
+
+/* v2 free-layout editor */
+.stagebar{gap:12px}.stage-mode{display:flex;gap:5px;margin-left:auto}.stage-mode button{padding:5px 9px;font-size:12px}.stage-mode button.active{background:#2563eb;color:#fff;border-color:#2563eb}
+#preview.layout-editing .card{outline:2px solid rgba(37,99,235,.35);outline-offset:5px}
+.layout-node{position:absolute!important;box-sizing:border-box;transform-origin:center center;touch-action:none}
+#preview.layout-editing .layout-node{cursor:move}
+#preview.layout-editing .layout-node.selected{outline:2px solid #3b82f6;outline-offset:2px;box-shadow:0 0 0 1px #fff}
+#preview.layout-editing .layout-node.locked{cursor:not-allowed}
+.layout-handle{display:none;position:absolute;width:10px;height:10px;background:#fff;border:2px solid #2563eb;border-radius:2px;z-index:999;pointer-events:auto}
+#preview.layout-editing .layout-node.selected:not(.locked)>.layout-handle{display:block}
+.layout-handle.resize{right:-7px;bottom:-7px;cursor:nwse-resize}
+.layout-handle.rotate{width:12px;height:12px;border-radius:50%;left:50%;top:-24px;transform:translateX(-50%);cursor:grab}
+.layout-handle.rotate:after{content:"";position:absolute;width:1px;height:12px;background:#2563eb;left:4px;top:10px}
+.free-text-element{display:flex;align-items:center;white-space:pre-wrap;overflow:hidden;padding:2px 4px;color:var(--t);font-weight:700;font-size:12px;line-height:1.15}
+.free-text-element.number-element{justify-content:center;font-size:10px;letter-spacing:.06em}
+.layout-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.layout-actions button{padding:7px 5px}
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.72);z-index:5000;padding:4vh 5vw}
+.modal-backdrop[hidden]{display:none}
+.card-search-dialog{height:92vh;max-width:1320px;margin:auto;background:#f7f9fc;border-radius:14px;box-shadow:0 25px 80px rgba(0,0,0,.35);display:flex;flex-direction:column;overflow:hidden}
+.modal-head{padding:15px 18px;background:#101827;color:#fff;display:flex;align-items:center;justify-content:space-between}.modal-head div{display:flex;flex-direction:column}.modal-head small{color:#aab4c4;margin-top:2px}.modal-head button{background:#263449;color:#fff;border-color:#44536a}
+.card-search-toolbar{display:grid;grid-template-columns:minmax(280px,1fr) 180px 180px 180px;gap:8px;padding:12px 16px;background:#fff;border-bottom:1px solid #dde3eb}
+.tag-cloud{display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px;background:#fff}.tag-cloud button{border-radius:999px;padding:5px 9px;font-size:12px}.tag-cloud button.active{background:#2563eb;color:#fff;border-color:#2563eb}
+.library-count{padding:8px 16px;color:#64748b;font-size:12px}.library-results{padding:0 16px 18px;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px}
+.library-card{background:#fff;border:1px solid #dce2ea;border-radius:10px;padding:12px;text-align:left;display:block;min-height:150px}.library-card:hover{border-color:#7c8da4}.library-card .lib-head{display:flex;justify-content:space-between;gap:10px}.library-card strong{font-size:15px}.library-card .lib-number{font:11px ui-monospace,monospace;color:#64748b}.library-card .lib-meta{font-size:11px;color:#64748b;margin:5px 0}.library-card .lib-effect{font-size:12px;line-height:1.45;color:#334155;max-height:54px;overflow:hidden}.library-card .lib-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}.library-card .lib-tags span{font-size:10px;background:#eef2ff;color:#334e8a;border-radius:999px;padding:3px 6px}
+@media(max-width:1200px){.card-search-toolbar{grid-template-columns:1fr 1fr}.modal-backdrop{padding:2vh 2vw}.card-search-dialog{height:96vh}}
