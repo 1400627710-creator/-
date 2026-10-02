@@ -510,7 +510,7 @@ $("#termSearch").addEventListener("input",renderRuleTermLibrary);
 $("#newRuleTerm").onclick=function(){fillTermEditor(null);renderRuleTermLibrary();$("#termName").focus()};
 $("#termList").onclick=function(e){var b=e.target.closest("[data-term-id]");if(!b)return;var t=ruleTerms.find(function(x){return x.id===b.getAttribute("data-term-id")});if(t){fillTermEditor(t);renderRuleTermLibrary()}};
 $("#saveRuleTerm").onclick=function(){
-  var name=$("#termName").value.trim();if(!name){setStatus("词条名称不能为空");return}var old=ruleTerms.find(function(x){return x.id===selectedRuleTermId}),oldName=old&&old.name;
+  var name=$("#termName").value.trim();if(!name){setStatus("词条名称不能为空");return}var duplicate=ruleTerms.find(function(x){return x.id!==selectedRuleTermId&&String(x.name).toLowerCase()===name.toLowerCase()});if(duplicate){setStatus("已经存在同名词条："+duplicate.name);return}var old=ruleTerms.find(function(x){return x.id===selectedRuleTermId}),oldName=old&&old.name;
   recordHistory();var term=old||{id:uid()};term.name=name;term.color=$("#termColor").value;term.category=$("#termCategory").value.trim();term.tags=$("#termTags").value.trim();term.description=$("#termDescription").value.trim();if(!old)ruleTerms.push(term);
   if(oldName&&oldName!==name){var from="[["+oldName+"]]",to="[["+name+"]]";cards.forEach(function(c){c.description=String(c.description||"").split(from).join(to)})}
   selectedRuleTermId=term.id;renderAll();fillTermEditor(term);renderRuleTermLibrary();setStatus("词条已保存："+name);
@@ -678,10 +678,10 @@ $("#cropMarks").onchange=function(){printSettings.crop=this.checked;persist()};
 function safeFilename(name){return String(name||"card").replace(/[\\/:*?"<>|]/g,"_").trim()||"card"}
 function normalizeName(name){return String(name||"").replace(/\\.[^.]+$/,"").replace(/[\\s_\\-]+/g,"").toLowerCase()}
 function fileToDataUrl(file){return new Promise(function(resolve,reject){var rr=new FileReader();rr.onload=function(){resolve(String(rr.result||""))};rr.onerror=reject;rr.readAsDataURL(file)})}
-function projectPayload(){return {format:"card-assembly-studio",version:4,exportedAt:new Date().toISOString(),projectName:projectName,cards:cards,selected:selected,skins:skins,ruleTerms:ruleTerms,userAssets:userAssets,customTemplates:customTemplates,favoriteAssets:favoriteAssets,snapshots:snapshots,aiStyle:$("#aiStyle").value,aiQuality:aiQuality,printSettings:printSettings}}
+function projectPayload(){return {format:"card-assembly-studio",version:5,exportedAt:new Date().toISOString(),projectName:projectName,cards:cards,selected:selected,skins:skins,ruleTerms:ruleTerms,userAssets:userAssets,customTemplates:customTemplates,favoriteAssets:favoriteAssets,snapshots:snapshots,aiStyle:$("#aiStyle").value,aiQuality:aiQuality,printSettings:printSettings}}
 function downloadText(text,name,type){var blob=new Blob([text],{type:type||"text/plain;charset=utf-8"}),url=URL.createObjectURL(blob);download(url,name);setTimeout(function(){URL.revokeObjectURL(url)},1000)}
 
-$("#projectExport").onclick=function(){downloadText(JSON.stringify(projectPayload(),null,2),safeFilename(projectName)+".cardstudio","application/json");setStatus("项目文件已保存，包含卡牌、皮肤、模板与图片素材")};
+$("#projectExport").onclick=function(){downloadText(JSON.stringify(projectPayload(),null,2),safeFilename(projectName)+".cardstudio","application/json");setStatus("项目文件已保存，包含卡牌、规则词条、皮肤、模板与图片素材")};
 $("#projectImport").onclick=function(){$("#projectFile").click()};
 $("#projectFile").onchange=async function(){
   var file=this.files&&this.files[0];if(!file)return;
@@ -789,11 +789,11 @@ function ttsCard(c,index){return {id:c.id,number:c.cardNumber||String(index+1).p
 $("#exportTTS").onclick=async function(){
   var btn=this;btn.disabled=true;setStatus("正在生成 TTS 模组数据...");
   try{
-    var zip=new JSZip(),data=cards.map(ttsCard),byTag={},byNumber={},byId={};
-    data.forEach(function(c){byId[c.id]=c.number;byNumber[c.number]=c.id;c.tags.concat(c.rulesKeywords).forEach(function(t){if(!byTag[t])byTag[t]=[];byTag[t].push(c.id)})});
+    var zip=new JSZip(),data=cards.map(ttsCard),byTag={},byTerm={},byNumber={},byId={};
+    data.forEach(function(c){byId[c.id]=c.number;byNumber[c.number]=c.id;c.tags.concat(c.rulesKeywords).forEach(function(t){if(!byTag[t])byTag[t]=[];byTag[t].push(c.id)});c.termRefs.forEach(function(t){if(!byTerm[t])byTerm[t]=[];byTerm[t].push(c.id)})});
     zip.file("cards.json",JSON.stringify({format:"card-studio-tts",version:2,project:projectName,cards:data},null,2));
     zip.file("glossary.json",JSON.stringify({version:1,terms:ruleTerms},null,2));
-    zip.file("index.json",JSON.stringify({byId:byId,byNumber:byNumber,byTag:byTag},null,2));
+    zip.file("index.json",JSON.stringify({byId:byId,byNumber:byNumber,byTag:byTag,byTerm:byTerm},null,2));
     zip.file("manifest.csv","\uFEFF"+Papa.unparse(manifestRows()));
     zip.file("README-TTS.txt","Card Studio TTS 数据包\\n\\ncards.json：完整卡牌数据库\\nindex.json：按稳定 ID、编号、标签建立的索引\\nmanifest.csv：人工查看用清单\\n\\n未来 TTS Lua 模组可读取同结构数据，并以 card.id 作为稳定主键。");
     var blob=await zip.generateAsync({type:"blob"}),url=URL.createObjectURL(blob);download(url,safeFilename(projectName)+"-TTS-data.zip");setTimeout(function(){URL.revokeObjectURL(url)},1000);setStatus("TTS 数据包已导出："+cards.length+" 张");
