@@ -69,13 +69,24 @@ var BASE_SKINS=[
   {id:"arcane",name:"星界秘仪",appearance:{primary:"#24133f",secondary:"#4c2b73",accent:"#71d6ff",frame:"#120b24",text:"#f4efff",frameStyle:"classic",textureStyle:"grid",costStyle:"hex",rarityStyle:"gem",fontStyle:"soft"}}
 ];
 
+var DEFAULT_LAYOUT={
+  art:{x:0,y:0,w:100,h:100,r:0,z:1,locked:true},
+  cost:{x:4,y:3,w:16,h:16,r:0,z:30,locked:false},
+  head:{x:15,y:4,w:80,h:17,r:0,z:20,locked:false},
+  rarity:{x:88,y:22,w:8,h:8,r:0,z:31,locked:false},
+  meta:{x:8,y:62,w:84,h:7,r:0,z:20,locked:false},
+  effect:{x:8,y:69,w:84,h:18,r:0,z:20,locked:false},
+  stats:{x:7,y:87,w:86,h:10,r:0,z:20,locked:false},
+  tags:{x:8,y:58,w:70,h:5,r:0,z:20,locked:false}
+};
+var makeLayout=function(){return clone(DEFAULT_LAYOUT)};
 var makeCard=function(templateId,name){
   var t=TEMPLATES[templateId]||TEMPLATES.unit;
   return {
     id:uid(),templateId:t.id,name:name||("新"+t.short+"卡"),cost:1,faction:"中立",
     description:"在这里填写卡牌效果。可使用 {费用}、{攻击} 等变量。",
     attack:t.id==="event"?0:1,health:t.id==="event"?0:1,move:t.id==="unit"?2:0,range:t.id==="unit"?1:0,
-    unitType:t.short,rarity:"普通",tags:"",art:"",appearance:clone(DEFAULT_APPEARANCE)
+    unitType:t.short,rarity:"普通",tags:"",rulesKeywords:"",cardNumber:"",art:"",appearance:clone(DEFAULT_APPEARANCE),layout:makeLayout(),extraElements:[]
   };
 };
 var sample=[
@@ -85,7 +96,7 @@ var sample=[
   Object.assign(makeCard("event","突发浓雾"),{cost:0,faction:"环境",description:"本回合所有超过 2 格的远程攻击获得 -1 命中。\\n回合结束时弃置此事件。",unitType:"战场事件",tags:"环境,全局"})
 ];
 
-var vars={"名称":"name","费用":"cost","系别":"faction","攻击":"attack","血量":"health","移速":"move","射程":"range","兵种":"unitType","稀有度":"rarity"};
+var vars={"名称":"name","费用":"cost","系别":"faction","攻击":"attack","血量":"health","移速":"move","射程":"range","兵种":"unitType","稀有度":"rarity","编号":"cardNumber"};
 
 var loadJson=function(key,fallback){try{var v=JSON.parse(localStorage.getItem(key)||"null");return v==null?fallback:v}catch(e){return fallback}};
 var dbReady=false,dbSaveTimer=null;
@@ -119,6 +130,10 @@ var normalizeCard=function(c){
   if(c.unitType==null)c.unitType=TEMPLATES[c.templateId].short;
   if(c.rarity==null)c.rarity="普通";
   if(c.tags==null)c.tags="";
+  if(c.rulesKeywords==null)c.rulesKeywords="";
+  if(c.cardNumber==null)c.cardNumber="";
+  c.layout=Object.assign(makeLayout(),c.layout||{});Object.keys(c.layout).forEach(function(k){c.layout[k]=Object.assign({},DEFAULT_LAYOUT[k]||{x:10,y:10,w:30,h:10,r:0,z:40,locked:false},c.layout[k]||{})});
+  if(!Array.isArray(c.extraElements))c.extraElements=[];
   if(c.art==null)c.art="";
   return c;
 };
@@ -186,14 +201,18 @@ var cardHtml=function(card,editable){
   var customFrame=frameAsset?'<img class="custom-frame-layer" src="'+esc(frameAsset.dataUrl)+'">':"";
   var customTexture=textureAsset?'<img class="custom-texture-layer" src="'+esc(textureAsset.dataUrl)+'">':"";
   var customIcon=iconAsset?'<img class="card-custom-icon" src="'+esc(iconAsset.dataUrl)+'">':"";
+  function lp(key){var p=(card.layout&&card.layout[key])||DEFAULT_LAYOUT[key]||{x:0,y:0,w:10,h:10,r:0,z:20};return 'left:'+p.x+'%;top:'+p.y+'%;width:'+p.w+'%;height:'+p.h+'%;z-index:'+p.z+';transform:rotate('+p.r+'deg)'}
+  function handles(key){return editable?'<i class="layout-handle resize" data-handle="resize"></i><i class="layout-handle rotate" data-handle="rotate"></i>':""}
+  function node(key,cls,inner,attrs){var p=(card.layout&&card.layout[key])||DEFAULT_LAYOUT[key]||{};return '<div class="layout-node '+cls+(p.locked?' locked':'')+'" data-layout-key="'+key+'" style="'+lp(key)+'" '+(attrs||"")+'>'+inner+handles(key)+'</div>'}
+  var extras=(card.extraElements||[]).map(function(el){var p=el.layout||{x:10,y:10,w:30,h:8,r:0,z:45,locked:false};var inner=esc(resolveVars(el.text||"",card)).replace(/\\n/g,"<br>");return '<div class="layout-node free-text-element '+(el.kind==="number"?"number-element ":"")+(p.locked?"locked":"")+'" data-extra-id="'+el.id+'" style="left:'+p.x+'%;top:'+p.y+'%;width:'+p.w+'%;height:'+p.h+'%;z-index:'+p.z+';transform:rotate('+p.r+'deg);font-size:'+(el.fontSize||11)+'px;color:'+(el.color||a.text)+';text-align:'+(el.align||"left")+'">'+inner+handles("extra")+'</div>'}).join("");
   return '<div class="'+classes+'" style="'+style+'">'+customFrame+customTexture+customIcon+
-    '<div class="art">'+artEmpty+'</div><div class="shade"></div><div class="texture-layer"></div><div class="trim"></div>'+
-    '<div class="cost-badge" data-edit="cost"'+ce+'><span>'+esc(card.cost)+'</span></div>'+
-    '<div class="head"><div class="title" data-edit="name"'+ce+'>'+esc(card.name)+'</div><div class="faction" data-edit="faction"'+ce+'>'+esc(card.faction)+'</div></div>'+
-    '<div class="rarity-mark rarity-'+a.rarityStyle+'" title="'+esc(card.rarity)+'">'+raritySymbol(a.rarityStyle)+'</div>'+
-    '<div class="meta"><span data-edit="unitType"'+ce+'>'+esc(card.unitType)+'</span><span>·</span><span data-edit="rarity"'+ce+'>'+esc(card.rarity)+'</span></div>'+
-    '<div class="effect" data-edit="description"'+ce+'>'+desc+'</div>'+
-    '<div class="stats">'+stats+'</div><div class="tags">'+esc(card.tags)+'</div></div>';
+    node("art","art",artEmpty)+ '<div class="shade"></div><div class="texture-layer"></div><div class="trim"></div>'+
+    node("cost","cost-badge",'<span data-edit="cost"'+ce+'>'+esc(card.cost)+'</span>')+
+    node("head","head",'<div class="title" data-edit="name"'+ce+'>'+esc(card.name)+'</div><div class="faction" data-edit="faction"'+ce+'>'+esc(card.faction)+'</div>')+
+    node("rarity","rarity-mark rarity-"+a.rarityStyle,raritySymbol(a.rarityStyle),'title="'+esc(card.rarity)+'"')+
+    node("meta","meta",'<span data-edit="unitType"'+ce+'>'+esc(card.unitType)+'</span><span>·</span><span data-edit="rarity"'+ce+'>'+esc(card.rarity)+'</span>')+
+    node("effect","effect",'<span data-edit="description"'+ce+'>'+desc+'</span>')+
+    node("stats","stats",stats)+node("tags","tags",esc(card.tags))+extras+'</div>';
 };
 var setArt=function(root,card){
   var art=root.querySelector(".art");
