@@ -161,10 +161,15 @@ var setArt=function(root,card){
   var art=root.querySelector(".art");
   if(art&&card.art)art.style.backgroundImage='url("'+String(card.art).replace(/"/g,"%22")+'")';
 };
-var renderCard=function(){
+var renderPreviewOnly=function(){
   var c=current(),t=TEMPLATES[c.templateId];
   $("#preview").innerHTML=cardHtml(c,true);setArt($("#preview"),c);
-  $("#templateName").textContent=t.name;$("#typeLabel").childNodes[0].nodeValue=t.typeLabel;
+  $("#templateName").textContent=t.name;
+};
+var renderCard=function(){
+  var c=current(),t=TEMPLATES[c.templateId];
+  renderPreviewOnly();
+  $("#typeLabel").childNodes[0].nodeValue=t.typeLabel;
   $$("[data-form]").forEach(function(el){var f=el.getAttribute("data-form");el.value=c[f]==null?"":c[f]});
   $("#description").value=c.description||"";
   $("#dynamicStats").innerHTML=t.stats.map(function(s){return '<label>'+s[2]+'<input type="number" data-stat="'+s[0]+'" value="'+esc(c[s[0]])+'"></label>'}).join("");
@@ -259,11 +264,21 @@ $("#preview").addEventListener("focusout",function(e){
 });
 $("#cardList").addEventListener("click",function(e){var b=e.target.closest("[data-id]");if(!b)return;selected=b.getAttribute("data-id");renderAll()});
 $("#cardSearch").addEventListener("input",renderList);
-$$("[data-form]").forEach(function(el){el.addEventListener("change",function(){patch(el.getAttribute("data-form"),el.value,true)});el.addEventListener("input",function(){var c=current();var f=el.getAttribute("data-form");c[f]=["cost","attack","health","move","range"].indexOf(f)>=0?num(el.value,0):el.value;renderCard();renderList();persist()})});
-$("#dynamicStats").addEventListener("change",function(e){var f=e.target.getAttribute("data-stat");if(f)patch(f,e.target.value,true)});
-$("#dynamicStats").addEventListener("input",function(e){var f=e.target.getAttribute("data-stat");if(f){current()[f]=num(e.target.value,0);renderCard();renderList();persist()}});
-$("#description").addEventListener("change",function(){patch("description",this.value,true)});
-$("#description").addEventListener("input",function(){current().description=this.value;renderCard();persist()});
+$("[data-form]").forEach(function(el){
+  el.addEventListener("focus",recordHistory);
+  el.addEventListener("change",function(){patch(el.getAttribute("data-form"),el.value,false)});
+  el.addEventListener("input",function(){
+    var c=current(),f=el.getAttribute("data-form");
+    c[f]=["cost","attack","health","move","range"].indexOf(f)>=0?num(el.value,0):el.value;
+    renderPreviewOnly();renderList();persist();
+  });
+});
+$("#dynamicStats").addEventListener("focusin",function(e){if(e.target.getAttribute("data-stat"))recordHistory()});
+$("#dynamicStats").addEventListener("change",function(e){var f=e.target.getAttribute("data-stat");if(f)patch(f,e.target.value,false)});
+$("#dynamicStats").addEventListener("input",function(e){var f=e.target.getAttribute("data-stat");if(f){current()[f]=num(e.target.value,0);renderPreviewOnly();renderList();persist()}});
+$("#description").addEventListener("focus",recordHistory);
+$("#description").addEventListener("change",function(){patch("description",this.value,false)});
+$("#description").addEventListener("input",function(){current().description=this.value;renderPreviewOnly();persist()});
 Object.keys(vars).forEach(function(v){var b=document.createElement("button");b.textContent="{"+v+"}";b.onclick=function(){patch("description",(current().description||"")+"{"+v+"}",true)};$("#variables").appendChild(b)});
 
 $("#templateCards").addEventListener("click",function(e){var b=e.target.closest("[data-template]");if(b)setTemplate(b.getAttribute("data-template"))});
@@ -344,7 +359,11 @@ $("#skinList").onclick=function(e){
   if(fav){var s=skins.find(function(x){return x.id===fav.getAttribute("data-skin-fav")});if(s){s.favorite=!s.favorite;renderSkins();persist()}return}
   if(main){var skin=skins.find(function(x){return x.id===main.getAttribute("data-skin")});if(skin){recordHistory();current().appearance=clone(skin.appearance);renderCard();persist();setStatus("已应用皮肤："+skin.name)}}
 };
-$$("[data-color]").forEach(function(el){el.onchange=function(){patchAppearance(el.getAttribute("data-color"),el.value)};el.oninput=function(){current().appearance[el.getAttribute("data-color")]=el.value;renderCard();persist()}});
+$("[data-color]").forEach(function(el){
+  el.addEventListener("focus",recordHistory);
+  el.onchange=function(){current().appearance[el.getAttribute("data-color")]=el.value;renderCard();persist()};
+  el.oninput=function(){current().appearance[el.getAttribute("data-color")]=el.value;renderPreviewOnly();persist()};
+});
 $("#saveSkin").onclick=function(){
   var skin={id:uid(),name:"自定义皮肤 "+(skins.length+1),favorite:true,appearance:clone(current().appearance)};
   skins.push(skin);renderSkins();persist();setStatus("已保存为可复用皮肤");
