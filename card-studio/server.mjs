@@ -13,6 +13,7 @@ const DEFAULT_CARD_ART_DIRECTION = [
   "Avoid photorealism, plastic 3D rendering, neon cyberpunk lighting, vector-flat graphics, anime cel shading, typography, logos, frames, and UI."
 ].join(" ");
 
+const APP_VERSION = "2.0.1";
 const app = express();
 const root = dirname(fileURLToPath(import.meta.url));
 
@@ -21,7 +22,7 @@ app.use("/vendor", express.static(join(root, "node_modules")));
 app.use(express.static(join(root, "public")));
 
 app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, aiConfigured: Boolean(process.env.OPENAI_API_KEY) });
+  res.json({ ok: true, version: APP_VERSION, aiConfigured: Boolean(process.env.OPENAI_API_KEY) });
 });
 
 function setEnvValue(key, value) {
