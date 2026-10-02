@@ -487,24 +487,27 @@ var capture=async function(card,kind){
 var download=function(url,name){var a=document.createElement("a");a.href=url;a.download=name;a.click()};
 $("#png").onclick=async function(){setStatus("正在导出 PNG...");try{download(await capture(current(),"png"),current().name+".png");setStatus("PNG 完成：300dpi")}catch(e){setStatus("导出失败："+e.message)}};
 $("#jpg").onclick=async function(){setStatus("正在导出 JPG...");try{download(await capture(current(),"jpeg"),current().name+".jpg");setStatus("JPG 完成：300dpi")}catch(e){setStatus("导出失败："+e.message)}};
-var crop=function(pdf,x,y){var l=2,left=x+3,right=x+66,top=y+3,bottom=y+91;pdf.setLineWidth(.12);pdf.line(left-l,top,left,top);pdf.line(left,top-l,left,top);pdf.line(right,top,right+l,top);pdf.line(right,top-l,right,top);pdf.line(left-l,bottom,left,bottom);pdf.line(left,bottom,left,bottom+l);pdf.line(right,bottom,right+l,bottom);pdf.line(right,bottom,right,bottom+l)};
+var crop=function(pdf,x,y){if(!printSettings.crop)return;var l=2,left=x+3,right=x+66,top=y+3,bottom=y+91;pdf.setLineWidth(.12);pdf.line(left-l,top,left,top);pdf.line(left,top-l,left,top);pdf.line(right,top,right+l,top);pdf.line(right,top-l,right,top);pdf.line(left-l,bottom,left,bottom);pdf.line(left,bottom,left,bottom+l);pdf.line(right,bottom,right+l,bottom);pdf.line(right,bottom,right,bottom+l)};
 $("#singlePdf").onclick=async function(){
   setStatus("正在生成单张 PDF...");
   try{var img=await capture(current(),"png"),PDF=window.jspdf.jsPDF,pdf=new PDF({orientation:"portrait",unit:"mm",format:[69,94]});pdf.addImage(img,"PNG",0,0,69,94);crop(pdf,0,0);pdf.save(current().name+"-300dpi.pdf");setStatus("PDF 完成：含 3mm 出血与裁切线")}catch(e){setStatus("PDF 失败："+e.message)}
 };
 var batchPdf=async function(){
-  setStatus("正在生成 A4 拼版...");
+  var list=getVisibleCards();if(!list.length)list=cards;setStatus("正在生成拼版...");
   try{
-    var PDF=window.jspdf.jsPDF,pdf=new PDF({orientation:"portrait",unit:"mm",format:"a4"});
-    for(var i=0;i<cards.length;i++){
-      if(i>0&&i%9===0)pdf.addPage();
-      var img=await capture(cards[i],"png"),slot=i%9,col=slot%3,row=Math.floor(slot/3),x=1.5+col*69,y=7.5+row*94;
-      pdf.addImage(img,"PNG",x,y,69,94);crop(pdf,x,y);setStatus("正在拼版 "+(i+1)+"/"+cards.length);
+    var PDF=window.jspdf.jsPDF,ss=SHEETS[printSettings.sheet]||SHEETS.a4,pdf=new PDF({orientation:ss[0]>ss[1]?"landscape":"portrait",unit:"mm",format:ss}),cw=69,ch=94,margin=3;
+    var cols=Math.max(1,Math.floor((ss[0]-margin*2)/cw)),rows=Math.max(1,Math.floor((ss[1]-margin*2)/ch)),per=cols*rows,startX=(ss[0]-cols*cw)/2,startY=(ss[1]-rows*ch)/2;
+    for(var i=0;i<list.length;i++){
+      if(i>0&&i%per===0)pdf.addPage();
+      var img=await capture(list[i],"png"),slot=i%per,col=slot%cols,row=Math.floor(slot/cols),x=startX+col*cw,y=startY+row*ch;
+      pdf.addImage(img,"PNG",x,y,cw,ch);crop(pdf,x,y);setStatus("正在拼版 "+(i+1)+"/"+list.length);
     }
-    pdf.save("卡牌集-A4-300dpi.pdf");setStatus("批量 PDF 完成："+cards.length+" 张");
+    pdf.save(safeFilename(projectName)+"-"+String(printSettings.sheet).toUpperCase()+"-300dpi.pdf");setStatus("拼版 PDF 完成："+list.length+" 张");
   }catch(e){setStatus("批量 PDF 失败："+e.message)}
 };
 $("#batchPdf").onclick=batchPdf;$("#batchPdfTop").onclick=batchPdf;
+$("#sheetSize").onchange=function(){printSettings.sheet=this.value;persist()};
+$("#cropMarks").onchange=function(){printSettings.crop=this.checked;persist()};
 
 function safeFilename(name){return String(name||"card").replace(/[\\/:*?"<>|]/g,"_").trim()||"card"}
 function normalizeName(name){return String(name||"").replace(/\\.[^.]+$/,"").replace(/[\\s_\\-]+/g,"").toLowerCase()}
