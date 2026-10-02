@@ -18,7 +18,7 @@ if (missing.length) {
 if (!html.includes("jszip.min.js")) {
   throw new Error("JSZip CDN script is missing.");
 }
-if (app.includes('$("[data-form]").forEach') || app.includes('$("[data-color]").forEach')) {
+if (/(^|[^$])\\$\\("\\[data-form\\]"\\)\\.forEach/m.test(app) || /(^|[^$])\\$\\("\\[data-color\\]"\\)\\.forEach/m.test(app)) {
   throw new Error("querySelector used where querySelectorAll helper is required.");
 }
 for (const id of ["projectExport","projectImport","batchImages","batchAI","uploadAssetBtn","batchRename","batchPngZip"]) {
