@@ -26,6 +26,7 @@ app.post("/api/generate-image", async (req, res) => {
   const style = String(body.style || "").trim();
   const cardName = String(body.cardName || "").trim();
   const faction = String(body.faction || "").trim();
+  const cardType = String(body.cardType || "").trim();
 
   if (!prompt) {
     return res.status(400).json({ error: "请输入插画关键词。" });
@@ -38,6 +39,7 @@ app.post("/api/generate-image", async (req, res) => {
       "No text, no letters, no logo, no border, no UI.",
       "Full-bleed artwork with a strong central focal point and readable silhouette.",
       "Leave calmer visual areas near the top and bottom for card text overlays.",
+      cardType ? "Card template type: " + cardType + "." : "",
       cardName ? "Card subject: " + cardName + "." : "",
       faction ? "Faction mood: " + faction + "." : "",
       style ? "Unified set style: " + style + "." : "",

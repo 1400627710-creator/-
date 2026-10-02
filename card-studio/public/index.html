@@ -3,53 +3,58 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#101827">
 <title>卡牌组装流水线</title>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-<style>
-:root{font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:#172033;background:#edf1f5}
-*{box-sizing:border-box}body{margin:0;min-width:1180px}button,input,textarea{font:inherit}button{cursor:pointer;border:1px solid #d4dae3;border-radius:8px;background:#fff;color:#263247;padding:8px 11px}button:hover{border-color:#8c99aa}button.primary{background:#2563eb;border-color:#2563eb;color:white}button:disabled{opacity:.45;cursor:not-allowed}
-.top{height:64px;background:#101827;color:white;padding:0 20px;display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:baseline;gap:12px}.brand b{font-size:19px}.brand span{color:#aab4c4;font-size:12px}.actions{display:flex;gap:8px}.top button{background:#202b3d;color:#eef3fa;border-color:#3b4659}.top .primary{background:#3b82f6}
-.workspace{height:calc(100vh - 64px);display:grid;grid-template-columns:260px minmax(560px,1fr) 350px}.left,.right{background:#fff;overflow:auto}.left{border-right:1px solid #dce1e8;padding:14px}.right{border-left:1px solid #dce1e8;padding:14px}.stage{overflow:auto;padding:16px 22px 28px;display:flex;flex-direction:column;align-items:center}
-.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.panel-head small{color:#8d97a4;margin-left:7px}.search,input,textarea{width:100%;border:1px solid #d5dbe4;border-radius:7px;padding:8px 9px;outline:0}.search{background:#f7f9fb;margin-bottom:10px}input:focus,textarea:focus{border-color:#4a7ee8;box-shadow:0 0 0 3px rgba(74,126,232,.1)}
-.card-list{display:flex;flex-direction:column;gap:5px;min-height:220px}.card-row{width:100%;display:grid;grid-template-columns:24px 1fr 26px;gap:6px;text-align:left;align-items:center;border-color:transparent;background:#f6f8fa;padding:9px 8px}.card-row.active{background:#eaf2ff;border-color:#9bbcf7}.card-row .n{font-size:10px;color:#9ba4af}.card-row strong,.card-row small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.card-row small{color:#788493;margin-top:2px}.card-row .cost{text-align:right;color:#697586;font-weight:800}.row{display:flex;gap:7px}.row button{flex:1}.left .row{margin-top:10px}
-.stagebar{align-self:stretch;display:flex;justify-content:space-between;color:#667085;font-size:12px;margin-bottom:12px}.stagebar b{color:#344054}.status{max-width:55%;text-align:right}.checker{padding:24px;border-radius:16px;background-color:#f0f2f5;background-image:linear-gradient(45deg,#e1e5ea 25%,transparent 25%),linear-gradient(-45deg,#e1e5ea 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e1e5ea 75%),linear-gradient(-45deg,transparent 75%,#e1e5ea 75%);background-size:18px 18px;background-position:0 0,0 9px,9px -9px,-9px 0;box-shadow:inset 0 0 0 1px #d4dae2}.hint{font-size:12px;color:#6e7887;margin:12px 0 9px}.export-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
-.card{--p:#111827;--s:#334155;--a:#f59e0b;--f:#0f172a;--t:#f8fafc;width:348px;height:474px;position:relative;overflow:hidden;border-radius:13px;background:var(--p);color:var(--t);box-shadow:0 22px 50px rgba(10,20,35,.28)}
-.card:before{content:"";position:absolute;inset:0;z-index:9;border:10px solid var(--f);border-radius:13px;pointer-events:none}.card:after{content:"";position:absolute;inset:10px;z-index:9;border:2px solid var(--a);border-radius:7px;pointer-events:none;opacity:.78}
-.art{position:absolute;left:15px;right:15px;top:15px;height:275px;background:radial-gradient(circle at 50% 25%,var(--s),var(--p) 72%);background-size:cover;background-position:center;border-radius:4px 4px 14px 14px}.art-empty{position:absolute;inset:0;display:grid;place-content:center;text-align:center;color:rgba(255,255,255,.68);font-weight:800;line-height:1.5}.art-empty small{font-weight:500;font-size:10px;opacity:.7}.shade{position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,rgba(0,0,0,.05) 20%,rgba(0,0,0,.13) 49%,var(--p) 69%,var(--p) 100%)}.trim{position:absolute;inset:15px;z-index:10;border:1px dashed rgba(255,255,255,.16);pointer-events:none}
-.cost-badge{position:absolute;z-index:5;left:18px;top:17px;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:var(--a);color:#111827;border:4px solid var(--f);font-size:26px;font-weight:900}.head{position:absolute;z-index:5;left:76px;right:22px;top:21px;text-shadow:0 2px 8px rgba(0,0,0,.8)}.title{font-size:22px;line-height:1.15;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.faction{font-size:11px;margin-top:4px;color:#f7d98f;letter-spacing:.12em;font-weight:800}.meta{position:absolute;z-index:5;left:29px;right:29px;top:283px;height:28px;padding:0 10px;display:flex;gap:7px;align-items:center;justify-content:center;background:rgba(20,28,40,.78);border:1px solid var(--a);border-radius:6px;font-size:11px;font-weight:800}.effect{position:absolute;z-index:5;left:29px;right:29px;top:319px;min-height:78px;max-height:78px;overflow:hidden;font-size:13px;line-height:1.45;white-space:pre-wrap}.stats{position:absolute;z-index:5;left:27px;right:27px;bottom:31px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.stat{height:46px;border-radius:8px;background:rgba(37,47,62,.88);border:1px solid var(--a);display:grid;grid-template-columns:22px 1fr;align-items:center}.stat small{text-align:center;font-size:10px;opacity:.68;font-weight:800}.stat strong{font-size:21px;text-align:center;padding-right:6px}.tags{position:absolute;z-index:5;left:31px;right:31px;bottom:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:8px;text-align:center;opacity:.58;letter-spacing:.08em}
-[contenteditable=true]{outline:0;cursor:text;border-radius:3px}[contenteditable=true]:hover{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}[contenteditable=true]:focus{box-shadow:inset 0 0 0 2px #8db4ff;background:rgba(0,0,0,.22)}
-.right section{border-bottom:1px solid #e5e8ed;padding:2px 0 15px;margin-bottom:13px}.right section:last-child{border-bottom:0}h3{font-size:14px;margin:5px 0 11px}label{display:block;color:#697586;font-size:11px;font-weight:800;margin-bottom:8px}label input,label textarea{margin-top:4px;color:#1f2937;font-weight:500}.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 8px}textarea{resize:vertical}.variables{display:flex;flex-wrap:wrap;gap:5px;margin:-2px 0 10px}.variables button{padding:4px 6px;font-size:10px;background:#f5f7fa}.wide{width:100%}
-.theme-list{display:flex;flex-direction:column;gap:5px;max-height:170px;overflow:auto;margin-bottom:10px}.theme-item{display:grid;grid-template-columns:1fr 34px;border:1px solid #e1e5ea;border-radius:8px;overflow:hidden}.theme-item.active{border-color:#79a2ee}.theme-main{border:0;border-radius:0;display:flex;align-items:center;gap:8px;text-align:left}.swatch{width:34px;height:24px;border-radius:5px;border:1px solid rgba(0,0,0,.12)}.fav{border:0;border-left:1px solid #e1e5ea;border-radius:0;color:#c98f12;font-size:16px;padding:0}.colors{display:grid;grid-template-columns:1fr 1fr;gap:0 8px}.colors label{display:grid;grid-template-columns:1fr 40px;align-items:center}.colors input[type=color]{width:40px;height:30px;padding:2px;margin:0}
-.hidden-export{position:fixed;left:-10000px;top:0;width:348px;height:474px}.hidden-export .card{box-shadow:none}
-@media(max-width:1300px){.workspace{grid-template-columns:235px minmax(500px,1fr) 330px}}
-</style>
+<link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 <header class="top">
-  <div class="brand"><b>卡牌组装流水线</b><span>桌游作者 MVP · 像填表，不像 PS</span></div>
+  <div class="brand">
+    <b>卡牌组装流水线</b>
+    <span>选模板 → 填字段 → 选素材 → AI 插画 → 批量导出</span>
+  </div>
   <div class="actions">
-    <button id="importBtn">导入 CSV / Excel / JSON</button>
+    <button id="undoBtn" title="撤销">↶ 撤销</button>
+    <button id="redoBtn" title="重做">↷ 重做</button>
+    <button id="importBtn">导入数据</button>
     <input id="importFile" type="file" accept=".csv,.json,.xlsx,.xls" hidden>
-    <a href="/sample-cards.csv" download><button>示例 CSV</button></a>
     <button id="batchPdfTop" class="primary">批量 PDF</button>
   </div>
 </header>
 
 <div class="workspace">
   <aside class="left">
-    <div class="panel-head"><div><b>卡牌集</b><small id="count"></small></div><button id="newCard">＋</button></div>
-    <input id="cardSearch" class="search" placeholder="搜索名称 / 系别 / 关键词">
+    <div class="panel-head">
+      <div><b>卡牌集</b><small id="count"></small></div>
+      <button id="newCard">＋ 新卡</button>
+    </div>
+    <input id="cardSearch" class="search" placeholder="搜索名称 / 模板 / 系别 / 关键词">
     <div id="cardList" class="card-list"></div>
-    <div class="row"><button id="duplicate">复制</button><button id="delete">删除</button></div>
+    <div class="row">
+      <button id="duplicate">复制</button>
+      <button id="delete">删除</button>
+    </div>
+
+    <div class="side-section">
+      <div class="panel-head compact">
+        <div><b>版本快照</b><small>本机保存</small></div>
+        <button id="saveSnapshot">保存</button>
+      </div>
+      <div id="snapshotList" class="snapshot-list"></div>
+    </div>
   </aside>
 
   <main class="stage">
-    <div class="stagebar"><span>模板：<b>标准单位卡 · 布局锁定</b></span><span id="status" class="status">就绪</span></div>
+    <div class="stagebar">
+      <span>模板：<b id="templateName">标准单位卡</b> · 布局锁定</span>
+      <span id="status" class="status">就绪</span>
+    </div>
     <div class="checker"><div id="preview"></div></div>
-    <p class="hint">直接点击卡面上的文字或数字即可改。区域位置固定，不会被拖乱。</p>
+    <p class="hint">卡面文字可直接点击修改；结构、对齐与安全区由系统锁定。</p>
     <div class="export-actions">
       <button id="png">PNG 300dpi</button>
       <button id="jpg">JPG 300dpi</button>
@@ -60,270 +65,72 @@
 
   <aside class="right">
     <section>
-      <h3>填写卡牌</h3>
+      <h3>1. 模板</h3>
+      <div id="templateCards" class="template-cards"></div>
+    </section>
+
+    <section>
+      <h3>2. 填写卡牌</h3>
       <div class="grid">
         <label>名称<input data-form="name"></label>
         <label>费用<input type="number" data-form="cost"></label>
         <label>系别<input data-form="faction"></label>
-        <label>兵种<input data-form="unitType"></label>
+        <label id="typeLabel">兵种<input data-form="unitType"></label>
         <label>稀有度<input data-form="rarity"></label>
-        <label>攻击<input type="number" data-form="attack"></label>
-        <label>血量<input type="number" data-form="health"></label>
-        <label>移速<input type="number" data-form="move"></label>
-        <label>射程<input type="number" data-form="range"></label>
       </div>
+      <div id="dynamicStats" class="grid"></div>
       <label>卡牌效果<textarea id="description" rows="5"></textarea></label>
       <div id="variables" class="variables"></div>
       <label>检索关键词<input data-form="tags" placeholder="快速,远程,守备"></label>
     </section>
 
     <section>
-      <h3>插画</h3>
+      <h3>3. 插画</h3>
       <div class="row">
         <button id="uploadArt">上传图片</button>
         <button id="clearArt">清空</button>
         <input id="artFile" type="file" accept="image/*" hidden>
       </div>
-      <label>AI 关键词<textarea id="aiPrompt" rows="3">战场中的英雄单位，动态构图，环境叙事丰富</textarea></label>
+      <label>AI 关键词<textarea id="aiPrompt" rows="3">战场中的主体，动态构图，环境叙事丰富</textarea></label>
       <label>整套统一风格<textarea id="aiStyle" rows="3">统一的东方奇幻桌游插画，厚涂，电影光影，材质细腻，不出现文字</textarea></label>
       <button id="aiGenerate" class="wide primary">AI 生成并自动适配</button>
     </section>
 
     <section>
-      <h3>皮肤与素材</h3>
-      <input id="themeSearch" class="search" placeholder="搜索皮肤">
-      <div id="themeList" class="theme-list"></div>
+      <h3>4. 素材库</h3>
+      <div class="tool-row">
+        <input id="assetSearch" class="search" placeholder="搜索边框 / 底纹 / 标记 / 字体">
+        <select id="assetCategory">
+          <option value="all">全部分类</option>
+          <option value="frame">边框</option>
+          <option value="texture">底纹</option>
+          <option value="cost">费用标记</option>
+          <option value="rarity">稀有度标记</option>
+          <option value="font">字体样式</option>
+        </select>
+      </div>
+      <div id="assetList" class="asset-list"></div>
+    </section>
+
+    <section>
+      <h3>5. 皮肤</h3>
+      <input id="skinSearch" class="search" placeholder="搜索皮肤">
+      <div id="skinList" class="skin-list"></div>
       <div class="colors">
         <label>主色<input type="color" data-color="primary"></label>
         <label>辅色<input type="color" data-color="secondary"></label>
         <label>强调<input type="color" data-color="accent"></label>
         <label>边框<input type="color" data-color="frame"></label>
       </div>
-      <button id="saveTheme" class="wide">保存成可复用皮肤</button>
+      <div class="stack-actions">
+        <button id="saveSkin">保存当前皮肤</button>
+        <button id="applyAll" class="primary">一键应用到全部卡牌</button>
+      </div>
     </section>
   </aside>
 </div>
 
 <div class="hidden-export"><div id="exportCard"></div></div>
-
-<script>
-(function(){
-  var uid=function(){return crypto.randomUUID()};
-  var sample=[
-    {id:uid(),name:"边境长枪兵",cost:2,faction:"王国",description:"部署：若你控制相邻据点，获得 +1 攻击。\\n守备时，{射程} 不会降低。",attack:3,health:4,move:2,range:1,unitType:"步兵",rarity:"普通",tags:"前线,守备,长枪",art:""},
-    {id:uid(),name:"赤潮斥候",cost:1,faction:"赤潮",description:"移动后若未攻击，可额外移动 1 格。\\n当前费用：{费用}",attack:2,health:2,move:4,range:1,unitType:"侦察",rarity:"普通",tags:"快速,探索",art:""},
-    {id:uid(),name:"星辉炮术师",cost:4,faction:"星辉议会",description:"远程攻击命中后，对目标相邻敌军造成 1 点伤害。\\n攻击 {攻击} / 射程 {射程}",attack:4,health:3,move:2,range:4,unitType:"远程",rarity:"稀有",tags:"远程,范围",art:""}
-  ];
-  var baseThemes=[
-    {id:"obsidian",name:"黑曜战场",primary:"#111827",secondary:"#334155",accent:"#f59e0b",frame:"#0f172a",text:"#f8fafc",favorite:true},
-    {id:"jade",name:"苍翠古林",primary:"#12372a",secondary:"#365e32",accent:"#e8b86d",frame:"#0d281f",text:"#f7f4e9"},
-    {id:"ember",name:"赤焰军团",primary:"#4a1515",secondary:"#8c2f1b",accent:"#ffd166",frame:"#2b0b0b",text:"#fff5e8"},
-    {id:"arcane",name:"星界秘仪",primary:"#24133f",secondary:"#4c2b73",accent:"#71d6ff",frame:"#120b24",text:"#f4efff"}
-  ];
-  var vars={"名称":"name","费用":"cost","系别":"faction","攻击":"attack","血量":"health","移速":"move","射程":"range","兵种":"unitType","稀有度":"rarity"};
-  var savedProject;
-  try{savedProject=JSON.parse(localStorage.getItem("card-studio-project")||"null")}catch(e){}
-  var cards=savedProject&&savedProject.cards&&savedProject.cards.length?savedProject.cards:sample;
-  var selected=savedProject&&savedProject.selected&&cards.some(function(c){return c.id===savedProject.selected})?savedProject.selected:cards[0].id;
-  var themes;
-  try{themes=JSON.parse(localStorage.getItem("card-studio-themes")||"null")}catch(e){}
-  if(!themes||!themes.length)themes=baseThemes;
-  var theme=savedProject&&savedProject.theme?savedProject.theme:themes[0];
-
-  var $=function(q){return document.querySelector(q)};
-  var $$=function(q){return Array.prototype.slice.call(document.querySelectorAll(q))};
-  var esc=function(v){return String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")};
-  var num=function(v,f){var n=Number(v);return Number.isFinite(n)?n:(f||0)};
-  var current=function(){return cards.find(function(c){return c.id===selected})||cards[0]};
-  var setStatus=function(t){$("#status").textContent=t};
-  var persist=function(){
-    try{
-      localStorage.setItem("card-studio-project",JSON.stringify({cards:cards,selected:selected,theme:theme}));
-      localStorage.setItem("card-studio-themes",JSON.stringify(themes));
-    }catch(e){}
-  };
-  var resolveVars=function(text,card){
-    return String(text||"").replace(/\\{([^}]+)\\}/g,function(all,key){
-      var field=vars[String(key).trim()];
-      return field?String(card[field]==null?"":card[field]):all;
-    });
-  };
-  var cardHtml=function(card,editable){
-    var ce=editable?' contenteditable="true"':'';
-    var desc=esc(resolveVars(card.description,card)).replace(/\\n/g,"<br>");
-    var artEmpty=card.art?"":'<div class="art-empty">插画区域<br><small>上传图片或使用 AI 生成</small></div>';
-    return '<div class="card" style="--p:'+theme.primary+';--s:'+theme.secondary+';--a:'+theme.accent+';--f:'+theme.frame+';--t:'+theme.text+'">'+
-      '<div class="art">'+artEmpty+'</div><div class="shade"></div><div class="trim"></div>'+
-      '<div class="cost-badge" data-edit="cost"'+ce+'>'+esc(card.cost)+'</div>'+
-      '<div class="head"><div class="title" data-edit="name"'+ce+'>'+esc(card.name)+'</div><div class="faction" data-edit="faction"'+ce+'>'+esc(card.faction)+'</div></div>'+
-      '<div class="meta"><span data-edit="unitType"'+ce+'>'+esc(card.unitType)+'</span><span>·</span><span data-edit="rarity"'+ce+'>'+esc(card.rarity)+'</span></div>'+
-      '<div class="effect" data-edit="description"'+ce+'>'+desc+'</div>'+
-      '<div class="stats">'+
-        '<div class="stat"><small>攻</small><strong data-edit="attack"'+ce+'>'+esc(card.attack)+'</strong></div>'+
-        '<div class="stat"><small>血</small><strong data-edit="health"'+ce+'>'+esc(card.health)+'</strong></div>'+
-        '<div class="stat"><small>移</small><strong data-edit="move"'+ce+'>'+esc(card.move)+'</strong></div>'+
-        '<div class="stat"><small>射</small><strong data-edit="range"'+ce+'>'+esc(card.range)+'</strong></div>'+
-      '</div><div class="tags">'+esc(card.tags)+'</div></div>';
-  };
-  var setArt=function(root,card){
-    var art=root.querySelector(".art");
-    if(art&&card.art)art.style.backgroundImage='url("'+String(card.art).replace(/"/g,"%22")+'")';
-  };
-  var renderCard=function(){
-    var c=current();
-    $("#preview").innerHTML=cardHtml(c,true);
-    setArt($("#preview"),c);
-    $$("[data-form]").forEach(function(el){
-      var f=el.getAttribute("data-form");
-      el.value=c[f]==null?"":c[f];
-    });
-    $("#description").value=c.description||"";
-    $$("[data-color]").forEach(function(el){el.value=theme[el.getAttribute("data-color")]});
-  };
-  var renderExport=function(card){
-    $("#exportCard").innerHTML=cardHtml(card,false);
-    setArt($("#exportCard"),card);
-  };
-  var renderList=function(){
-    var q=$("#cardSearch").value.trim().toLowerCase();
-    var list=cards.filter(function(c){
-      return !q||[c.name,c.faction,c.unitType,c.rarity,c.tags].join(" ").toLowerCase().indexOf(q)>=0;
-    });
-    $("#count").textContent=cards.length+" 张";
-    $("#cardList").innerHTML=list.map(function(c,i){
-      return '<button class="card-row '+(c.id===selected?"active":"")+'" data-id="'+c.id+'"><span class="n">'+String(i+1).padStart(2,"0")+'</span><span><strong>'+esc(c.name)+'</strong><small>'+esc(c.faction)+' · '+esc(c.unitType)+' · '+esc(c.rarity)+'</small></span><span class="cost">'+esc(c.cost)+'</span></button>';
-    }).join("");
-    $("#delete").disabled=cards.length<=1;
-  };
-  var renderThemes=function(){
-    var q=$("#themeSearch").value.trim().toLowerCase();
-    var list=themes.filter(function(t){return !q||t.name.toLowerCase().indexOf(q)>=0}).slice().sort(function(a,b){return Number(!!b.favorite)-Number(!!a.favorite)});
-    $("#themeList").innerHTML=list.map(function(t){
-      var grad="linear-gradient(135deg,"+t.primary+","+t.secondary+" 55%,"+t.accent+")";
-      return '<div class="theme-item '+(t.id===theme.id?"active":"")+'"><button class="theme-main" data-theme="'+t.id+'"><span class="swatch" style="background:'+grad+'"></span><span>'+esc(t.name)+'</span></button><button class="fav" data-fav="'+t.id+'">'+(t.favorite?"★":"☆")+'</button></div>';
-    }).join("");
-  };
-  var renderAll=function(){renderList();renderCard();renderThemes();persist()};
-  var patch=function(field,value){
-    var c=current(); if(!c)return;
-    if(["cost","attack","health","move","range"].indexOf(field)>=0)value=num(value,0);
-    c[field]=value; renderCard(); renderList(); persist();
-  };
-  $("#preview").addEventListener("focusin",function(e){
-    var f=e.target&&e.target.getAttribute&&e.target.getAttribute("data-edit");
-    if(f==="description")e.target.textContent=current().description||"";
-  });
-  $("#preview").addEventListener("focusout",function(e){
-    var f=e.target&&e.target.getAttribute&&e.target.getAttribute("data-edit");
-    if(f)patch(f,e.target.innerText.trim());
-  });
-  $("#cardList").addEventListener("click",function(e){
-    var b=e.target.closest("[data-id]"); if(!b)return;
-    selected=b.getAttribute("data-id"); renderAll();
-  });
-  $("#cardSearch").addEventListener("input",renderList);
-  $$("[data-form]").forEach(function(el){
-    el.addEventListener("input",function(){patch(el.getAttribute("data-form"),el.value)});
-  });
-  $("#description").addEventListener("input",function(){patch("description",this.value)});
-  Object.keys(vars).forEach(function(v){
-    var b=document.createElement("button"); b.textContent="{"+v+"}";
-    b.onclick=function(){patch("description",(current().description||"")+"{"+v+"}")};
-    $("#variables").appendChild(b);
-  });
-  $("#newCard").onclick=function(){
-    var c={id:uid(),name:"新卡牌",cost:1,faction:"中立",description:"在这里填写卡牌效果。可使用 {费用}、{攻击} 等变量。",attack:1,health:1,move:2,range:1,unitType:"单位",rarity:"普通",tags:"",art:""};
-    cards.push(c);selected=c.id;renderAll();
-  };
-  $("#duplicate").onclick=function(){
-    var c=Object.assign({},current(),{id:uid(),name:current().name+" - 副本"});
-    cards.push(c);selected=c.id;renderAll();
-  };
-  $("#delete").onclick=function(){
-    if(cards.length<=1)return;
-    cards=cards.filter(function(c){return c.id!==selected});
-    selected=cards[0].id;renderAll();
-  };
-  $("#importBtn").onclick=function(){$("#importFile").click()};
-  $("#importFile").onchange=async function(){
-    var file=this.files&&this.files[0]; if(!file)return;
-    setStatus("正在导入...");
-    try{
-      var rows=[],name=file.name.toLowerCase();
-      if(name.endsWith(".json")){
-        var parsed=JSON.parse(await file.text());rows=Array.isArray(parsed)?parsed:(Array.isArray(parsed.cards)?parsed.cards:[]);
-      }else if(name.endsWith(".xlsx")||name.endsWith(".xls")){
-        var wb=XLSX.read(await file.arrayBuffer(),{type:"array"});var ws=wb.Sheets[wb.SheetNames[0]];rows=XLSX.utils.sheet_to_json(ws);
-      }else{
-        rows=Papa.parse(await file.text(),{header:true,skipEmptyLines:true}).data;
-      }
-      var pick=function(r,keys,fallback){for(var i=0;i<keys.length;i++){var k=keys[i];if(r[k]!==undefined&&r[k]!==null&&String(r[k]).trim()!=="")return r[k]}return fallback};
-      cards=rows.map(function(r){
-        return {id:uid(),name:String(pick(r,["name","名称","卡牌名称"],"未命名卡牌")),cost:num(pick(r,["cost","费用"],0)),faction:String(pick(r,["faction","系别","阵营"],"中立")),description:String(pick(r,["description","描述","效果","卡牌效果"],"")),attack:num(pick(r,["attack","攻击"],0)),health:num(pick(r,["health","血量","生命"],0)),move:num(pick(r,["move","移速","移动"],0)),range:num(pick(r,["range","射程"],0)),unitType:String(pick(r,["unitType","兵种","类型"],"单位")),rarity:String(pick(r,["rarity","稀有度"],"普通")),tags:String(pick(r,["tags","关键词","标签"],"")),art:String(pick(r,["art","插画","图片","背景"],""))};
-      }).filter(function(c){return c.name});
-      if(!cards.length)throw new Error("没有读取到卡牌数据");
-      selected=cards[0].id;setStatus("已导入 "+cards.length+" 张卡牌");renderAll();
-    }catch(err){setStatus("导入失败："+(err.message||"未知错误"))}
-    this.value="";
-  };
-  $("#uploadArt").onclick=function(){$("#artFile").click()};
-  $("#artFile").onchange=function(){
-    var file=this.files&&this.files[0];if(!file)return;
-    var reader=new FileReader();reader.onload=function(){patch("art",String(reader.result||""))};reader.readAsDataURL(file);this.value="";
-  };
-  $("#clearArt").onclick=function(){patch("art","")};
-  $("#aiGenerate").onclick=async function(){
-    var c=current(),btn=this,prompt=$("#aiPrompt").value.trim();if(!prompt)return;
-    btn.disabled=true;setStatus("AI 正在生成插画...");
-    try{
-      var res=await fetch("/api/generate-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:prompt,style:$("#aiStyle").value,cardName:c.name,faction:c.faction})});
-      var data=await res.json();if(!res.ok)throw new Error(data.error||"生成失败");
-      patch("art",data.image);setStatus("AI 插画已自动适配卡面");
-    }catch(err){setStatus("AI 生成失败："+(err.message||"未知错误"))}
-    btn.disabled=false;
-  };
-  $("#themeSearch").oninput=renderThemes;
-  $("#themeList").onclick=function(e){
-    var t=e.target.closest("[data-theme]"),f=e.target.closest("[data-fav]");
-    if(t){var id=t.getAttribute("data-theme");theme=themes.find(function(x){return x.id===id})||theme;renderAll()}
-    if(f){var fid=f.getAttribute("data-fav");themes=themes.map(function(x){return x.id===fid?Object.assign({},x,{favorite:!x.favorite}):x});renderThemes();persist()}
-  };
-  $$("[data-color]").forEach(function(el){
-    el.oninput=function(){theme=Object.assign({},theme);theme[el.getAttribute("data-color")]=el.value;renderCard();persist()};
-  });
-  $("#saveTheme").onclick=function(){
-    var t=Object.assign({},theme,{id:uid(),name:"自定义皮肤 "+(themes.length+1),favorite:true});
-    themes.push(t);theme=t;setStatus("已保存为可复用皮肤");renderAll();
-  };
-  var waitFrame=function(){return new Promise(function(resolve){requestAnimationFrame(function(){requestAnimationFrame(resolve)})})};
-  var capture=async function(card,kind){
-    renderExport(card);await document.fonts.ready;await waitFrame();
-    var el=$("#exportCard .card");var ratio=815/el.offsetWidth;
-    return kind==="jpeg"?htmlToImage.toJpeg(el,{pixelRatio:ratio,quality:.95,cacheBust:true}):htmlToImage.toPng(el,{pixelRatio:ratio,cacheBust:true});
-  };
-  var download=function(url,name){var a=document.createElement("a");a.href=url;a.download=name;a.click()};
-  $("#png").onclick=async function(){setStatus("正在导出 PNG...");try{download(await capture(current(),"png"),current().name+".png");setStatus("PNG 完成：300dpi")}catch(e){setStatus("导出失败："+e.message)}};
-  $("#jpg").onclick=async function(){setStatus("正在导出 JPG...");try{download(await capture(current(),"jpeg"),current().name+".jpg");setStatus("JPG 完成：300dpi")}catch(e){setStatus("导出失败："+e.message)}};
-  var crop=function(pdf,x,y){var l=2,left=x+3,right=x+66,top=y+3,bottom=y+91;pdf.setLineWidth(.12);pdf.line(left-l,top,left,top);pdf.line(left,top-l,left,top);pdf.line(right,top,right+l,top);pdf.line(right,top-l,right,top);pdf.line(left-l,bottom,left,bottom);pdf.line(left,bottom,left,bottom+l);pdf.line(right,bottom,right+l,bottom);pdf.line(right,bottom,right,bottom+l)};
-  $("#singlePdf").onclick=async function(){
-    setStatus("正在生成单张 PDF...");
-    try{var img=await capture(current(),"png");var PDF=window.jspdf.jsPDF;var pdf=new PDF({orientation:"portrait",unit:"mm",format:[69,94]});pdf.addImage(img,"PNG",0,0,69,94);crop(pdf,0,0);pdf.save(current().name+"-300dpi.pdf");setStatus("PDF 完成：含 3mm 出血与裁切线")}catch(e){setStatus("PDF 失败："+e.message)}
-  };
-  var batchPdf=async function(){
-    setStatus("正在生成 A4 拼版...");
-    try{
-      var PDF=window.jspdf.jsPDF;var pdf=new PDF({orientation:"portrait",unit:"mm",format:"a4"});
-      for(var i=0;i<cards.length;i++){
-        if(i>0&&i%9===0)pdf.addPage();
-        var img=await capture(cards[i],"png"),slot=i%9,col=slot%3,row=Math.floor(slot/3),x=1.5+col*69,y=7.5+row*94;
-        pdf.addImage(img,"PNG",x,y,69,94);crop(pdf,x,y);setStatus("正在拼版 "+(i+1)+"/"+cards.length);
-      }
-      pdf.save("卡牌集-A4-300dpi.pdf");setStatus("批量 PDF 完成："+cards.length+" 张");
-    }catch(e){setStatus("批量 PDF 失败："+e.message)}
-  };
-  $("#batchPdf").onclick=batchPdf;$("#batchPdfTop").onclick=batchPdf;
-  renderAll();
-})();
-</script>
+<script src="/app.js"></script>
 </body>
 </html>
