@@ -9,6 +9,7 @@ const app = express();
 const root = dirname(fileURLToPath(import.meta.url));
 
 app.use(express.json({ limit: "20mb" }));
+app.use("/vendor", express.static(join(root, "node_modules")));
 app.use(express.static(join(root, "public")));
 
 app.get("/api/health", (_req, res) => {
@@ -125,7 +126,7 @@ app.post("/api/redraw-image", async (req, res) => {
     ].filter(Boolean).join(" ");
 
     const form = new FormData();
-    form.append("model", process.env.OPENAI_IMAGE_MODEL || "gpt-image-2.5-flare");
+    form.append("model", process.env.OPENAI_IMAGE_EDIT_MODEL || "gpt-image-2.5-sunburst");
     form.append("image", new Blob([bytes], { type: mime }), "card-art.png");
     form.append("prompt", fullPrompt);
     form.append("size", "1024x1536");
@@ -153,6 +154,6 @@ app.get("*", (_req, res) => {
 });
 
 const port = Number(process.env.PORT || 8787);
-app.listen(port, () => {
+app.listen(port, "127.0.0.1", () => {
   console.log("卡牌组装流水线已启动：http://localhost:" + port);
 });
