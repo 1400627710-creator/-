@@ -18,17 +18,17 @@ const requiredIds = [
   "batchImages","batchAI","batchImageFiles","uploadAssetBtn","customAssetFile",
   "batchRename","exportManifest","exportJsonList","batchPngZip","batchJpgZip",
   "sheetSize","cropMarks","singlePdf","batchPdf","batchPdfTop","exportCard",
-  "safeMode","layoutMode","layoutQuickButton","layoutPanel","addImageElement","freeImageFile","imageLabelTools","imageLabelPosition","addImageLabel","detachImageLabel","addTextElement","addNumberElement","elX","elY","elW","elH","elR","elZ","resetLayout","copyLayoutAll",
+  "safeMode","layoutMode","layoutQuickButton","layoutPanel","addImageElement","freeImageFile","imageLabelTools","imageLabelPosition","addImageLabel","detachImageLabel","addTextElement","addNumberElement","elX","elY","elW","elH","elR","elZ","elOpacity","elOpacityValue","selectedLayerName","toggleElementVisibility","layerUp","layerDown","layerList","resetLayout","copyLayoutAll",
   "openCardSearch","cardSearchModal","librarySearch","libraryResults","tagCloud","exportTTS",
   "markRuleTerm","openRuleTerms","termQuickColor","termQuickList","ruleTermsModal","termSearch","termList","termName","termColor","termCategory","termTags","termDescription","saveRuleTerm","insertRuleTerm"
 ];
 
-if (!html.includes("v2.0.1 · 自由布局版")) throw new Error("Visible 2.0.1 version badge is missing.");
+if (!html.includes("v2.1.0 · 自由布局版")) throw new Error("Visible 2.1.0 version badge is missing.");
 if (!html.includes("自由布局（拖拽编辑）")) throw new Error("High-visibility free-layout wording is missing.");
-if (!html.includes("styles.css?v=2.0.1") || !html.includes("app.js?v=2.0.1")) throw new Error("2.0.1 browser cache busting is missing.");
-if (!launcher.includes("CARD_STUDIO_PORT=8791") || !quickLauncher.includes("CARD_STUDIO_PORT=8791")) throw new Error("Launchers must use the dedicated 2.0.1 port.");
-if (!launcher.includes("?v=2.0.1") || !quickLauncher.includes("?v=2.0.1")) throw new Error("Launchers must open the cache-busted 2.0.1 URL.");
-if (pkg.version !== "2.0.1") throw new Error("Package version must be 2.0.1.");
+if (!html.includes("styles.css?v=2.1.0") || !html.includes("app.js?v=2.1.0")) throw new Error("2.1.0 browser cache busting is missing.");
+if (!launcher.includes("CARD_STUDIO_PORT=8792") || !quickLauncher.includes("CARD_STUDIO_PORT=8792")) throw new Error("Launchers must use the dedicated 2.1.0 port.");
+if (!launcher.includes("?v=2.1.0") || !quickLauncher.includes("?v=2.1.0")) throw new Error("Launchers must open the cache-busted 2.1.0 URL.");
+if (pkg.version !== "2.1.0") throw new Error("Package version must be 2.1.0.");
 
 const missing = requiredIds.filter((id) => !html.includes('id="' + id + '"'));
 if (missing.length) throw new Error("Missing required DOM ids: " + missing.join(", "));
@@ -50,12 +50,12 @@ if (badSelectors.length) throw new Error("querySelector used where querySelector
 
 for (const id of [
   "projectExport","projectImport","batchImages","batchAI","uploadAssetBtn","batchRename",
-  "batchPngZip","batchJpgZip","saveApiKey","aiRedraw","resetAiStyle","applyTextAll","sheetSize","cropMarks","layoutMode","addImageElement","addImageLabel","detachImageLabel","addTextElement","addNumberElement","resetLayout","openCardSearch","exportTTS","markRuleTerm","openRuleTerms","saveRuleTerm","insertRuleTerm"
+  "batchPngZip","batchJpgZip","saveApiKey","aiRedraw","resetAiStyle","applyTextAll","sheetSize","cropMarks","layoutMode","addImageElement","addImageLabel","detachImageLabel","addTextElement","addNumberElement","toggleElementVisibility","layerUp","layerDown","resetLayout","openCardSearch","exportTTS","markRuleTerm","openRuleTerms","saveRuleTerm","insertRuleTerm"
 ]) {
   if (!app.includes('$("#' + id + '")')) throw new Error("Missing handler reference for #" + id);
 }
 
-for (const marker of ["indexedDB.open", "projectPayload", "customTemplates", "userAssets", "SHEETS", "factionFilter", "rarityFilter", "DEFAULT_LAYOUT", "extraElements", "addFreeImage", "addLabelToSelectedImage", "parentId", "renderCardLibrary", "ttsCard", "renderRichText", "extractRuleTerms", "ruleTerms", "byTerm", "botanical", "canvas", "classical", "DEFAULT_AI_STYLE"]) {
+for (const marker of ["indexedDB.open", "projectPayload", "customTemplates", "userAssets", "SHEETS", "factionFilter", "rarityFilter", "DEFAULT_LAYOUT", "stat_attack", "stat_health", "rarityText", "allLayerModels", "renderLayerPanel", "selectedModel", "opacity", "visible", "extraElements", "addFreeImage", "addLabelToSelectedImage", "parentId", "renderCardLibrary", "ttsCard", "renderRichText", "extractRuleTerms", "ruleTerms", "byTerm", "botanical", "canvas", "classical", "DEFAULT_AI_STYLE"]) {
   if (!app.includes(marker)) throw new Error("Missing implemented feature marker: " + marker);
 }
 
@@ -67,8 +67,10 @@ if (!server.includes('app.use("/vendor"')) throw new Error("node_modules vendor 
 if (!server.includes('"127.0.0.1"')) throw new Error("Server must bind to localhost only.");
 if (!server.includes("OPENAI_IMAGE_EDIT_MODEL")) throw new Error("Dedicated image edit model setting is missing.");
 if (!server.includes("DEFAULT_CARD_ART_DIRECTION")) throw new Error("Classical painterly AI art direction is missing.");
-if (!server.includes('APP_VERSION = "2.0.1"')) throw new Error("Server runtime version marker is missing.");
+if (!server.includes('APP_VERSION = "2.1.0"')) throw new Error("Server runtime version marker is missing.");
 
+if (!app.includes("version:6")) throw new Error("Independent-layer project schema version is missing.");
+if (!html.includes("每个字段独立")) throw new Error("Independent-module guidance is missing.");
 console.log("Card Studio smoke check passed.");
 
-if (app.includes('\n  $("#preview .layout-node.selected").forEach')) throw new Error("single-selector helper used for layout selection list");
+if (app.includes('$("#preview .layout-node.selected").forEach')) throw new Error("single-selector helper used for layout selection list");
