@@ -31,3 +31,5 @@
 .card-custom-icon{position:absolute;z-index:8;right:29px;bottom:84px;width:30px;height:30px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
 .custom-frame-layer{position:absolute;z-index:11;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none}.custom-texture-layer{position:absolute;z-index:3;left:15px;right:15px;top:260px;bottom:15px;width:calc(100% - 30px);height:calc(100% - 275px);object-fit:cover;opacity:.35;pointer-events:none}
 .micro-help{font-size:10px;line-height:1.45;color:#7c8796;margin:8px 0 0}.empty-note{font-size:11px;color:#8b95a2;padding:7px}
+
+.asset-mini-actions{display:flex;gap:3px}.asset-mini-actions button{padding:4px 5px;font-size:9px}
