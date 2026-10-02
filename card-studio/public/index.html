@@ -10,12 +10,12 @@
 <script src="/vendor/html-to-image/dist/html-to-image.js"></script>
 <script src="/vendor/jspdf/dist/jspdf.umd.min.js"></script>
 <script src="/vendor/jszip/dist/jszip.min.js"></script>
-<link rel="stylesheet" href="/styles.css?v=2.0.1">
+<link rel="stylesheet" href="/styles.css?v=2.1.0">
 </head>
 <body>
 <header class="top">
   <div class="brand">
-    <b>卡牌组装流水线</b><span class="version-badge">v2.0.1 · 自由布局版</span>
+    <b>卡牌组装流水线</b><span class="version-badge">v2.1.0 · 独立图层自由布局</span>
     <input id="projectName" class="project-name" value="未命名卡牌项目" aria-label="项目名称">
   </div>
   <div class="actions">
@@ -33,7 +33,7 @@
 <div class="editor-mode-bar" role="toolbar" aria-label="编辑模式">
   <div class="editor-mode-title"><b>编辑模式</b><span>随时切换，不会丢失内容</span></div>
   <button id="safeMode" class="mode-choice active"><strong>普通制卡</strong><small>填写字段 · 自动排版</small></button>
-  <button id="layoutMode" class="mode-choice layout-choice"><strong>✥ 自由布局（拖拽编辑）</strong><small>点这里进入 · 移动 / 缩放 / 旋转 / 加图标文字</small><kbd>L</kbd></button>
+  <button id="layoutMode" class="mode-choice layout-choice"><strong>✥ 自由布局（独立图层）</strong><small>每个字段独立 · 拖动 / 分层 / 透明度 / 图标文字</small><kbd>L</kbd></button>
 </div>
 
 <div class="workspace">
@@ -313,6 +313,6 @@
 </div>
 
 <div class="hidden-export"><div id="exportCard"></div></div>
-<script src="/app.js?v=2.0.1"></script>
+<script src="/app.js?v=2.1.0"></script>
 </body>
 </html>
