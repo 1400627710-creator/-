@@ -461,6 +461,47 @@ $("#deleteTemplate").onclick=function(){
   var id=current().templateId;if(!customTemplates[id]){setStatus("内置模板不能删除");return}
   recordHistory();cards.forEach(function(c){if(c.templateId===id)c.templateId="unit"});delete customTemplates[id];TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);current().templateId="unit";renderAll();setStatus("自定义模板已删除，相关卡牌改为标准单位卡");
 };
+$("#batchImages").onclick=function(){$("#batchImageFiles").click()};
+$("#batchImageFiles").onchange=async function(){
+  var files=Array.prototype.slice.call(this.files||[]);if(!files.length)return;
+  recordHistory();setStatus("正在匹配 "+files.length+" 张图片...");
+  var remaining=cards.filter(function(c){return !c.art}),used={},matchedFiles={};
+  for(var i=0;i<files.length;i++){
+    var f=files[i],fn=normalizeName(f.name),target=cards.find(function(c){return normalizeName(c.name)===fn&&!used[c.id]});
+    if(target){target.art=await fileToDataUrl(f);used[target.id]=true;matchedFiles[f.name]=true}
+  }
+  var restFiles=files.filter(function(f){return !matchedFiles[f.name]}),restCards=remaining.filter(function(c){return !used[c.id]});
+  for(var j=0;j<Math.min(restFiles.length,restCards.length);j++){restCards[j].art=await fileToDataUrl(restFiles[j]);used[restCards[j].id]=true}
+  renderAll();setStatus("批量图片完成：已填入 "+Object.keys(used).length+" 张卡牌");this.value="";
+};
+
+async function generateForCard(c,promptText){
+  var res=await fetch("/api/generate-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:promptText,style:$("#aiStyle").value,cardName:c.name,faction:c.faction,cardType:TEMPLATES[c.templateId].name})});
+  var data=await res.json();if(!res.ok)throw new Error(data.error||"生成失败");c.art=data.image;
+}
+$("#batchAI").onclick=async function(){
+  var targets=cards.filter(function(c){return !c.art});if(!targets.length){setStatus("没有缺图卡牌");return}
+  recordHistory();var btn=this;btn.disabled=true;
+  try{
+    for(var i=0;i<targets.length;i++){var c=targets[i];setStatus("AI 批量生图 "+(i+1)+"/"+targets.length+"："+c.name);await generateForCard(c,(c.description||"")+"。主体："+c.name)}
+    renderAll();setStatus("批量 AI 插画完成："+targets.length+" 张");
+  }catch(e){renderAll();setStatus("批量 AI 在中途停止："+e.message)}
+  btn.disabled=false;
+};
+
+$("#uploadAssetBtn").onclick=function(){$("#customAssetFile").click()};
+$("#customAssetFile").onchange=async function(){
+  var f=this.files&&this.files[0];if(!f)return;var cat=$("#uploadAssetCategory").value;
+  var name=prompt("素材名称",f.name.replace(/\.[^.]+$/,""));if(!name){this.value="";return}
+  recordHistory();var a={id:uid(),name:name,category:cat,dataUrl:await fileToDataUrl(f)};userAssets.push(a);
+  if(cat==="icon")current().appearance.iconAssetId=a.id;else if(cat==="frameImage")current().appearance.frameImageAssetId=a.id;else current().appearance.textureImageAssetId=a.id;
+  renderAll();setStatus("自定义素材已上传并应用："+name);this.value="";
+};
+$("#customAssetList").onclick=function(e){
+  var b=e.target.closest("[data-remove-custom]");if(!b)return;var id=b.getAttribute("data-remove-custom");recordHistory();
+  userAssets=userAssets.filter(function(a){return a.id!==id});cards.forEach(function(c){["iconAssetId","frameImageAssetId","textureImageAssetId"].forEach(function(k){if(c.appearance[k]===id)c.appearance[k]=""})});
+  renderAll();setStatus("自定义素材已删除");
+};
 
 renderAll();
 })();
