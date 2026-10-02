@@ -191,19 +191,31 @@ var renderCard=function(){
   renderTemplates();renderAssets();renderSkins();
 };
 var renderExport=function(card){$("#exportCard").innerHTML=cardHtml(card,false);setArt($("#exportCard"),card)};
-var renderList=function(){
-  var q=$("#cardSearch").value.trim().toLowerCase();
+var getVisibleCards=function(){
+  var q=$("#cardSearch").value.trim().toLowerCase(),filter=$("#templateFilter").value,sort=$("#sortCards").value;
   var list=cards.filter(function(c){
     var t=TEMPLATES[c.templateId]||TEMPLATES.unit;
-    return !q||[c.name,t.name,c.faction,c.unitType,c.rarity,c.tags].join(" ").toLowerCase().indexOf(q)>=0;
+    return (filter==="all"||c.templateId===filter)&&(!q||[c.name,t.name,c.faction,c.unitType,c.rarity,c.tags].join(" ").toLowerCase().indexOf(q)>=0);
   });
-  $("#count").textContent=cards.length+" 张";
+  if(sort!=="manual")list=list.slice().sort(function(a,b){
+    var av,bv;
+    if(sort==="template"){av=TEMPLATES[a.templateId].name;bv=TEMPLATES[b.templateId].name}
+    else{av=a[sort];bv=b[sort]}
+    if(sort==="cost")return num(av)-num(bv);
+    return String(av||"").localeCompare(String(bv||""),"zh-CN");
+  });
+  return list;
+};
+var renderList=function(){
+  var list=getVisibleCards();
+  $("#count").textContent=list.length+"/"+cards.length+" 张";
   $("#cardList").innerHTML=list.map(function(c,i){
     var t=TEMPLATES[c.templateId]||TEMPLATES.unit;
     return '<button class="card-row '+(c.id===selected?"active":"")+'" data-id="'+c.id+'"><span class="n">'+String(i+1).padStart(2,"0")+'</span><span><strong>'+esc(c.name)+'</strong><small>'+esc(t.short)+' · '+esc(c.faction)+' · '+esc(c.rarity)+'</small></span><span class="cost">'+esc(c.cost)+'</span></button>';
   }).join("");
   $("#delete").disabled=cards.length<=1;
 };
+var renderTemplateFilter=function(){var old=$("#templateFilter").value;$("#templateFilter").innerHTML='<option value="all">全部模板</option>'+Object.keys(TEMPLATES).map(function(k){return '<option value="'+k+'">'+esc(TEMPLATES[k].name)+'</option>'}).join("");$("#templateFilter").value=TEMPLATES[old]?old:"all"};
 var renderTemplates=function(){
   var c=current();
   $("#templateCards").innerHTML=Object.keys(TEMPLATES).map(function(k){
@@ -251,7 +263,8 @@ var renderSnapshots=function(){
     return '<div class="snapshot-item"><div><strong>'+esc(s.label)+'</strong><small>'+esc(s.time)+'</small></div><button data-restore="'+s.id+'">恢复</button></div>';
   }).join(""):'<div class="empty-note">还没有快照。大改之前点“保存”。</div>';
 };
-var renderAll=function(){renderList();renderCard();renderSnapshots();updateHistoryButtons();persist()};
+var renderCustomAssets=function(){var box=$("#customAssetList");if(!box)return;box.innerHTML=userAssets.length?userAssets.map(function(a){return '<div class="custom-asset"><img src="'+esc(a.dataUrl)+'"><div><strong>'+esc(a.name)+'</strong><small>'+esc(a.category==="icon"?"卡面图标":a.category==="frameImage"?"图片边框":"图片底纹")+'</small></div><button data-remove-custom="'+a.id+'">删除</button></div>'}).join(""):'<div class="empty-note">尚未上传自定义图片素材。</div>'};
+var renderAll=function(){renderTemplateFilter();renderList();renderCard();renderSnapshots();renderCustomAssets();updateHistoryButtons();persist()};
 
 var patch=function(field,value,record){
   var c=current();if(!c)return;
@@ -277,7 +290,7 @@ $("#preview").addEventListener("focusout",function(e){
   var f=e.target&&e.target.getAttribute&&e.target.getAttribute("data-edit");if(f)patch(f,e.target.innerText.trim(),true);
 });
 $("#cardList").addEventListener("click",function(e){var b=e.target.closest("[data-id]");if(!b)return;selected=b.getAttribute("data-id");renderAll()});
-$("#cardSearch").addEventListener("input",renderList);
+$("#cardSearch").addEventListener("input",renderList);$("#templateFilter").addEventListener("change",renderList);$("#sortCards").addEventListener("change",renderList);
 $("[data-form]").forEach(function(el){
   el.addEventListener("focus",recordHistory);
   el.addEventListener("change",function(){patch(el.getAttribute("data-form"),el.value,false)});
