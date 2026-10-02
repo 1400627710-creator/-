@@ -8,13 +8,16 @@ var $$=function(q){return Array.prototype.slice.call(document.querySelectorAll(q
 var esc=function(v){return String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")};
 var num=function(v,f){var n=Number(v);return Number.isFinite(n)?n:(f||0)};
 var nowText=function(){return new Date().toLocaleString("zh-CN",{hour12:false})};
+var loadEarly=function(key,fallback){try{var v=JSON.parse(localStorage.getItem(key)||"null");return v==null?fallback:v}catch(e){return fallback}};
 
-var TEMPLATES={
+var BUILTIN_TEMPLATES={
   unit:{id:"unit",name:"标准单位卡",short:"单位",hint:"攻击 / 血量 / 移速 / 射程",typeLabel:"兵种",stats:[["attack","攻","攻击"],["health","血","血量"],["move","移","移速"],["range","射","射程"]]},
   spell:{id:"spell",name:"法术卡",short:"法术",hint:"威力 / 射程，效果区更大",typeLabel:"法术类型",stats:[["attack","威","威力"],["range","射","射程"]]},
   building:{id:"building",name:"建筑卡",short:"建筑",hint:"火力 / 耐久 / 射程",typeLabel:"建筑类型",stats:[["attack","火","火力"],["health","耐","耐久"],["range","射","射程"]]},
   event:{id:"event",name:"事件卡",short:"事件",hint:"大文本区，无战斗数值",typeLabel:"事件类型",stats:[]}
 };
+var customTemplates=loadEarly("card-studio-custom-templates",{});
+var TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);
 
 var COMPONENTS={
   frame:[
@@ -52,7 +55,7 @@ var CATEGORY_NAMES={frame:"边框",texture:"底纹",cost:"费用标记",rarity:"
 
 var DEFAULT_APPEARANCE={
   primary:"#111827",secondary:"#334155",accent:"#f59e0b",frame:"#0f172a",text:"#f8fafc",
-  frameStyle:"classic",textureStyle:"clean",costStyle:"circle",rarityStyle:"star",fontStyle:"default"
+  frameStyle:"classic",textureStyle:"clean",costStyle:"circle",rarityStyle:"star",fontStyle:"default",frameImageAssetId:"",textureImageAssetId:"",iconAssetId:""
 };
 var BASE_SKINS=[
   {id:"obsidian",name:"黑曜战场",favorite:true,appearance:clone(DEFAULT_APPEARANCE)},
@@ -86,6 +89,7 @@ var selected=saved&&saved.selected&&cards.some(function(c){return c.id===saved.s
 var skins=loadJson("card-studio-skins",BASE_SKINS);
 var favoriteAssets=loadJson("card-studio-favorite-assets",[]);
 var snapshots=loadJson("card-studio-snapshots",[]);
+var userAssets=loadJson("card-studio-user-assets",[]);
 var aiStyle=loadJson("card-studio-ai-style","统一的东方奇幻桌游插画，厚涂，电影光影，材质细腻，不出现文字");
 
 var normalizeAppearance=function(a){return Object.assign(clone(DEFAULT_APPEARANCE),a||{})};
@@ -103,12 +107,14 @@ skins=skins.map(function(s){s.appearance=normalizeAppearance(s.appearance);retur
 
 var history=[],future=[],historyLimit=80;
 var current=function(){return cards.find(function(c){return c.id===selected})||cards[0]};
-var stateSnapshot=function(){return JSON.stringify({cards:cards,selected:selected,skins:skins,favoriteAssets:favoriteAssets})};
+var stateSnapshot=function(){return JSON.stringify({cards:cards,selected:selected,skins:skins,favoriteAssets:favoriteAssets,userAssets:userAssets,customTemplates:customTemplates})};
 var restoreState=function(raw){
   var s=typeof raw==="string"?JSON.parse(raw):clone(raw);
   cards=(s.cards||[]).map(normalizeCard);selected=s.selected&&cards.some(function(c){return c.id===s.selected})?s.selected:(cards[0]&&cards[0].id);
   skins=(s.skins||skins).map(function(x){x.appearance=normalizeAppearance(x.appearance);return x});
   favoriteAssets=s.favoriteAssets||favoriteAssets;
+  userAssets=s.userAssets||userAssets;
+  customTemplates=s.customTemplates||customTemplates;TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);
   renderAll();
 };
 var recordHistory=function(){
@@ -122,6 +128,8 @@ var persist=function(){
     localStorage.setItem("card-studio-skins",JSON.stringify(skins));
     localStorage.setItem("card-studio-favorite-assets",JSON.stringify(favoriteAssets));
     localStorage.setItem("card-studio-snapshots",JSON.stringify(snapshots.slice(0,12)));
+    localStorage.setItem("card-studio-user-assets",JSON.stringify(userAssets));
+    localStorage.setItem("card-studio-custom-templates",JSON.stringify(customTemplates));
     localStorage.setItem("card-studio-ai-style",JSON.stringify($("#aiStyle")?$("#aiStyle").value:aiStyle));
   }catch(e){}
 };
