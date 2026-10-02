@@ -263,7 +263,7 @@ var renderSnapshots=function(){
     return '<div class="snapshot-item"><div><strong>'+esc(s.label)+'</strong><small>'+esc(s.time)+'</small></div><button data-restore="'+s.id+'">恢复</button></div>';
   }).join(""):'<div class="empty-note">还没有快照。大改之前点“保存”。</div>';
 };
-var renderCustomAssets=function(){var box=$("#customAssetList");if(!box)return;box.innerHTML=userAssets.length?userAssets.map(function(a){return '<div class="custom-asset"><img src="'+esc(a.dataUrl)+'"><div><strong>'+esc(a.name)+'</strong><small>'+esc(a.category==="icon"?"卡面图标":a.category==="frameImage"?"图片边框":"图片底纹")+'</small></div><button data-remove-custom="'+a.id+'">删除</button></div>'}).join(""):'<div class="empty-note">尚未上传自定义图片素材。</div>'};
+var renderCustomAssets=function(){var box=$("#customAssetList");if(!box)return;var q=$("#assetSearch").value.trim().toLowerCase(),cat=$("#assetCategory").value;var list=userAssets.filter(function(a){var catOk=cat==="all"||cat==="custom"||(cat==="frame"&&a.category==="frameImage")||(cat==="texture"&&a.category==="textureImage")||(cat==="icon"&&a.category==="icon");return catOk&&(!q||[a.name,a.category].join(" ").toLowerCase().indexOf(q)>=0)}).slice().sort(function(a,b){return Number(!!b.favorite)-Number(!!a.favorite)});box.innerHTML=list.length?list.map(function(a){var label=a.category==="icon"?"卡面图标":a.category==="frameImage"?"图片边框":"图片底纹";return '<div class="custom-asset"><img src="'+esc(a.dataUrl)+'"><div><strong>'+esc(a.name)+'</strong><small>'+esc(label)+'</small></div><div class="asset-mini-actions"><button data-apply-custom="'+a.id+'">应用</button><button data-fav-custom="'+a.id+'">'+(a.favorite?"★":"☆")+'</button><button data-remove-custom="'+a.id+'">删</button></div></div>'}).join(""):'<div class="empty-note">没有匹配的自定义图片素材。</div>'};
 var renderAll=function(){renderTemplateFilter();renderList();renderCard();renderSnapshots();renderCustomAssets();updateHistoryButtons();persist()};
 
 var patch=function(field,value,record){
@@ -366,7 +366,7 @@ $("#aiGenerate").onclick=async function(){
   btn.disabled=false;
 };
 
-$("#assetSearch").oninput=renderAssets;$("#assetCategory").onchange=renderAssets;
+$("#assetSearch").oninput=function(){renderAssets();renderCustomAssets()};$("#assetCategory").onchange=function(){renderAssets();renderCustomAssets()};
 $("#assetList").onclick=function(e){
   var fav=e.target.closest("[data-asset-fav]"),main=e.target.closest("[data-asset]");
   if(fav){
@@ -498,9 +498,10 @@ $("#customAssetFile").onchange=async function(){
   renderAll();setStatus("自定义素材已上传并应用："+name);this.value="";
 };
 $("#customAssetList").onclick=function(e){
-  var b=e.target.closest("[data-remove-custom]");if(!b)return;var id=b.getAttribute("data-remove-custom");recordHistory();
-  userAssets=userAssets.filter(function(a){return a.id!==id});cards.forEach(function(c){["iconAssetId","frameImageAssetId","textureImageAssetId"].forEach(function(k){if(c.appearance[k]===id)c.appearance[k]=""})});
-  renderAll();setStatus("自定义素材已删除");
+  var apply=e.target.closest("[data-apply-custom]"),fav=e.target.closest("[data-fav-custom]"),remove=e.target.closest("[data-remove-custom]");
+  if(apply){var a=userAssets.find(function(x){return x.id===apply.getAttribute("data-apply-custom")});if(!a)return;recordHistory();if(a.category==="icon")current().appearance.iconAssetId=a.id;else if(a.category==="frameImage")current().appearance.frameImageAssetId=a.id;else current().appearance.textureImageAssetId=a.id;renderAll();setStatus("已应用自定义素材："+a.name);return}
+  if(fav){var fa=userAssets.find(function(x){return x.id===fav.getAttribute("data-fav-custom")});if(fa){fa.favorite=!fa.favorite;renderCustomAssets();persist()}return}
+  if(remove){var id=remove.getAttribute("data-remove-custom");recordHistory();userAssets=userAssets.filter(function(a){return a.id!==id});cards.forEach(function(c){["iconAssetId","frameImageAssetId","textureImageAssetId"].forEach(function(k){if(c.appearance[k]===id)c.appearance[k]=""})});renderAll();setStatus("自定义素材已删除")}
 };
 $("#batchRename").onclick=function(){
   var list=getVisibleCards(),prefix=$("#namePrefix").value,start=num($("#nameStart").value,1);if(!list.length)return;recordHistory();
