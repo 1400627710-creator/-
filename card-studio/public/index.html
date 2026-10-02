@@ -97,6 +97,13 @@
       </div>
       <div id="dynamicStats" class="grid"></div>
       <label>卡牌效果<textarea id="description" rows="5"></textarea></label>
+      <div class="term-toolbar">
+        <input id="termQuickColor" type="color" value="#38bdf8" title="词条颜色">
+        <button id="markRuleTerm" class="term-primary">选中文字 → 设为规则词条</button>
+        <button id="openRuleTerms">词条库</button>
+      </div>
+      <div id="termQuickList" class="term-quick-list"></div>
+      <p class="micro-help">选中效果中的一个词再点“设为规则词条”。卡面只显示彩色短词，完整解释保存在词条库。</p>
       <div id="variables" class="variables"></div>
       <label>检索关键词<input data-form="tags" placeholder="快速,远程,守备"></label>
     </section>
@@ -236,6 +243,35 @@
       <p class="micro-help">导出卡面为 69 × 94 mm（含出血），拼版会按纸张自动计算每页数量。</p>
     </section>
   </aside>
+</div>
+
+<div id="ruleTermsModal" class="modal-backdrop" hidden>
+  <div class="term-library-dialog">
+    <div class="modal-head"><div><b>规则词条库</b><small>特殊效果的统一定义、颜色与检索仓库</small></div><button id="closeRuleTerms">关闭</button></div>
+    <div class="term-library-body">
+      <aside class="term-library-list">
+        <div class="term-search-row"><input id="termSearch" class="search" placeholder="搜索词条 / 分类 / 标签 / 说明"><button id="newRuleTerm">＋ 新词条</button></div>
+        <div id="termLibraryCount" class="library-count"></div>
+        <div id="termList"></div>
+      </aside>
+      <main class="term-editor">
+        <input id="termId" type="hidden">
+        <div class="grid">
+          <label>词条名称<input id="termName" placeholder="例如：穿透"></label>
+          <label>显示颜色<input id="termColor" type="color" value="#38bdf8"></label>
+          <label>分类<input id="termCategory" placeholder="例如：伤害 / 移动 / 状态"></label>
+          <label>检索标签<input id="termTags" placeholder="攻击,护甲,伤害"></label>
+        </div>
+        <label>完整规则说明<textarea id="termDescription" rows="9" placeholder="这里写完整解释。卡牌本身只需要写短词条。"></textarea></label>
+        <div id="termUsage" class="term-usage"></div>
+        <div class="row">
+          <button id="saveRuleTerm" class="primary">保存词条</button>
+          <button id="insertRuleTerm">插入当前卡牌</button>
+          <button id="deleteRuleTerm">删除词条</button>
+        </div>
+      </main>
+    </div>
+  </div>
 </div>
 
 <div id="cardSearchModal" class="modal-backdrop" hidden>
