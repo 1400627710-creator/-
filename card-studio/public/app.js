@@ -74,14 +74,19 @@ var BASE_SKINS=[
 ];
 
 var DEFAULT_LAYOUT={
-  art:{x:0,y:0,w:100,h:100,r:0,z:1,locked:true},
-  cost:{x:4,y:3,w:16,h:16,r:0,z:30,locked:false},
-  head:{x:15,y:4,w:80,h:17,r:0,z:20,locked:false},
-  rarity:{x:88,y:22,w:8,h:8,r:0,z:31,locked:false},
-  meta:{x:8,y:62,w:84,h:7,r:0,z:20,locked:false},
-  effect:{x:8,y:69,w:84,h:18,r:0,z:20,locked:false},
-  stats:{x:7,y:87,w:86,h:10,r:0,z:20,locked:false},
-  tags:{x:8,y:58,w:70,h:5,r:0,z:20,locked:false}
+  art:{x:0,y:0,w:100,h:100,r:0,z:1,locked:true,opacity:1,visible:true},
+  cost:{x:4,y:3,w:16,h:16,r:0,z:30,locked:false,opacity:1,visible:true},
+  title:{x:15,y:4,w:80,h:10,r:0,z:24,locked:false,opacity:1,visible:true},
+  faction:{x:15,y:14,w:62,h:5,r:0,z:23,locked:false,opacity:1,visible:true},
+  rarityMark:{x:88,y:22,w:8,h:8,r:0,z:31,locked:false,opacity:1,visible:true},
+  type:{x:8,y:62,w:38,h:7,r:0,z:22,locked:false,opacity:1,visible:true},
+  rarityText:{x:54,y:62,w:38,h:7,r:0,z:22,locked:false,opacity:1,visible:true},
+  effect:{x:8,y:69,w:84,h:18,r:0,z:20,locked:false,opacity:1,visible:true},
+  stat_attack:{x:7,y:87,w:20,h:10,r:0,z:25,locked:false,opacity:1,visible:true},
+  stat_health:{x:29,y:87,w:20,h:10,r:0,z:25,locked:false,opacity:1,visible:true},
+  stat_move:{x:51,y:87,w:20,h:10,r:0,z:25,locked:false,opacity:1,visible:true},
+  stat_range:{x:73,y:87,w:20,h:10,r:0,z:25,locked:false,opacity:1,visible:true},
+  tags:{x:8,y:58,w:70,h:5,r:0,z:20,locked:false,opacity:1,visible:true}
 };
 var makeLayout=function(){return clone(DEFAULT_LAYOUT)};
 var makeCard=function(templateId,name){
@@ -139,8 +144,15 @@ var normalizeCard=function(c){
   if(c.tags==null)c.tags="";
   if(c.rulesKeywords==null)c.rulesKeywords="";
   if(c.cardNumber==null)c.cardNumber="";
-  c.layout=Object.assign(makeLayout(),c.layout||{});Object.keys(c.layout).forEach(function(k){c.layout[k]=Object.assign({},DEFAULT_LAYOUT[k]||{x:10,y:10,w:30,h:10,r:0,z:40,locked:false},c.layout[k]||{})});
-  if(!Array.isArray(c.extraElements))c.extraElements=[];
+  var oldLayout=c.layout||{},t=TEMPLATES[c.templateId]||TEMPLATES.unit,nextLayout=makeLayout();
+  function legacy(base,patch){return Object.assign({},base||{},patch||{})}
+  if(oldLayout.head&&!oldLayout.title){nextLayout.title=legacy(nextLayout.title,{x:oldLayout.head.x,y:oldLayout.head.y,w:oldLayout.head.w,h:Math.max(6,(oldLayout.head.h||17)*.58),r:oldLayout.head.r,z:oldLayout.head.z,locked:oldLayout.head.locked,opacity:oldLayout.head.opacity,visible:oldLayout.head.visible});nextLayout.faction=legacy(nextLayout.faction,{x:oldLayout.head.x,y:(oldLayout.head.y||0)+Math.max(7,(oldLayout.head.h||17)*.58),w:Math.max(30,(oldLayout.head.w||80)*.78),h:Math.max(4,(oldLayout.head.h||17)*.3),r:oldLayout.head.r,z:oldLayout.head.z,locked:oldLayout.head.locked,opacity:oldLayout.head.opacity,visible:oldLayout.head.visible})}
+  if(oldLayout.meta&&!oldLayout.type){nextLayout.type=legacy(nextLayout.type,{x:oldLayout.meta.x,y:oldLayout.meta.y,w:(oldLayout.meta.w||84)*.46,h:oldLayout.meta.h,r:oldLayout.meta.r,z:oldLayout.meta.z,locked:oldLayout.meta.locked,opacity:oldLayout.meta.opacity,visible:oldLayout.meta.visible});nextLayout.rarityText=legacy(nextLayout.rarityText,{x:(oldLayout.meta.x||8)+(oldLayout.meta.w||84)*.54,y:oldLayout.meta.y,w:(oldLayout.meta.w||84)*.46,h:oldLayout.meta.h,r:oldLayout.meta.r,z:oldLayout.meta.z,locked:oldLayout.meta.locked,opacity:oldLayout.meta.opacity,visible:oldLayout.meta.visible})}
+  if(oldLayout.rarity&&!oldLayout.rarityMark)nextLayout.rarityMark=legacy(nextLayout.rarityMark,oldLayout.rarity);
+  if(oldLayout.stats){var stats=t.stats||[],gap=2,totalW=oldLayout.stats.w||86,n=Math.max(1,stats.length),cell=(totalW-gap*(n-1))/n;stats.forEach(function(st,i){var key="stat_"+st[0];if(!oldLayout[key])nextLayout[key]=legacy(nextLayout[key],{x:(oldLayout.stats.x||7)+i*(cell+gap),y:oldLayout.stats.y,w:cell,h:oldLayout.stats.h,r:oldLayout.stats.r,z:oldLayout.stats.z,locked:oldLayout.stats.locked,opacity:oldLayout.stats.opacity,visible:oldLayout.stats.visible})})}
+  Object.keys(oldLayout).forEach(function(k){if(DEFAULT_LAYOUT[k])nextLayout[k]=Object.assign({},nextLayout[k],oldLayout[k])});
+  c.layout=nextLayout;Object.keys(c.layout).forEach(function(k){c.layout[k]=Object.assign({},DEFAULT_LAYOUT[k]||{x:10,y:10,w:30,h:10,r:0,z:40,locked:false,opacity:1,visible:true},c.layout[k]||{});if(c.layout[k].opacity==null)c.layout[k].opacity=1;if(c.layout[k].visible==null)c.layout[k].visible=true});
+  if(!Array.isArray(c.extraElements))c.extraElements=[];c.extraElements.forEach(function(el){el.layout=Object.assign({x:10,y:10,w:30,h:8,r:0,z:40,locked:false,opacity:1,visible:true},el.layout||{});if(el.layout.opacity==null)el.layout.opacity=1;if(el.layout.visible==null)el.layout.visible=true});
   if(c.art==null)c.art="";
   return c;
 };
