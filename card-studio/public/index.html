@@ -10,13 +10,14 @@
 <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 <header class="top">
   <div class="brand">
     <b>卡牌组装流水线</b>
-    <span>选模板 → 填字段 → 选素材 → AI 插画 → 批量导出</span>
+    <input id="projectName" class="project-name" value="未命名卡牌项目" aria-label="项目名称">
   </div>
   <div class="actions">
     <button id="undoBtn" title="撤销">↶ 撤销</button>
@@ -37,7 +38,12 @@
       <button id="newCard">＋ 新卡</button>
     </div>
     <input id="cardSearch" class="search" placeholder="搜索名称 / 模板 / 系别 / 关键词">
-    <div class="left-tools"><select id="templateFilter"><option value="all">全部模板</option></select><select id="sortCards"><option value="manual">当前顺序</option><option value="name">按名称</option><option value="cost">按费用</option><option value="faction">按系别</option><option value="rarity">按稀有度</option><option value="template">按模板</option></select></div>
+    <div class="left-tools">
+      <select id="templateFilter"><option value="all">全部模板</option></select>
+      <select id="factionFilter"><option value="all">全部系别</option></select>
+      <select id="rarityFilter"><option value="all">全部稀有度</option></select>
+      <select id="sortCards"><option value="manual">当前顺序</option><option value="name">按名称</option><option value="cost">按费用</option><option value="faction">按系别</option><option value="rarity">按稀有度</option><option value="template">按模板</option></select>
+    </div>
     <div id="cardList" class="card-list"></div>
     <div class="row">
       <button id="duplicate">复制</button>
@@ -91,7 +97,19 @@
     </section>
 
     <section>
-      <h3>3. 插画</h3>
+      <h3>3. 文字样式</h3>
+      <div class="grid">
+        <label>区域<select id="textTarget"><option value="title">标题</option><option value="effect">效果正文</option><option value="meta">系别 / 类型</option><option value="stats">数值</option><option value="cost">费用</option></select></label>
+        <label>字号<input id="textSize" type="number" min="8" max="40"></label>
+        <label>颜色<input id="textColor" type="color"></label>
+        <label>对齐<select id="textAlign"><option value="left">左对齐</option><option value="center">居中</option><option value="right">右对齐</option></select></label>
+      </div>
+      <label class="checkline"><input id="textBold" type="checkbox"> 加粗</label>
+      <button id="applyTextAll" class="wide">把当前区域文字样式应用到全部卡牌</button>
+    </section>
+
+    <section>
+      <h3>4. 插画</h3>
       <div class="row">
         <button id="uploadArt">上传图片</button>
         <button id="clearArt">清空</button>
@@ -99,13 +117,14 @@
       </div>
       <label>AI 关键词<textarea id="aiPrompt" rows="3">战场中的主体，动态构图，环境叙事丰富</textarea></label>
       <label>整套统一风格<textarea id="aiStyle" rows="3">统一的东方奇幻桌游插画，厚涂，电影光影，材质细腻，不出现文字</textarea></label>
-      <button id="aiGenerate" class="wide primary">AI 生成并自动适配</button>
+      <label>AI 质量<select id="aiQuality"><option value="low">草稿 / 快速</option><option value="medium">中等</option><option value="high">高质量</option></select></label>
+      <div class="row"><button id="aiGenerate" class="primary">生成新图</button><button id="aiRedraw">基于现图重绘</button></div>
       <div class="row mini-gap"><button id="batchImages">批量导入图片</button><button id="batchAI">缺图卡牌批量 AI</button></div>
       <input id="batchImageFiles" type="file" accept="image/*" multiple hidden>
     </section>
 
     <section>
-      <h3>4. 素材库</h3>
+      <h3>5. 素材库</h3>
       <div class="tool-row">
         <input id="assetSearch" class="search" placeholder="搜索边框 / 底纹 / 标记 / 字体">
         <select id="assetCategory">
@@ -124,7 +143,7 @@
     </section>
 
     <section>
-      <h3>5. 皮肤</h3>
+      <h3>6. 皮肤</h3>
       <input id="skinSearch" class="search" placeholder="搜索皮肤">
       <div id="skinList" class="skin-list"></div>
       <div class="colors">
@@ -140,7 +159,7 @@
     </section>
 
     <section>
-      <h3>6. 批量与项目</h3>
+      <h3>7. 批量与项目</h3>
       <div class="grid">
         <label>批量前缀<input id="namePrefix" placeholder="例如 UNIT-"></label>
         <label>起始编号<input id="nameStart" type="number" value="1"></label>
@@ -153,8 +172,20 @@
         <button id="exportManifest">导出清单 CSV</button>
         <button id="exportJsonList">导出清单 JSON</button>
       </div>
-      <button id="batchPngZip" class="wide top-gap">批量 PNG 打包 ZIP</button>
+      <div class="row top-gap"><button id="batchPngZip">PNG ZIP</button><button id="batchJpgZip">JPG ZIP</button></div>
       <p class="micro-help">批量图片优先按“图片文件名 = 卡牌名称”匹配，剩余图片再按卡牌顺序填入空位。</p>
+    </section>
+
+    <section>
+      <h3>8. 打印设置</h3>
+      <div class="grid">
+        <label>纸张<select id="sheetSize"><option value="a4">A4</option><option value="a3">A3</option><option value="letter">Letter</option></select></label>
+        <label>DPI<input value="300" disabled></label>
+        <label>成品尺寸<input value="63 × 88 mm" disabled></label>
+        <label>出血<input value="3 mm / 四周" disabled></label>
+      </div>
+      <label class="checkline"><input id="cropMarks" type="checkbox" checked> 添加裁切线</label>
+      <p class="micro-help">导出卡面为 69 × 94 mm（含出血），拼版会按纸张自动计算每页数量。</p>
     </section>
   </aside>
 </div>
