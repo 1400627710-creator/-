@@ -60,4 +60,4 @@ if (!server.includes("OPENAI_IMAGE_EDIT_MODEL")) throw new Error("Dedicated imag
 
 console.log("Card Studio smoke check passed.");
 
-if (app.includes('$("#preview .layout-node.selected").forEach')) fail("single-selector helper used for layout selection list");
+if (app.includes('\n  $("#preview .layout-node.selected").forEach')) fail("single-selector helper used for layout selection list");
