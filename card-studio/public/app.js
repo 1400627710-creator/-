@@ -327,7 +327,7 @@ function setLayoutMode(on,focusPanel){
   if(!layoutEditing){selectedElement=null;refreshElementPanel()}
 }
 function selectLayoutNode(node){
-  $$("#preview .layout-node.selected").forEach(function(x){x.classList.remove("selected")});
+  document.querySelectorAll("#preview .layout-node.selected").forEach(function(x){x.classList.remove("selected")});
   var m=getElementModel(current(),node);if(!m){selectedElement=null;refreshElementPanel();return}
   selectedElement={type:m.type,id:m.id};node.classList.add("selected");refreshElementPanel();
 }
@@ -538,7 +538,7 @@ $("#preview").addEventListener("focusin",function(e){
 $("#preview").addEventListener("focusout",function(e){
   var f=e.target&&e.target.getAttribute&&e.target.getAttribute("data-edit");if(f)patch(f,e.target.innerText.trim(),true);
 });
-$("#layerList").addEventListener("click",function(e){var row=e.target.closest("[data-layer-id]");if(!row)return;setLayoutMode(true,false);selectedElement={type:row.getAttribute("data-layer-type"),id:row.getAttribute("data-layer-id")};var m=selectedModel(current());if(!m)return;if(e.target.closest("[data-layer-eye]")){recordHistory();m.layout.visible=m.layout.visible===false?true:false;renderPreviewOnly();refreshElementPanel();persist();return}if(e.target.closest("[data-layer-lock]")){recordHistory();m.layout.locked=!m.layout.locked;renderPreviewOnly();refreshElementPanel();persist();return}$("#preview .layout-node.selected").forEach(function(x){x.classList.remove("selected")});var node=findSelectedNode();if(node)node.classList.add("selected");refreshElementPanel()});
+$("#layerList").addEventListener("click",function(e){var row=e.target.closest("[data-layer-id]");if(!row)return;setLayoutMode(true,false);selectedElement={type:row.getAttribute("data-layer-type"),id:row.getAttribute("data-layer-id")};var m=selectedModel(current());if(!m)return;if(e.target.closest("[data-layer-eye]")){recordHistory();m.layout.visible=m.layout.visible===false?true:false;renderPreviewOnly();refreshElementPanel();persist();return}if(e.target.closest("[data-layer-lock]")){recordHistory();m.layout.locked=!m.layout.locked;renderPreviewOnly();refreshElementPanel();persist();return}document.querySelectorAll("#preview .layout-node.selected").forEach(function(x){x.classList.remove("selected")});var node=findSelectedNode();if(node)node.classList.add("selected");refreshElementPanel()});
 $("#cardList").addEventListener("click",function(e){var b=e.target.closest("[data-id]");if(!b)return;selected=b.getAttribute("data-id");renderAll()});
 $("#projectName").addEventListener("change",function(){projectName=this.value.trim()||"未命名卡牌项目";this.value=projectName;persist()});
 $("#cardSearch").addEventListener("input",renderList);$("#templateFilter").addEventListener("change",renderList);$("#factionFilter").addEventListener("change",renderList);$("#rarityFilter").addEventListener("change",renderList);$("#sortCards").addEventListener("change",renderList);
