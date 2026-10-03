@@ -397,7 +397,7 @@ var renderCard=function(){
   $("#description").value=c.description||"";
   $("#dynamicStats").innerHTML=t.stats.map(function(s){return '<label>'+s[2]+'<input type="number" data-stat="'+s[0]+'" value="'+esc(c[s[0]])+'"></label>'}).join("");
   $$("[data-color]").forEach(function(el){el.value=c.appearance[el.getAttribute("data-color")]});
-  refreshTextControls();refreshElementPanel();renderTermQuickList();
+  refreshTextControls();refreshElementPanel();renderTermQuickList();syncArtControls();
   renderTemplates();renderAssets();renderSkins();
 };
 var renderExport=function(card){$("#exportCard").innerHTML=cardHtml(card,false);setArt($("#exportCard"),card);$("#exportCard").classList.remove("layout-editing")}
@@ -630,6 +630,8 @@ $("#applyTextAll").onclick=function(){
 };
 
 $("#templateCards").addEventListener("click",function(e){var b=e.target.closest("[data-template]");if(b)setTemplate(b.getAttribute("data-template"))});
+$("#presetShowcase").onclick=function(){recordHistory();applyCompositionPreset("showcase")};
+$("#presetClassicFrame").onclick=function(){recordHistory();applyCompositionPreset("classic")};
 $("#newCard").onclick=function(){recordHistory();var c=makeCard(current().templateId);c.appearance=clone(current().appearance);cards.push(c);selected=c.id;renderAll();setStatus("已创建"+TEMPLATES[c.templateId].name)};
 $("#duplicate").onclick=function(){recordHistory();var c=clone(current());c.id=uid();c.name=current().name+" - 副本";cards.push(c);selected=c.id;renderAll();setStatus("已复制卡牌")};
 $("#delete").onclick=function(){if(cards.length<=1)return;recordHistory();cards=cards.filter(function(c){return c.id!==selected});selected=cards[0].id;renderAll();setStatus("已删除卡牌")};
@@ -674,7 +676,11 @@ $("#importFile").onchange=async function(){
 $("#uploadArt").onclick=function(){$("#artFile").click()};
 $("#artFile").onchange=function(){var file=this.files&&this.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(){patch("art",String(reader.result||""),true)};reader.readAsDataURL(file);this.value=""};
 $("#clearArt").onclick=function(){patch("art","",true)};
-$("#aiStyle").value=aiStyle;
+$("#aiStyle").value=aiStyle;$("#aiQuality").value=["low","medium","high","xhigh","max"].indexOf(aiQuality)>=0?aiQuality:"high";
+$("#aiQuality").addEventListener("change",function(){aiQuality=this.value;localStorage.setItem("card-studio-ai-quality",JSON.stringify(aiQuality));persist()});
+function syncArtControls(){var a=current().appearance,x=a.artFocusX==null?50:a.artFocusX,y=a.artFocusY==null?50:a.artFocusY,z=a.artZoom||100;$("#artFocusX").value=x;$("#artFocusY").value=y;$("#artZoom").value=z;$("#artFocusXValue").textContent=Math.round(x)+"%";$("#artFocusYValue").textContent=Math.round(y)+"%";$("#artZoomValue").textContent=Math.round(z)+"%"}
+["X","Y"].forEach(function(axis){var el=$("#artFocus"+axis);el.addEventListener("pointerdown",function(){recordHistory()});el.addEventListener("input",function(){current().appearance["artFocus"+axis]=num(this.value,50);$("#artFocus"+axis+"Value").textContent=Math.round(num(this.value,50))+"%";renderPreviewOnly();persist()})});
+$("#artZoom").addEventListener("pointerdown",function(){recordHistory()});$("#artZoom").addEventListener("input",function(){current().appearance.artZoom=num(this.value,100);$("#artZoomValue").textContent=Math.round(num(this.value,100))+"%";renderPreviewOnly();persist()});
 $("#aiStyle").addEventListener("change",persist);$("#resetAiStyle").onclick=function(){$("#aiStyle").value=DEFAULT_AI_STYLE;aiStyle=DEFAULT_AI_STYLE;persist();setStatus("已恢复古典油画默认风格")};
 $("#aiGenerate").onclick=async function(){
   var c=current(),btn=this,prompt=$("#aiPrompt").value.trim();if(!prompt)return;
@@ -859,6 +865,11 @@ $("#batchAI").onclick=async function(){
   btn.disabled=false;
 };
 
+$("#smartFrameBtn").onclick=function(){$("#smartFrameFile").click()};
+$("#smartFrameFile").onchange=async function(){var f=this.files&&this.files[0];if(!f)return;var btn=$("#smartFrameBtn");btn.disabled=true;setStatus("正在把普通边框图转换为透明卡框...");
+  try{recordHistory();var data=await makeSmartFrameDataUrl(f),asset={id:uid(),name:f.name.replace(/\.[^.]+$/,"")+" · 智能卡框",category:"frameImage",dataUrl:data,smartFrame:true};userAssets.push(asset);current().appearance.frameImageAssetId=asset.id;applyCompositionPreset("classic",true);renderAll();setStatus("智能卡框已完成：白底已去除、边框已覆盖插画，并套用古典双槽版式")}
+  catch(e){setStatus("智能卡框导入失败："+e.message)}btn.disabled=false;this.value="";
+};
 $("#uploadAssetBtn").onclick=function(){$("#customAssetFile").click()};
 $("#customAssetFile").onchange=async function(){
   var f=this.files&&this.files[0];if(!f)return;var cat=$("#uploadAssetCategory").value;
