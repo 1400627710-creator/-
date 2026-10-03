@@ -184,14 +184,15 @@
         <input id="artFile" type="file" accept="image/*" hidden>
       </div>
       <label>AI 关键词<textarea id="aiPrompt" rows="3">战场中的主体，动态构图，环境叙事丰富</textarea></label>
-      <label>整套统一风格<textarea id="aiStyle" rows="4">古典奇幻桌游插画，传统人工油画质感，亚麻画布纹理，可见而自然的猪鬃笔触与颜料堆叠，柔和的明暗塑形，略带旧画册与十九世纪幻想插画气质，构图清晰、主体明确、色彩克制而丰富；避免现代数码渲染、3D塑料质感、霓虹赛博效果、照片感和任何文字</textarea></label><button id="resetAiStyle" class="wide ai-style-reset">恢复古典油画默认风格</button>
+      <label>快速画风<select id="aiStylePreset"><option value="premium">高端幻想 · 概念厚涂（默认）</option><option value="inkAnime">动漫笔触 · 墨线厚涂</option><option value="oil">古典幻想 · 传统油画</option><option value="abstract">史诗光影 · 抽象笔触</option><option value="custom">自定义 / 保留当前文字</option></select></label>
+      <label>整套统一风格<textarea id="aiStyle" rows="4"></textarea></label><button id="resetAiStyle" class="wide ai-style-reset">恢复高端卡牌默认风格</button>
       <div class="api-key-box">
         <label>AI Key（只保存在本机）<input id="apiKeyInput" type="password" placeholder="粘贴后点保存"></label>
         <button id="saveApiKey">保存 AI Key</button>
         <small id="apiKeyStatus">正在检查...</small>
       </div>
       <label>AI 质量<select id="aiQuality"><option value="low">草稿 LOW</option><option value="medium">预览 MEDIUM</option><option value="high" selected>高质量 HIGH（默认）</option><option value="xhigh">精细 XHIGH</option><option value="max">终稿 MAX</option></select></label>
-      <p class="micro-help ai-quality-help">建议：构图试验用 MEDIUM；准备真正上卡时用 HIGH / XHIGH；最终成品用 MAX。</p>
+      <p class="micro-help ai-quality-help">默认使用质量优先的 GPT Image 2.5 Sunburst。构图试验用 MEDIUM；准备真正上卡时用 HIGH / XHIGH；最终成品用 MAX。</p>
       <div class="art-focus-box"><b>插画构图微调</b><small>无需重生成，也能把人物脸部/主体移到正确位置</small>
         <label>横向焦点 <span id="artFocusXValue">50%</span><input id="artFocusX" type="range" min="0" max="100" value="50"></label>
         <label>纵向焦点 <span id="artFocusYValue">50%</span><input id="artFocusY" type="range" min="0" max="100" value="50"></label>
