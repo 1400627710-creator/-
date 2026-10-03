@@ -351,7 +351,7 @@ function refreshElementPanel(){
   var c=current(),m=selectedModel(c),models=selectedModels(c),count=models.length,disabled=!m;
   ["#elX","#elY","#elW","#elH","#elR","#elZ","#elOpacity","#toggleElementVisibility","#toggleElementLock","#layerUp","#layerDown","#bringFront","#sendBack","#duplicateElement","#deleteElement"].forEach(function(q){var el=$(q);if(el)el.disabled=disabled});
   $("#selectionCount").textContent=count+" 个模块";$("#selectedLayerName").textContent=count>1?count+" 个模块":(m?m.label:"未选择");
-  if(!m){$("#elementText").value="";$("#elementText").disabled=true;$("#elOpacity").value=100;$("#elOpacityValue").textContent="100%";$("#addImageLabel").disabled=true;$("#detachImageLabel").disabled=true;$("#imageLabelPosition").disabled=true;$("#imageLabelTools").classList.remove("active");renderLayerPanel();return}
+  if(!m){$("#elementText").value="";$("#elementText").disabled=true;$("#elOpacity").value=100;$("#elOpacityValue").textContent="100%";$("#addImageLabel").disabled=true;$("#detachImageLabel").disabled=true;$("#imageLabelPosition").disabled=true;$("#imageLabelTools").classList.remove("active");renderLayerPanel();refreshTextControls();return}
   $("#elX").value=Math.round(m.layout.x*10)/10;$("#elY").value=Math.round(m.layout.y*10)/10;$("#elW").value=Math.round(m.layout.w*10)/10;$("#elH").value=Math.round(m.layout.h*10)/10;$("#elR").value=Math.round(m.layout.r*10)/10;$("#elZ").value=m.layout.z||20;
   var opacity=Math.round((m.layout.opacity==null?1:m.layout.opacity)*100);$("#elOpacity").value=opacity;$("#elOpacityValue").textContent=count>1?"所选 → "+opacity+"%":opacity+"%";
   var allHidden=count&&models.every(function(x){return x.layout.visible===false}),allLocked=count&&models.every(function(x){return x.layout.locked});
@@ -360,7 +360,7 @@ function refreshElementPanel(){
   $("#elementText").disabled=!isExtra||isImage;$("#elementText").value=isExtra&&!isImage?(m.element.text||""):"";
   $("#addImageLabel").disabled=!isImage;$("#detachImageLabel").disabled=!isAttached;$("#imageLabelPosition").disabled=!isImage;
   $("#imageLabelTools").classList.toggle("active",isImage||isAttached);
-  applySelectionClasses();renderLayerPanel();
+  applySelectionClasses();renderLayerPanel();refreshTextControls();
 }
 function setLayoutMode(on,focusPanel){
   layoutEditing=!!on;
@@ -459,18 +459,25 @@ var renderPreviewOnly=function(){
   $("#preview").innerHTML=cardHtml(c,true);setArt($("#preview"),c);$("#preview").classList.toggle("layout-editing",layoutEditing);applySelectionClasses();renderLayerPanel();
   $("#templateName").textContent=t.name;
 };
-var TEXT_TARGETS={title:"title",effect:"effect",meta:"meta",stats:"stats",cost:"cost"};
-function refreshTextControls(){
-  var target=$("#textTarget")?$("#textTarget").value:"title",prefix=TEXT_TARGETS[target]||"title",a=current().appearance;
-  if($("#textSize"))$("#textSize").value=a[prefix+"Size"];
-  if($("#textColor"))$("#textColor").value=a[prefix+"Color"];
-  if($("#textAlign"))$("#textAlign").value=a[prefix+"Align"];
-  if($("#textBold"))$("#textBold").checked=!!a[prefix+"Bold"];
+function textControlTargets(){
+  var c=current(),raw=$("#textTarget")?$("#textTarget").value:"title";
+  if(raw!=="selected")return [{type:"layout",key:raw}];
+  return selectedModels(c).filter(function(m){return (m.type==="layout"&&FIXED_TEXT_KEYS.indexOf(m.id)>=0)||(m.type==="extra"&&m.element.kind!=="image")}).map(function(m){return m.type==="layout"?{type:"layout",key:m.id}:{type:"extra",element:m.element}});
 }
-function setTextStyleValue(suffix,value,record){
-  var prefix=TEXT_TARGETS[$("#textTarget").value]||"title";
-  if(record!==false)recordHistory();
-  current().appearance[prefix+suffix]=value;renderPreviewOnly();persist();
+function readTextControlStyle(target){
+  var c=current(),a=normalizeAppearance(c.appearance);
+  if(target.type==="layout")return textStyleFor(c,target.key,a);
+  var el=target.element;return {size:el.fontSize||11,color:el.color||a.text,align:el.align||"left",bold:!!el.bold,fontStyle:el.fontStyle||a.fontStyle||"default"};
+}
+function refreshTextControls(){
+  if(!$("#textTarget"))return;var targets=textControlTargets(),disabled=!targets.length,style=targets.length?readTextControlStyle(targets[0]):{size:13,color:"#334155",align:"left",bold:false,fontStyle:"default"};
+  ["#textSize","#textColor","#textAlign","#textBold","#textFont","#clearTextOverride","#applyTextAll"].forEach(function(q){var el=$(q);if(el)el.disabled=disabled});
+  $("#textSize").value=style.size;$("#textColor").value=style.color;$("#textAlign").value=style.align;$("#textBold").checked=!!style.bold;$("#textFont").value=style.fontStyle||"default";
+}
+function setTextStyleValue(field,value,record){
+  var targets=textControlTargets();if(!targets.length){setStatus("请先选择一个文字模块，或在“文字模块”中指定区域");return}if(record!==false)recordHistory();var c=current();
+  targets.forEach(function(t){if(t.type==="layout"){if(!c.textStyles)c.textStyles={};if(!c.textStyles[t.key])c.textStyles[t.key]={};c.textStyles[t.key][field]=value}else{var el=t.element;if(field==="size")el.fontSize=value;else el[field]=value}});
+  renderPreviewOnly();refreshTextControls();persist();
 }
 var renderCard=function(){
   var c=current(),t=TEMPLATES[c.templateId];
@@ -764,14 +771,20 @@ $("#termUsage").onclick=function(e){var b=e.target.closest("[data-term-card]");i
 $("#preview").addEventListener("dblclick",function(e){var span=e.target.closest(".rule-term");if(!span)return;var term=termByName(span.getAttribute("data-rule-term"));if(term)openTermLibrary(term)});
 $("#preview").addEventListener("dblclick",function(e){if(!layoutEditing)return;var node=e.target.closest(".free-image-element");if(!node)return;e.preventDefault();selectLayoutNode(node);addLabelToSelectedImage()});
 $("#textTarget").addEventListener("change",refreshTextControls);
-$("#textSize").addEventListener("change",function(){setTextStyleValue("Size",Math.max(8,Math.min(40,num(this.value,13))),true)});
-$("#textColor").addEventListener("change",function(){setTextStyleValue("Color",this.value,true)});
-$("#textAlign").addEventListener("change",function(){setTextStyleValue("Align",this.value,true)});
-$("#textBold").addEventListener("change",function(){setTextStyleValue("Bold",this.checked,true)});
+$("#textSize").addEventListener("change",function(){setTextStyleValue("size",Math.max(8,Math.min(40,num(this.value,13))),true)});
+$("#textColor").addEventListener("change",function(){setTextStyleValue("color",this.value,true)});
+$("#textAlign").addEventListener("change",function(){setTextStyleValue("align",this.value,true)});
+$("#textBold").addEventListener("change",function(){setTextStyleValue("bold",this.checked,true)});
+$("#textFont").addEventListener("change",function(){setTextStyleValue("fontStyle",this.value,true)});
+$("#clearTextOverride").onclick=function(){
+  var targets=textControlTargets();if(!targets.length)return;recordHistory();var c=current(),a=normalizeAppearance(c.appearance);
+  targets.forEach(function(t){if(t.type==="layout"){if(c.textStyles)delete c.textStyles[t.key]}else{t.element.fontSize=11;t.element.color=a.text;t.element.align="left";t.element.bold=false;t.element.fontStyle=""}});
+  renderPreviewOnly();refreshTextControls();persist();setStatus("已恢复所选文字模块的默认样式");
+};
 $("#applyTextAll").onclick=function(){
-  var prefix=TEXT_TARGETS[$("#textTarget").value]||"title",src=current().appearance;recordHistory();
-  cards.forEach(function(c){c.appearance[prefix+"Size"]=src[prefix+"Size"];c.appearance[prefix+"Color"]=src[prefix+"Color"];c.appearance[prefix+"Align"]=src[prefix+"Align"];c.appearance[prefix+"Bold"]=src[prefix+"Bold"]});
-  renderAll();setStatus("当前文字样式已应用到全部卡牌");
+  var targets=textControlTargets().filter(function(t){return t.type==="layout"});if(!targets.length){setStatus("自定义文字没有跨卡牌对应模块；请选择名称、系别、攻击等固定文字模块");return}recordHistory();var source=current();
+  targets.forEach(function(t){var style=clone(textStyleFor(source,t.key,normalizeAppearance(source.appearance)));cards.forEach(function(c){if(!c.textStyles)c.textStyles={};c.textStyles[t.key]=clone(style)})});
+  renderAll();setStatus("已把 "+targets.length+" 个文字模块的样式应用到全部卡牌");
 };
 
 $("#templateCards").addEventListener("click",function(e){var b=e.target.closest("[data-template]");if(b)setTemplate(b.getAttribute("data-template"))});
