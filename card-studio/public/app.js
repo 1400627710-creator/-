@@ -572,14 +572,14 @@ $("#layoutMode").onclick=function(){setLayoutMode(true,true)};
 $("#layoutQuickButton").onclick=function(){setLayoutMode(!layoutEditing,true)};
 $("#preview").addEventListener("pointerdown",function(e){
   if(!layoutEditing)return;var handle=e.target.closest("[data-handle]"),node=e.target.closest(".layout-node");
-  if(node){beginLayoutPointer(e,node,handle?handle.getAttribute("data-handle"):"move");return}
+  if(node){var nm=getElementModel(current(),node);if(nm&&nm.id==="art"&&nm.layout.locked){beginMarquee(e);return}if(nm&&nm.layout.locked){selectLayoutNode(node,e.ctrlKey||e.metaKey||e.shiftKey);return}beginLayoutPointer(e,node,handle?handle.getAttribute("data-handle"):"move");return}
   if(e.target.closest(".card"))beginMarquee(e);
 });
 window.addEventListener("pointermove",function(e){moveLayoutPointer(e);moveMarquee(e)});
 window.addEventListener("pointerup",function(){endLayoutPointer();endMarquee()});window.addEventListener("pointercancel",function(){endLayoutPointer();endMarquee()});
 $("#preview").addEventListener("click",function(e){if(layoutEditing&&e.target.closest(".layout-node")){e.preventDefault();e.stopPropagation()}});
 $("#preview").addEventListener("dblclick",function(e){
-  if(!layoutEditing)return;var node=e.target.closest(".layout-node"),card=e.target.closest(".card");
+  if(!layoutEditing)return;var node=e.target.closest(".layout-node"),card=e.target.closest(".card");if(node&&node.getAttribute("data-layout-key")==="art"){var am=getElementModel(current(),node);if(am&&am.layout.locked)node=null}
   if(!node&&card){var r=card.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*100,y=(e.clientY-r.top)/r.height*100;addExtra("text",{x:clamp(x-12,0,88),y:clamp(y-3,0,96)});setTimeout(function(){var n=findSelectedNode();if(n){n.contentEditable="true";n.focus();document.execCommand&&document.execCommand("selectAll",false,null)}},0);return}
   if(node&&node.classList.contains("free-text-element")){selectLayoutNode(node,e.ctrlKey||e.metaKey||e.shiftKey);node.contentEditable="true";node.focus();document.execCommand&&document.execCommand("selectAll",false,null)}
 });
@@ -629,8 +629,9 @@ $("#distributeH").onclick=function(){distributeSelection("h")};$("#distributeV")
 $("#selectAllLayers").onclick=function(){var refs=allLayerModels(current()).filter(function(m){return m.layout.visible!==false&&!m.layout.locked}).map(function(m){return {type:m.type,id:m.id}});setSelection(refs,refs[refs.length-1]);setStatus("已选择全部可见且未锁定模块")};
 
 window.addEventListener("keydown",function(e){
-  var tag=document.activeElement&&document.activeElement.tagName;
-  if((e.key==="l"||e.key==="L")&&["INPUT","TEXTAREA","SELECT"].indexOf(tag)<0){e.preventDefault();setLayoutMode(!layoutEditing,true);return}
+  var tag=document.activeElement&&document.activeElement.tagName;if(["INPUT","TEXTAREA","SELECT"].indexOf(tag)>=0)return;
+  if(e.key==="l"||e.key==="L"){e.preventDefault();setLayoutMode(!layoutEditing,true);return}
+  var modeKeys={"1":"content","2":"text","3":"layout","4":"visual","5":"rules","6":"export"};if(modeKeys[e.key]){e.preventDefault();setToolMode(modeKeys[e.key]);if(modeKeys[e.key]==="layout"&&!layoutEditing)setLayoutMode(true,false);return}
 });
 window.addEventListener("keydown",function(e){
   if(!layoutEditing||["INPUT","TEXTAREA","SELECT"].indexOf(document.activeElement&&document.activeElement.tagName)>=0)return;
@@ -656,8 +657,8 @@ $("#preview").addEventListener("focusout",function(e){
   var f=e.target&&e.target.getAttribute&&e.target.getAttribute("data-edit");if(f){patch(f,e.target.innerText.trim(),true);return}
   var n=e.target&&e.target.closest&&e.target.closest(".free-text-element[data-extra-id]");if(n&&n.contentEditable==="true"){var m=getElementModel(current(),n);if(m&&m.type==="extra"){m.element.text=n.innerText.trim();n.contentEditable="false";renderPreviewOnly();refreshElementPanel();persist()}}
 });
-$("#layerList").addEventListener("click",function(e){var row=e.target.closest("[data-layer-id]");if(!row)return;setLayoutMode(true,false);var ref={type:row.getAttribute("data-layer-type"),id:row.getAttribute("data-layer-id")};if(e.ctrlKey||e.metaKey||e.shiftKey)addSelection(ref);else setSelection([ref],ref);var m=modelFromRef(current(),ref);if(!m)return;if(e.target.closest("[data-layer-eye]")){recordHistory();m.layout.visible=m.layout.visible===false?true:false;renderPreviewOnly();refreshElementPanel();persist();return}if(e.target.closest("[data-layer-lock]")){recordHistory();m.layout.locked=!m.layout.locked;renderPreviewOnly();refreshElementPanel();persist();return}document.querySelectorAll("#preview .layout-node.selected").forEach(function(x){x.classList.remove("selected")});var node=findSelectedNode();if(node)node.classList.add("selected");refreshElementPanel()});
-$("#cardList").addEventListener("click",function(e){var b=e.target.closest("[data-id]");if(!b)return;selected=b.getAttribute("data-id");renderAll()});
+$("#layerList").addEventListener("click",function(e){var row=e.target.closest("[data-layer-id]");if(!row)return;setLayoutMode(true,false);var ref={type:row.getAttribute("data-layer-type"),id:row.getAttribute("data-layer-id")};if(e.ctrlKey||e.metaKey||e.shiftKey)addSelection(ref);else setSelection([ref],ref);var m=modelFromRef(current(),ref);if(!m)return;if(e.target.closest("[data-layer-eye]")){recordHistory();m.layout.visible=m.layout.visible===false?true:false;renderPreviewOnly();refreshElementPanel();persist();return}if(e.target.closest("[data-layer-lock]")){recordHistory();m.layout.locked=!m.layout.locked;renderPreviewOnly();refreshElementPanel();persist();return}applySelectionClasses();refreshElementPanel()});
+$("#cardList").addEventListener("click",function(e){var b=e.target.closest("[data-id]");if(!b)return;selected=b.getAttribute("data-id");selectedElements=[];selectedElement=null;renderAll()});
 $("#projectName").addEventListener("change",function(){projectName=this.value.trim()||"未命名卡牌项目";this.value=projectName;persist()});
 $("#cardSearch").addEventListener("input",renderList);$("#templateFilter").addEventListener("change",renderList);$("#factionFilter").addEventListener("change",renderList);$("#rarityFilter").addEventListener("change",renderList);$("#sortCards").addEventListener("change",renderList);
 $$("[data-form]").forEach(function(el){
