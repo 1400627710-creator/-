@@ -10,12 +10,12 @@
 <script src="/vendor/html-to-image/dist/html-to-image.js"></script>
 <script src="/vendor/jspdf/dist/jspdf.umd.min.js"></script>
 <script src="/vendor/jszip/dist/jszip.min.js"></script>
-<link rel="stylesheet" href="/styles.css?v=2.2.0">
+<link rel="stylesheet" href="/styles.css?v=2.3.0">
 </head>
 <body>
 <header class="top">
   <div class="brand">
-    <b>卡牌组装流水线</b><span class="version-badge">v2.2.0 · 独立图层自由布局</span>
+    <b>卡牌组装流水线</b><span class="version-badge">v2.3.0 · 独立图层自由布局</span>
     <input id="projectName" class="project-name" value="未命名卡牌项目" aria-label="项目名称">
   </div>
   <div class="actions">
@@ -80,7 +80,15 @@
   </main>
 
   <aside class="right">
-    <section>
+    <div class="right-mode-tabs" id="rightModeTabs">
+      <button data-tool-mode="content" class="active">内容</button>
+      <button data-tool-mode="text">文字</button>
+      <button data-tool-mode="layout">自由编辑</button>
+      <button data-tool-mode="visual">视觉</button>
+      <button data-tool-mode="rules">规则 / 卡查</button>
+      <button data-tool-mode="export">导出 / 项目</button>
+    </div>
+    <section data-tool-group="content">
       <h3>1. 模板</h3>
       <div id="templateCards" class="template-cards"></div>
       <div class="row mini-gap"><button id="cloneTemplate">另存为自定义模板</button><button id="deleteTemplate">删除自定义模板</button></div>
@@ -90,8 +98,8 @@
       </div>
     </section>
 
-    <section>
-      <h3>2. 填写卡牌</h3>
+    <section data-tool-group="content">
+      <h3>填写卡牌</h3>
       <div class="grid">
         <label>名称<input data-form="name"></label>
         <label>费用<input type="number" data-form="cost"></label>
@@ -112,8 +120,8 @@
       <label>检索关键词<input data-form="tags" placeholder="快速,远程,守备"></label>
     </section>
 
-    <section id="layoutPanel" class="layout-panel">
-      <h3>3. 自由布局 <span class="mode-required">切换到自由布局后使用</span></h3>
+    <section id="layoutPanel" class="layout-panel" data-tool-group="layout">
+      <h3>自由编辑 <span class="mode-required">切换到自由布局后使用</span></h3>
       <div class="layout-actions">
         <button id="addImageElement" class="image-element-primary">＋ 导入小素材 / 图标</button>
         <input id="freeImageFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
@@ -134,7 +142,17 @@
         <button id="addImageLabel">给选中图标加文字</button>
         <button id="detachImageLabel">解除文字跟随</button>
       </div>
-      <div class="selected-layer-head"><b>当前模块：<span id="selectedLayerName">未选择</span></b><small>卡面点击任意模块，或从下方图层列表选择</small></div>
+      <div class="selected-layer-head"><b>当前选择：<span id="selectedLayerName">未选择</span></b><small><span id="selectionCount">0 个模块</span> · 卡面框选 / Ctrl(Cmd)+点击多选 / Esc 清空</small></div>
+      <div class="multi-edit-tools">
+        <div class="tool-subtitle"><b>多选与校准</b><small>类似图像编辑器的对齐与分布</small></div>
+        <div class="align-grid">
+          <button id="alignLeft">左对齐</button><button id="alignHCenter">水平居中</button><button id="alignRight">右对齐</button>
+          <button id="alignTop">顶对齐</button><button id="alignVCenter">垂直居中</button><button id="alignBottom">底对齐</button>
+          <button id="distributeH">水平等距</button><button id="distributeV">垂直等距</button><button id="selectAllLayers">全选可见层</button>
+        </div>
+        <label class="checkline"><input id="lockAspect" type="checkbox"> 拖拽缩放时锁定宽高比</label>
+        <p class="micro-help hotkey-help"><b>快捷键：</b>方向键微调 0.2%；Shift+方向键 1%；Alt+方向键 0.05%；Ctrl/Cmd+A 全选；Ctrl/Cmd+D 复制；Delete 隐藏固定模块 / 删除自定义模块；Esc 清空选择；双击空白处新增文本。</p>
+      </div>
       <div class="grid">
         <label>X<input id="elX" type="number" step="1"></label>
         <label>Y<input id="elY" type="number" step="1"></label>
@@ -161,11 +179,11 @@
         <button id="copyLayoutAll">布局应用到同模板</button>
       </div>
       <label class="top-gap">元素文字<textarea id="elementText" rows="2" placeholder="选中文字元素后直接输入；给图标加文字后会自动选中新文字"></textarea></label>
-      <p class="micro-help">自由布局模式：名称、系别、类型、稀有度、费用、攻击、血量、移速、射程、标签、效果、插画全部是独立模块。每层可单独移动、缩放、旋转、调透明度、隐藏、锁定和排序；导入图片默认放在文字层下方。</p>
+      <p class="micro-help">自由编辑模式：所有标准字段和自定义元素都是独立图层。支持框选、Ctrl/Cmd 多选、批量拖动、比例缩放、对齐/分布、透明度、锁定、隐藏与排序；双击空白处可直接新增文字。</p>
     </section>
 
-    <section>
-      <h3>4. 文字样式</h3>
+    <section data-tool-group="text">
+      <h3>文字样式</h3>
       <div class="grid">
         <label>区域<select id="textTarget"><option value="title">标题</option><option value="effect">效果正文</option><option value="meta">系别 / 类型</option><option value="stats">数值</option><option value="cost">费用</option></select></label>
         <label>字号<input id="textSize" type="number" min="8" max="40"></label>
@@ -176,8 +194,8 @@
       <button id="applyTextAll" class="wide">把当前区域文字样式应用到全部卡牌</button>
     </section>
 
-    <section>
-      <h3>5. 插画</h3>
+    <section data-tool-group="visual">
+      <h3>插画</h3>
       <div class="row">
         <button id="uploadArt">上传图片</button>
         <button id="clearArt">清空</button>
@@ -187,11 +205,7 @@
       <label>快速画风<select id="aiStylePreset"><option value="premium">高端幻想 · 概念厚涂（默认）</option><option value="inkAnime">动漫笔触 · 墨线厚涂</option><option value="oil">古典幻想 · 传统油画</option><option value="abstract">史诗光影 · 抽象笔触</option><option value="custom">自定义 / 保留当前文字</option></select></label>
       <label>整套统一风格<textarea id="aiStyle" rows="4"></textarea></label><button id="resetAiStyle" class="wide ai-style-reset">恢复高端卡牌默认风格</button>
       <div class="style-reference-box"><b>整套风格母版</b><small id="styleReferenceStatus">未设置。设置后，后续生图会参考同一张图的笔触、色彩和光影语言。</small><div class="row"><button id="setStyleReference">以当前插画为母版</button><button id="uploadStyleReference">上传参考图</button><button id="clearStyleReference">清除</button></div><input id="styleReferenceFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></div>
-      <div class="api-key-box">
-        <label>AI Key（只保存在本机）<input id="apiKeyInput" type="password" placeholder="粘贴后点保存"></label>
-        <button id="saveApiKey">保存 AI Key</button>
-        <small id="apiKeyStatus">正在检查...</small>
-      </div>
+      <div class="private-ai-note">私人开发版：已取消 AI Key 输入、保存与验证界面。AI 接入方式后续单独设计。</div>
       <label>AI 质量<select id="aiQuality"><option value="low">草稿 LOW</option><option value="medium">预览 MEDIUM</option><option value="high" selected>高质量 HIGH（默认）</option><option value="xhigh">精细 XHIGH</option><option value="max">终稿 MAX</option></select></label>
       <p class="micro-help ai-quality-help">默认使用质量优先的 GPT Image 2.5 Sunburst。构图试验用 MEDIUM；准备真正上卡时用 HIGH / XHIGH；最终成品用 MAX。</p>
       <div class="art-focus-box"><b>插画构图微调</b><small>无需重生成，也能把人物脸部/主体移到正确位置</small>
@@ -204,8 +218,8 @@
       <input id="batchImageFiles" type="file" accept="image/*" multiple hidden>
     </section>
 
-    <section>
-      <h3>6. 素材库</h3>
+    <section data-tool-group="visual">
+      <h3>素材库 / 卡框 / 背景</h3>
       <div class="tool-row">
         <input id="assetSearch" class="search" placeholder="搜索边框 / 底纹 / 标记 / 字体">
         <select id="assetCategory">
@@ -224,8 +238,8 @@
       <div id="customAssetList" class="custom-assets"></div>
     </section>
 
-    <section>
-      <h3>7. 皮肤</h3>
+    <section data-tool-group="visual">
+      <h3>配色与皮肤</h3>
       <input id="skinSearch" class="search" placeholder="搜索皮肤">
       <div id="skinList" class="skin-list"></div>
       <div class="colors">
@@ -240,8 +254,8 @@
       </div>
     </section>
 
-    <section>
-      <h3>8. 批量与项目</h3>
+    <section data-tool-group="export">
+      <h3>批量与项目</h3>
       <div class="grid">
         <label>批量前缀<input id="namePrefix" placeholder="例如 UNIT-"></label>
         <label>起始编号<input id="nameStart" type="number" value="1"></label>
@@ -258,8 +272,8 @@
       <p class="micro-help">批量图片优先按“图片文件名 = 卡牌名称”匹配，剩余图片再按卡牌顺序填入空位。</p>
     </section>
 
-    <section>
-      <h3>9. 标签化卡查 / TTS</h3>
+    <section data-tool-group="rules">
+      <h3>标签 / 词条 / 卡查 / TTS</h3>
       <div class="grid"><label>系列名<input data-form="setName" placeholder="例如 荣耀之星"></label><label>卡牌编号<input data-form="cardNumber" placeholder="例如 SET01-001"></label><label>年份<input data-form="year" placeholder="2026"></label><label>署名<input data-form="credit" placeholder="作者 / AI绘画 / 工作室"></label></div>
       <label>标签<input data-form="tags" placeholder="单位,王国,守备,长枪"></label>
       <label>规则关键词<input data-form="rulesKeywords" placeholder="部署,守备,相邻据点"></label>
@@ -267,8 +281,8 @@
       <p class="micro-help">卡查会索引名称、编号、标签、系别、类型、稀有度、效果文字与规则关键词；TTS 导出会保留这些字段供未来模组脚本使用。</p>
     </section>
 
-    <section>
-      <h3>10. 打印设置</h3>
+    <section data-tool-group="export">
+      <h3>导出与打印</h3>
       <div class="grid">
         <label>纸张<select id="sheetSize"><option value="a4">A4</option><option value="a3">A3</option><option value="letter">Letter</option></select></label>
         <label>DPI<input value="300" disabled></label>
@@ -326,6 +340,6 @@
 </div>
 
 <div class="hidden-export"><div id="exportCard"></div></div>
-<script src="/app.js?v=2.2.0"></script>
+<script src="/app.js?v=2.3.0"></script>
 </body>
 </html>
