@@ -9,9 +9,7 @@
     "check": "node --check public/app.js && node --check server.mjs && node smoke-check.mjs"
   },
   "dependencies": {
-    "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "openai": "latest",
     "html-to-image": "^1.11.13",
     "jspdf": "^2.5.2",
     "jszip": "^3.10.1",
