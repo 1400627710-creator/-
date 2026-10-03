@@ -58,7 +58,7 @@ var CATEGORY_NAMES={frame:"边框",texture:"底纹",cost:"费用标记",rarity:"
 
 var DEFAULT_APPEARANCE={
   primary:"#111827",secondary:"#334155",accent:"#f59e0b",frame:"#0f172a",text:"#f8fafc",
-  frameStyle:"classic",textureStyle:"clean",costStyle:"circle",rarityStyle:"star",fontStyle:"default",frameImageAssetId:"",textureImageAssetId:"",iconAssetId:"",
+  frameStyle:"classic",textureStyle:"clean",costStyle:"circle",rarityStyle:"star",fontStyle:"default",finishStyle:"premium",frameImageAssetId:"",textureImageAssetId:"",iconAssetId:"",artFocusX:50,artFocusY:50,artZoom:100,
   titleSize:22,titleColor:"#f8fafc",titleAlign:"left",titleBold:true,
   effectSize:13,effectColor:"#f8fafc",effectAlign:"left",effectBold:false,
   metaSize:11,metaColor:"#f8fafc",metaAlign:"center",metaBold:true,
@@ -131,7 +131,7 @@ var OLD_AI_STYLE="统一的东方奇幻桌游插画，厚涂，电影光影，�
 var DEFAULT_AI_STYLE="古典奇幻桌游插画，传统人工油画质感，亚麻画布纹理，可见而自然的猪鬃笔触与颜料堆叠，柔和的明暗塑形，略带旧画册与十九世纪幻想插画气质，构图清晰、主体明确、色彩克制而丰富；避免现代数码渲染、3D塑料质感、霓虹赛博效果、照片感和任何文字";
 var aiStyle=loadJson("card-studio-ai-style",DEFAULT_AI_STYLE);if(aiStyle===OLD_AI_STYLE)aiStyle=DEFAULT_AI_STYLE;
 var projectName=saved&&saved.projectName?saved.projectName:"未命名卡牌项目";
-var aiQuality="low";
+var aiQuality=loadJson("card-studio-ai-quality","high");
 var printSettings={sheet:"a4",crop:true};
 var SHEETS={a4:[210,297],a3:[297,420],letter:[215.9,279.4]};
 
@@ -235,7 +235,7 @@ var cardHtml=function(card,editable){
   var desc=renderRichText(card.description,card);
   var artEmpty=card.art?"":'<div class="art-empty">插画区域<br><small>上传图片或使用 AI 生成</small></div>';
   var layoutId=t.baseLayout||t.id;
-  var classes=["card","tpl-"+layoutId,"frame-"+a.frameStyle,"texture-"+a.textureStyle,"cost-"+a.costStyle,"rarity-"+a.rarityStyle,"font-"+a.fontStyle].join(" ");
+  var classes=["card","tpl-"+layoutId,"frame-"+a.frameStyle,"texture-"+a.textureStyle,"cost-"+a.costStyle,"rarity-"+a.rarityStyle,"font-"+a.fontStyle,"finish-"+(a.finishStyle||"premium")].join(" ");
   var style="--p:"+a.primary+";--s:"+a.secondary+";--a:"+a.accent+";--f:"+a.frame+";--t:"+a.text+";--stats-count:"+Math.max(1,t.stats.length)+";--title-size:"+a.titleSize+"px;--title-color:"+a.titleColor+";--title-align:"+a.titleAlign+";--title-weight:"+(a.titleBold?900:500)+";--effect-size:"+a.effectSize+"px;--effect-color:"+a.effectColor+";--effect-align:"+a.effectAlign+";--effect-weight:"+(a.effectBold?800:400)+";--meta-size:"+a.metaSize+"px;--meta-color:"+a.metaColor+";--meta-align:"+a.metaAlign+";--meta-weight:"+(a.metaBold?800:500)+";--stats-size:"+a.statsSize+"px;--stats-color:"+a.statsColor+";--stats-align:"+a.statsAlign+";--stats-weight:"+(a.statsBold?900:500)+";--cost-size:"+a.costSize+"px;--cost-color:"+a.costColor+";--cost-align:"+a.costAlign+";--cost-weight:"+(a.costBold?900:500);
   var frameAsset=assetById(a.frameImageAssetId),textureAsset=assetById(a.textureImageAssetId),iconAsset=assetById(a.iconAssetId);
   var customFrame=frameAsset?'<img class="custom-frame-layer" src="'+esc(frameAsset.dataUrl)+'">':"";
@@ -287,8 +287,8 @@ function renderLayerPanel(){
   box.innerHTML=layers.map(function(m){var p=m.layout,sel=selectedElement&&selectedElement.type===m.type&&selectedElement.id===m.id;return '<button class="layer-row '+(sel?"selected ":"")+(p.visible===false?"is-hidden ":"")+'" data-layer-type="'+m.type+'" data-layer-id="'+esc(m.id)+'"><span class="layer-eye" data-layer-eye title="显示/隐藏">'+(p.visible===false?"○":"●")+'</span><span class="layer-name">'+esc(m.label)+'</span><span class="layer-meta">Z '+(p.z||0)+' · '+Math.round((p.opacity==null?1:p.opacity)*100)+'%</span><span class="layer-lock" data-layer-lock title="锁定/解锁">'+(p.locked?"🔒":"🔓")+'</span></button>'}).join("");
 }
 var setArt=function(root,card){
-  var art=root.querySelector(".art");
-  if(art&&card.art)art.style.backgroundImage='url("'+String(card.art).replace(/"/g,"%22")+'")';
+  var art=root.querySelector(".art"),a=normalizeAppearance(card.appearance);
+  if(art){if(card.art)art.style.backgroundImage='url("'+String(card.art).replace(/"/g,"%22")+'")';art.style.backgroundPosition=(a.artFocusX==null?50:a.artFocusX)+"% "+(a.artFocusY==null?50:a.artFocusY)+"%";art.style.backgroundSize=Math.max(100,a.artZoom||100)+"% auto"}
 };
 var layoutEditing=false,selectedElement=null,dragState=null;
 function getElementModel(card,node){
@@ -777,7 +777,30 @@ $("#cropMarks").onchange=function(){printSettings.crop=this.checked;persist()};
 function safeFilename(name){return String(name||"card").replace(/[\\/:*?"<>|]/g,"_").trim()||"card"}
 function normalizeName(name){return String(name||"").replace(/\\.[^.]+$/,"").replace(/[\\s_\\-]+/g,"").toLowerCase()}
 function fileToDataUrl(file){return new Promise(function(resolve,reject){var rr=new FileReader();rr.onload=function(){resolve(String(rr.result||""))};rr.onerror=reject;rr.readAsDataURL(file)})}
-function projectPayload(){return {format:"card-assembly-studio",version:6,exportedAt:new Date().toISOString(),projectName:projectName,cards:cards,selected:selected,skins:skins,ruleTerms:ruleTerms,userAssets:userAssets,customTemplates:customTemplates,favoriteAssets:favoriteAssets,snapshots:snapshots,aiStyle:$("#aiStyle").value,aiQuality:aiQuality,printSettings:printSettings}}
+function imageFromDataUrl(src){return new Promise(function(resolve,reject){var im=new Image();im.onload=function(){resolve(im)};im.onerror=reject;im.src=src})}
+async function makeSmartFrameDataUrl(file){
+  var src=await fileToDataUrl(file),im=await imageFromDataUrl(src),maxSide=1800,scale=Math.min(1,maxSide/Math.max(im.naturalWidth,im.naturalHeight)),w=Math.max(1,Math.round(im.naturalWidth*scale)),h=Math.max(1,Math.round(im.naturalHeight*scale)),cv=document.createElement("canvas");cv.width=w;cv.height=h;var ctx=cv.getContext("2d",{willReadFrequently:true});ctx.drawImage(im,0,0,w,h);var id=ctx.getImageData(0,0,w,h),d=id.data;
+  for(var i=0;i<d.length;i+=4){var r=d[i],g=d[i+1],b=d[i+2],mn=Math.min(r,g,b),mx=Math.max(r,g,b),ch=mx-mn;if(ch<=16&&mn>=245)d[i+3]=0;else if(ch<=16&&mn>=235)d[i+3]=Math.round(d[i+3]*(245-mn)/10)}
+  ctx.putImageData(id,0,0);return cv.toDataURL("image/png");
+}
+function applyCompositionPreset(kind,quiet){
+  var c=current(),t=TEMPLATES[c.templateId]||TEMPLATES.unit,l=makeLayout(c.templateId),a=c.appearance;
+  if(kind==="showcase"){
+    l.art={x:0,y:0,w:100,h:100,r:0,z:1,locked:true,opacity:1,visible:true};
+    l.title={x:6,y:4,w:66,h:7.5,r:0,z:34,locked:false,opacity:1,visible:true};l.faction={x:6,y:11.5,w:66,h:4.5,r:0,z:33,locked:false,opacity:.88,visible:true};
+    l.type={x:6,y:15.5,w:60,h:4.5,r:0,z:32,locked:false,opacity:.82,visible:true};l.cost={x:79,y:4,w:8,h:8,r:0,z:36,locked:false,opacity:1,visible:true};l.rarityMark={x:88,y:4,w:7,h:8,r:0,z:36,locked:false,opacity:1,visible:true};
+    l.rarityText.visible=false;l.tags.visible=false;l.effect={x:6,y:72,w:88,h:20,r:0,z:30,locked:false,opacity:1,visible:true};
+    var stats=t.stats||[],sw=9,sg=1,start=94-(stats.length*sw+Math.max(0,stats.length-1)*sg);stats.forEach(function(st,i){l["stat_"+st[0]]={x:start+i*(sw+sg),y:66,w:sw,h:5.5,r:0,z:35,locked:false,opacity:1,visible:true}});
+    a.finishStyle="premium";a.frameStyle="minimal";a.textureStyle="clean";a.titleSize=24;a.effectSize=13;a.metaSize=11;a.statsSize=17;a.costSize=20;a.artFocusX=50;a.artFocusY=46;a.artZoom=105;
+  }else{
+    l.art={x:0,y:0,w:100,h:100,r:0,z:1,locked:true,opacity:1,visible:true};l.cost={x:3.5,y:1.2,w:17,h:12.5,r:0,z:34,locked:false,opacity:1,visible:true};l.rarityMark={x:79.5,y:1.2,w:17,h:12.5,r:0,z:34,locked:false,opacity:1,visible:true};
+    l.title={x:22,y:4,w:56,h:6.5,r:0,z:35,locked:false,opacity:1,visible:true};l.faction={x:22,y:10.5,w:56,h:4,r:0,z:34,locked:false,opacity:.9,visible:true};l.type={x:22,y:14.5,w:56,h:4,r:0,z:34,locked:false,opacity:.85,visible:true};l.rarityText.visible=false;l.tags.visible=false;l.effect={x:8,y:70,w:84,h:23,r:0,z:30,locked:false,opacity:1,visible:true};
+    var stats=t.stats||[],sw=10,sg=1,start=92-(stats.length*sw+Math.max(0,stats.length-1)*sg);stats.forEach(function(st,i){l["stat_"+st[0]]={x:start+i*(sw+sg),y:64,w:sw,h:5.5,r:0,z:35,locked:false,opacity:1,visible:true}});
+    a.finishStyle="frame";a.frameStyle="minimal";a.textureStyle="clean";a.titleSize=20;a.effectSize=13;a.metaSize=10;a.statsSize=16;a.costSize=20;a.artFocusX=50;a.artFocusY=44;a.artZoom=108;
+  }
+  c.layout=l;renderAll();if(!quiet)setStatus(kind==="showcase"?"已套用：全幅插画 · 竞技卡":"已套用：古典双槽 · 边框卡");
+}
+function projectPayload(){return {format:"card-assembly-studio",version:7,exportedAt:new Date().toISOString(),projectName:projectName,cards:cards,selected:selected,skins:skins,ruleTerms:ruleTerms,userAssets:userAssets,customTemplates:customTemplates,favoriteAssets:favoriteAssets,snapshots:snapshots,aiStyle:$("#aiStyle").value,aiQuality:aiQuality,printSettings:printSettings}}
 function downloadText(text,name,type){var blob=new Blob([text],{type:type||"text/plain;charset=utf-8"}),url=URL.createObjectURL(blob);download(url,name);setTimeout(function(){URL.revokeObjectURL(url)},1000)}
 
 $("#projectExport").onclick=function(){downloadText(JSON.stringify(projectPayload(),null,2),safeFilename(projectName)+".cardstudio","application/json");setStatus("项目文件已保存，包含卡牌、规则词条、皮肤、模板与图片素材")};
