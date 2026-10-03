@@ -13,7 +13,7 @@ new vm.Script(app);
 const requiredIds = [
   "projectName","preview","cardList","cardSearch","templateFilter","factionFilter","rarityFilter","sortCards","templateCards",
   "dynamicStats","description","textTarget","textSize","textColor","textAlign","textBold","applyTextAll",
-  "aiPrompt","aiStylePreset","aiStyle","resetAiStyle","aiQuality","aiGenerate","aiRedraw","apiKeyInput","saveApiKey","apiKeyStatus","artFocusX","artFocusY","artZoom","autoPalette","setStyleReference","clearStyleReference","styleReferenceStatus",
+  "aiPrompt","aiStylePreset","aiStyle","resetAiStyle","aiQuality","aiGenerate","aiRedraw","apiKeyInput","saveApiKey","apiKeyStatus","artFocusX","artFocusY","artZoom","autoPalette","setStyleReference","uploadStyleReference","styleReferenceFile","clearStyleReference","styleReferenceStatus",
   "assetList","customAssetList","skinList","projectExport","projectImport","projectFile",
   "batchImages","batchAI","batchImageFiles","smartFrameBtn","smartFrameFile","uploadAssetBtn","customAssetFile",
   "batchRename","exportManifest","exportJsonList","batchPngZip","batchJpgZip",
@@ -49,7 +49,7 @@ const badSelectors = app.split("\n").filter((line) => {
 if (badSelectors.length) throw new Error("querySelector used where querySelectorAll helper is required.");
 
 for (const id of [
-  "projectExport","projectImport","batchImages","batchAI","smartFrameBtn","uploadAssetBtn","autoPalette","setStyleReference","clearStyleReference","presetShowcase","presetClassicFrame","batchRename",
+  "projectExport","projectImport","batchImages","batchAI","smartFrameBtn","uploadAssetBtn","autoPalette","setStyleReference","uploadStyleReference","clearStyleReference","presetShowcase","presetClassicFrame","batchRename",
   "batchPngZip","batchJpgZip","saveApiKey","aiRedraw","resetAiStyle","applyTextAll","sheetSize","cropMarks","layoutMode","addImageElement","addImageLabel","detachImageLabel","addTextElement","addNumberElement","toggleElementVisibility","layerUp","layerDown","resetLayout","openCardSearch","exportTTS","markRuleTerm","openRuleTerms","saveRuleTerm","insertRuleTerm"
 ]) {
   if (!app.includes('$("#' + id + '")')) throw new Error("Missing handler reference for #" + id);
