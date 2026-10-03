@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-set "CARD_STUDIO_PORT=8793"
+set "CARD_STUDIO_PORT=8794"
 set "PORT=%CARD_STUDIO_PORT%"
 
 where node >nul 2>nul
@@ -38,8 +38,8 @@ if not exist node_modules (
   )
 )
 
-start "" cmd /c "timeout /t 2 /nobreak >nul & start http://localhost:%CARD_STUDIO_PORT%/?v=2.2.0"
-echo [Card Studio 2.2.0] 正在启动，新版专用端口 %CARD_STUDIO_PORT% ...
-echo 浏览器打开后，顶部应显示“v2.2.0 · 自由布局版”。
+start "" cmd /c "timeout /t 2 /nobreak >nul & start http://localhost:%CARD_STUDIO_PORT%/?v=2.3.0"
+echo [Card Studio 2.3.0] 正在启动，新版专用端口 %CARD_STUDIO_PORT% ...
+echo 浏览器打开后，顶部应显示“v2.3.0 · 自由布局版”。
 call npm start
 pause
