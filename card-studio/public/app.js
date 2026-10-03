@@ -920,7 +920,7 @@ $("#exportJsonList").onclick=function(){downloadText(JSON.stringify(manifestRows
 
 var activeLibraryTag="";
 function splitTags(v){return String(v||"").split(/[,，;；|]/).map(function(x){return x.trim()}).filter(Boolean)}
-function searchableText(c){var t=TEMPLATES[c.templateId]||TEMPLATES.unit,termText=extractRuleTerms(c.description).map(function(n){var x=termByName(n);return x?[x.name,x.category,x.tags,x.description].join(" "):n}).join(" ");return [c.cardNumber,c.name,t.name,c.faction,c.unitType,c.rarity,c.tags,c.rulesKeywords,c.description,termText,c.cost,c.attack,c.health,c.move,c.range].join(" ").toLowerCase()}
+function searchableText(c){var t=TEMPLATES[c.templateId]||TEMPLATES.unit,termText=extractRuleTerms(c.description).map(function(n){var x=termByName(n);return x?[x.name,x.category,x.tags,x.description].join(" "):n}).join(" ");return [c.setName,c.cardNumber,c.year,c.credit,c.name,t.name,c.faction,c.unitType,c.rarity,c.tags,c.rulesKeywords,c.description,termText,c.cost,c.attack,c.health,c.move,c.range].join(" ").toLowerCase()}
 function renderCardLibrary(){
   var q=$("#librarySearch").value.trim().toLowerCase(),f=$("#libraryFaction").value,ty=$("#libraryType").value,r=$("#libraryRarity").value;
   var allTags={};cards.forEach(function(c){splitTags(c.tags).concat(splitTags(c.rulesKeywords)).forEach(function(t){allTags[t]=(allTags[t]||0)+1})});
@@ -942,7 +942,7 @@ $("#cardSearchModal").addEventListener("click",function(e){if(e.target===this)th
 ["#librarySearch","#libraryFaction","#libraryType","#libraryRarity"].forEach(function(q){$(q).addEventListener(q==="#librarySearch"?"input":"change",renderCardLibrary)});
 $("#tagCloud").onclick=function(e){var b=e.target.closest("[data-library-tag]");if(!b)return;var t=b.getAttribute("data-library-tag");activeLibraryTag=activeLibraryTag===t?"":t;renderCardLibrary()};
 $("#libraryResults").onclick=function(e){var b=e.target.closest("[data-library-card]");if(!b)return;selected=b.getAttribute("data-library-card");$("#cardSearchModal").hidden=true;renderAll();setStatus("已从卡查定位："+current().name)};
-function ttsCard(c,index){return {id:c.id,number:c.cardNumber||String(index+1).padStart(3,"0"),name:c.name,template:c.templateId,faction:c.faction,type:c.unitType,rarity:c.rarity,cost:c.cost,stats:{attack:c.attack,health:c.health,move:c.move,range:c.range},tags:splitTags(c.tags),rulesKeywords:splitTags(c.rulesKeywords),text:c.description,termRefs:extractRuleTerms(c.description),searchText:searchableText(c),imageFile:String(index+1).padStart(3,"0")+"-"+safeFilename(c.name)+".png"}}
+function ttsCard(c,index){return {id:c.id,setName:c.setName,number:c.cardNumber||String(index+1).padStart(3,"0"),year:c.year,credit:c.credit,name:c.name,template:c.templateId,faction:c.faction,type:c.unitType,rarity:c.rarity,cost:c.cost,stats:{attack:c.attack,health:c.health,move:c.move,range:c.range},tags:splitTags(c.tags),rulesKeywords:splitTags(c.rulesKeywords),text:c.description,termRefs:extractRuleTerms(c.description),searchText:searchableText(c),imageFile:String(index+1).padStart(3,"0")+"-"+safeFilename(c.name)+".png"}}
 $("#exportTTS").onclick=async function(){
   var btn=this;btn.disabled=true;setStatus("正在生成 TTS 模组数据...");
   try{
