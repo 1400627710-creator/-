@@ -128,8 +128,15 @@ var snapshots=loadJson("card-studio-snapshots",[]);
 var userAssets=loadJson("card-studio-user-assets",[]);
 var ruleTerms=loadJson("card-studio-rule-terms",[]);
 var OLD_AI_STYLE="统一的东方奇幻桌游插画，厚涂，电影光影，材质细腻，不出现文字";
-var DEFAULT_AI_STYLE="古典奇幻桌游插画，传统人工油画质感，亚麻画布纹理，可见而自然的猪鬃笔触与颜料堆叠，柔和的明暗塑形，略带旧画册与十九世纪幻想插画气质，构图清晰、主体明确、色彩克制而丰富；避免现代数码渲染、3D塑料质感、霓虹赛博效果、照片感和任何文字";
-var aiStyle=loadJson("card-studio-ai-style",DEFAULT_AI_STYLE);if(aiStyle===OLD_AI_STYLE)aiStyle=DEFAULT_AI_STYLE;
+var LEGACY_AI_STYLE="古典奇幻桌游插画，传统人工油画质感，亚麻画布纹理，可见而自然的猪鬃笔触与颜料堆叠，柔和的明暗塑形，略带旧画册与十九世纪幻想插画气质，构图清晰、主体明确、色彩克制而丰富；避免现代数码渲染、3D塑料质感、霓虹赛博效果、照片感和任何文字";
+var AI_STYLE_PRESETS={
+  premium:"高端幻想收藏卡插画，成熟概念艺术厚涂，强烈但克制的电影光影，清晰的主体轮廓与动作叙事，丰富笔触和材质层次，局部锐利焦点配合大面积概括笔触，颜色统一而有高级灰变化，避免廉价手游立绘感、塑料3D感和任何文字",
+  inkAnime:"高完成度幻想动漫插画，黑白墨线与厚涂结合，手绘排线、飞白和概括笔触，角色五官精致但不塑料，服装与武器有丰富结构，有限高饱和点色，强烈剪影和动态构图，避免扁平赛璐璐和任何文字",
+  oil:LEGACY_AI_STYLE,
+  abstract:"史诗幻想概念绘画，抽象大笔触与具象主体结合，戏剧化明暗和色块切割，人物边缘局部消融进环境，强烈方向性光线，保留手工绘画肌理和高级留白，避免杂乱细节、3D渲染和任何文字"
+};
+var DEFAULT_AI_STYLE=AI_STYLE_PRESETS.premium;
+var aiStyle=loadJson("card-studio-ai-style",DEFAULT_AI_STYLE);if(aiStyle===OLD_AI_STYLE||aiStyle===LEGACY_AI_STYLE)aiStyle=DEFAULT_AI_STYLE;
 var projectName=saved&&saved.projectName?saved.projectName:"未命名卡牌项目";
 var aiQuality=loadJson("card-studio-ai-quality","high");
 var printSettings={sheet:"a4",crop:true};
@@ -678,12 +685,15 @@ $("#uploadArt").onclick=function(){$("#artFile").click()};
 $("#artFile").onchange=function(){var file=this.files&&this.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(){patch("art",String(reader.result||""),true)};reader.readAsDataURL(file);this.value=""};
 $("#clearArt").onclick=function(){patch("art","",true)};
 $("#aiStyle").value=aiStyle;$("#aiQuality").value=["low","medium","high","xhigh","max"].indexOf(aiQuality)>=0?aiQuality:"high";
+function detectAiStylePreset(v){var keys=Object.keys(AI_STYLE_PRESETS);for(var i=0;i<keys.length;i++)if(AI_STYLE_PRESETS[keys[i]]===v)return keys[i];return "custom"}$("#aiStylePreset").value=detectAiStylePreset(aiStyle);
+$("#aiStylePreset").addEventListener("change",function(){if(this.value==="custom")return;$("#aiStyle").value=AI_STYLE_PRESETS[this.value];aiStyle=AI_STYLE_PRESETS[this.value];persist();setStatus("已切换整套画风："+this.options[this.selectedIndex].text)});
+$("#aiStyle").addEventListener("input",function(){aiStyle=this.value;$("#aiStylePreset").value=detectAiStylePreset(this.value)});
 $("#aiQuality").addEventListener("change",function(){aiQuality=this.value;localStorage.setItem("card-studio-ai-quality",JSON.stringify(aiQuality));persist()});
 function syncArtControls(){var a=current().appearance,x=a.artFocusX==null?50:a.artFocusX,y=a.artFocusY==null?50:a.artFocusY,z=a.artZoom||100;$("#artFocusX").value=x;$("#artFocusY").value=y;$("#artZoom").value=z;$("#artFocusXValue").textContent=Math.round(x)+"%";$("#artFocusYValue").textContent=Math.round(y)+"%";$("#artZoomValue").textContent=Math.round(z)+"%"}
 ["X","Y"].forEach(function(axis){var el=$("#artFocus"+axis);el.addEventListener("pointerdown",function(){recordHistory()});el.addEventListener("input",function(){current().appearance["artFocus"+axis]=num(this.value,50);$("#artFocus"+axis+"Value").textContent=Math.round(num(this.value,50))+"%";renderPreviewOnly();persist()})});
 $("#artZoom").addEventListener("pointerdown",function(){recordHistory()});$("#artZoom").addEventListener("input",function(){current().appearance.artZoom=num(this.value,100);$("#artZoomValue").textContent=Math.round(num(this.value,100))+"%";renderPreviewOnly();persist()});
 $("#autoPalette").onclick=async function(){var c=current();if(!c.art){setStatus("请先上传或生成插画，再自动配色");return}var btn=this;btn.disabled=true;try{var p=await paletteFromArt(c.art);recordHistory();Object.assign(c.appearance,p);renderAll();setStatus("已从插画提取主色：卡框、强调色和底色已自动协调")}catch(e){setStatus("自动配色失败："+e.message)}btn.disabled=false};
-$("#aiStyle").addEventListener("change",persist);$("#resetAiStyle").onclick=function(){$("#aiStyle").value=DEFAULT_AI_STYLE;aiStyle=DEFAULT_AI_STYLE;persist();setStatus("已恢复古典油画默认风格")};
+$("#aiStyle").addEventListener("change",persist);$("#resetAiStyle").onclick=function(){$("#aiStyle").value=DEFAULT_AI_STYLE;$("#aiStylePreset").value="premium";aiStyle=DEFAULT_AI_STYLE;persist();setStatus("已恢复高端幻想卡牌默认风格")};
 $("#aiGenerate").onclick=async function(){
   var c=current(),btn=this,prompt=$("#aiPrompt").value.trim();if(!prompt)return;
   btn.disabled=true;setStatus("AI 正在生成插画...");
