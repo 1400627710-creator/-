@@ -316,6 +316,7 @@ function setSelection(refs,primary){
 }
 function clearSelection(){selectedElements=[];selectedElement=null;applySelectionClasses();refreshElementPanel()}
 function addSelection(ref){var refs=selectedElements.slice();if(!isSelectedRef(ref))refs.push(ref);setSelection(refs,ref)}
+function toggleSelection(ref){var refs=selectedElements.slice(),idx=refs.findIndex(function(x){return sameRef(x,ref)});if(idx>=0)refs.splice(idx,1);else refs.push(ref);setSelection(refs,idx>=0?(refs[refs.length-1]||null):ref)}
 function nodeForRef(ref){return !ref?null:(ref.type==="extra"?$('#preview [data-extra-id="'+ref.id+'"]'):$('#preview [data-layout-key="'+ref.id+'"]'))}
 function applySelectionClasses(){
   document.querySelectorAll("#preview .layout-node.selected").forEach(function(x){x.classList.remove("selected","selected-primary")});var old=$("#preview .selection-bounds");if(old)old.remove();
@@ -371,7 +372,8 @@ function selectionBounds(models){
 function beginLayoutPointer(e,node,mode){
   var m=getElementModel(current(),node);if(!m||m.layout.locked)return;
   e.preventDefault();e.stopPropagation();
-  var ref={type:m.type,id:m.id},additive=!!(e.ctrlKey||e.metaKey||e.shiftKey);
+  var ref={type:m.type,id:m.id},toggle=!!(e.ctrlKey||e.metaKey),additive=!!e.shiftKey;
+  if(toggle){toggleSelection(ref);return}
   if(!isSelectedRef(ref))selectLayoutNode(node,additive);else{selectedElement=ref;applySelectionClasses();refreshElementPanel()}
   var models=selectedModels(current()).filter(function(x){return !x.layout.locked});if(!models.length)return;
   recordHistory();var cardEl=$("#preview .card"),rect=cardEl.getBoundingClientRect(),starts=models.map(function(x){return {ref:{type:x.type,id:x.id},layout:clone(x.layout)}}),group=selectionBounds(models);
@@ -668,7 +670,7 @@ $("#preview").addEventListener("focusout",function(e){
   var f=e.target&&e.target.getAttribute&&e.target.getAttribute("data-edit");if(f){patch(f,e.target.innerText.trim(),true);return}
   var n=e.target&&e.target.closest&&e.target.closest(".free-text-element[data-extra-id]");if(n&&n.contentEditable==="true"){var m=getElementModel(current(),n);if(m&&m.type==="extra"){m.element.text=n.innerText.trim();n.contentEditable="false";renderPreviewOnly();refreshElementPanel();persist()}}
 });
-$("#layerList").addEventListener("click",function(e){var row=e.target.closest("[data-layer-id]");if(!row)return;setLayoutMode(true,false);var ref={type:row.getAttribute("data-layer-type"),id:row.getAttribute("data-layer-id")};if(e.ctrlKey||e.metaKey||e.shiftKey)addSelection(ref);else setSelection([ref],ref);var m=modelFromRef(current(),ref);if(!m)return;if(e.target.closest("[data-layer-eye]")){recordHistory();m.layout.visible=m.layout.visible===false?true:false;renderPreviewOnly();refreshElementPanel();persist();return}if(e.target.closest("[data-layer-lock]")){recordHistory();m.layout.locked=!m.layout.locked;renderPreviewOnly();refreshElementPanel();persist();return}applySelectionClasses();refreshElementPanel()});
+$("#layerList").addEventListener("click",function(e){var row=e.target.closest("[data-layer-id]");if(!row)return;setLayoutMode(true,false);var ref={type:row.getAttribute("data-layer-type"),id:row.getAttribute("data-layer-id")};if(e.ctrlKey||e.metaKey)toggleSelection(ref);else if(e.shiftKey)addSelection(ref);else setSelection([ref],ref);var m=modelFromRef(current(),ref);if(!m)return;if(e.target.closest("[data-layer-eye]")){recordHistory();m.layout.visible=m.layout.visible===false?true:false;renderPreviewOnly();refreshElementPanel();persist();return}if(e.target.closest("[data-layer-lock]")){recordHistory();m.layout.locked=!m.layout.locked;renderPreviewOnly();refreshElementPanel();persist();return}applySelectionClasses();refreshElementPanel()});
 $("#cardList").addEventListener("click",function(e){var b=e.target.closest("[data-id]");if(!b)return;selected=b.getAttribute("data-id");selectedElements=[];selectedElement=null;renderAll()});
 $("#projectName").addEventListener("change",function(){projectName=this.value.trim()||"未命名卡牌项目";this.value=projectName;persist()});
 $("#cardSearch").addEventListener("input",renderList);$("#templateFilter").addEventListener("change",renderList);$("#factionFilter").addEventListener("change",renderList);$("#rarityFilter").addEventListener("change",renderList);$("#sortCards").addEventListener("change",renderList);
