@@ -55,7 +55,7 @@ for (const id of [
   if (!app.includes('$("#' + id + '")')) throw new Error("Missing handler reference for #" + id);
 }
 
-for (const marker of ["indexedDB.open", "projectPayload", "customTemplates", "userAssets", "SHEETS", "factionFilter", "rarityFilter", "DEFAULT_LAYOUT", "stat_attack", "stat_health", "rarityText", "allLayerModels", "renderLayerPanel", "selectedModel", "opacity", "visible", "extraElements", "addFreeImage", "addLabelToSelectedImage", "parentId", "renderCardLibrary", "ttsCard", "renderRichText", "extractRuleTerms", "ruleTerms", "byTerm", "botanical", "canvas", "classical", "DEFAULT_AI_STYLE", "AI_STYLE_PRESETS", "makeSmartFrameDataUrl", "applyCompositionPreset", "paletteFromArt", "autoFitText", "aiReferenceImage", "requestGeneratedArt"]) {
+for (const marker of ["indexedDB.open", "projectPayload", "customTemplates", "userAssets", "SHEETS", "factionFilter", "rarityFilter", "DEFAULT_LAYOUT", "stat_attack", "stat_health", "rarityText", "allLayerModels", "renderLayerPanel", "selectedModel", "opacity", "visible", "extraElements", "addFreeImage", "addLabelToSelectedImage", "parentId", "renderCardLibrary", "ttsCard", "renderRichText", "extractRuleTerms", "ruleTerms", "byTerm", "botanical", "canvas", "classical", "DEFAULT_AI_STYLE", "AI_STYLE_PRESETS", "makeSmartFrameDataUrl", "applyCompositionPreset", "paletteFromArt", "autoFitText", "aiReferenceImage", "requestGeneratedArt", "footerLeft", "footerRight", "setName", "credit"]) {
   if (!app.includes(marker)) throw new Error("Missing implemented feature marker: " + marker);
 }
 
@@ -75,7 +75,7 @@ if (!server.includes('APP_VERSION = "2.2.0"')) throw new Error("Server runtime v
 if (!app.includes("version:7")) throw new Error("Independent-layer project schema version is missing.");
 if (!app.includes("function escapeRegExp") || app.includes("\\function renderRichText")) throw new Error("Rule-term regex escaping regression.");
 if (!html.includes("每个字段独立")) throw new Error("Independent-module guidance is missing.");
-if (!html.includes("智能卡框导入") || !html.includes("全幅插画 · 竞技卡")) throw new Error("Production layout or smart-frame UI is missing.");
+if (!html.includes("智能卡框导入") || !html.includes("全幅插画 · 竞技卡")) throw new Error("Production layout or smart-frame UI is missing.");\nif (!html.includes('data-form="setName"') || !html.includes('data-form="credit"')) throw new Error("Collectible footer metadata fields are missing.");
 console.log("Card Studio smoke check passed.");
 
 if (app.includes('$("#preview .layout-node.selected").forEach')) throw new Error("single-selector helper used for layout selection list");
