@@ -139,9 +139,7 @@ var AI_STYLE_PRESETS={
 };
 var DEFAULT_AI_STYLE=AI_STYLE_PRESETS.premium;
 var aiStyle=loadJson("card-studio-ai-style",DEFAULT_AI_STYLE);if(aiStyle===OLD_AI_STYLE||aiStyle===LEGACY_AI_STYLE)aiStyle=DEFAULT_AI_STYLE;
-var aiReferenceImage=saved&&saved.aiReferenceImage?saved.aiReferenceImage:"";
 var projectName=saved&&saved.projectName?saved.projectName:"未命名卡牌项目";
-var aiQuality=loadJson("card-studio-ai-quality","high");
 var printSettings={sheet:"a4",crop:true};
 var SHEETS={a4:[210,297],a3:[297,420],letter:[215.9,279.4]};
 
@@ -171,7 +169,7 @@ skins=skins.map(function(s){s.appearance=normalizeAppearance(s.appearance);retur
 
 var history=[],future=[],historyLimit=12;
 var current=function(){return cards.find(function(c){return c.id===selected})||cards[0]};
-var stateSnapshot=function(){return JSON.stringify({projectName:projectName,cards:cards,selected:selected,skins:skins,favoriteAssets:favoriteAssets,ruleTerms:ruleTerms,userAssets:userAssets,customTemplates:customTemplates,aiStyle:$("#aiStyle")?$("#aiStyle").value:aiStyle,aiReferenceImage:aiReferenceImage,aiQuality:aiQuality,printSettings:printSettings})};
+var stateSnapshot=function(){return JSON.stringify({projectName:projectName,cards:cards,selected:selected,skins:skins,favoriteAssets:favoriteAssets,ruleTerms:ruleTerms,userAssets:userAssets,customTemplates:customTemplates,aiStyle:$("#aiStyle")?$("#aiStyle").value:aiStyle,printSettings:printSettings})};
 var restoreState=function(raw){
   var s=typeof raw==="string"?JSON.parse(raw):clone(raw);
   cards=(s.cards||[]).map(normalizeCard);selected=s.selected&&cards.some(function(c){return c.id===s.selected})?s.selected:(cards[0]&&cards[0].id);
@@ -180,7 +178,7 @@ var restoreState=function(raw){
   userAssets=s.userAssets||userAssets;
   ruleTerms=s.ruleTerms||ruleTerms;
   customTemplates=s.customTemplates||customTemplates;TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);
-  if(s.projectName)projectName=s.projectName;if(s.aiStyle)aiStyle=s.aiStyle;if(s.aiReferenceImage!==undefined)aiReferenceImage=s.aiReferenceImage;if(s.aiQuality)aiQuality=s.aiQuality;if(s.printSettings)printSettings=Object.assign({sheet:"a4",crop:true},s.printSettings);
+  if(s.projectName)projectName=s.projectName;if(s.aiStyle)aiStyle=s.aiStyle;if(s.printSettings)printSettings=Object.assign({sheet:"a4",crop:true},s.printSettings);
   renderAll();
 };
 var recordHistory=function(){
@@ -561,7 +559,7 @@ function setToolMode(mode){
   localStorage.setItem("card-studio-tool-mode",JSON.stringify(mode));
 }
 $("#rightModeTabs").addEventListener("click",function(e){var b=e.target.closest("[data-tool-mode]");if(!b)return;var mode=b.getAttribute("data-tool-mode");setToolMode(mode);if(mode==="layout"&&!layoutEditing)setLayoutMode(true,false)});
-var renderAll=function(){$("#projectName").value=projectName;if($("#aiStyle"))$("#aiStyle").value=aiStyle;if($("#aiStylePreset"))$("#aiStylePreset").value=detectAiStylePreset(aiStyle);if($("#aiQuality"))$("#aiQuality").value=aiQuality;$("#sheetSize").value=printSettings.sheet;$("#cropMarks").checked=!!printSettings.crop;renderTemplateFilter();renderList();renderCard();renderSnapshots();renderCustomAssets();updateHistoryButtons();setToolMode(activeToolMode);persist()};
+var renderAll=function(){$("#projectName").value=projectName;if($("#aiStyle"))$("#aiStyle").value=aiStyle;if($("#aiStylePreset"))$("#aiStylePreset").value=detectAiStylePreset(aiStyle);$("#sheetSize").value=printSettings.sheet;$("#cropMarks").checked=!!printSettings.crop;renderTemplateFilter();renderList();renderCard();renderSnapshots();renderCustomAssets();updateHistoryButtons();setToolMode(activeToolMode);persist()};
 
 var patch=function(field,value,record){
   var c=current();if(!c)return;
@@ -939,7 +937,7 @@ function applyCompositionPreset(kind,quiet){
   }
   c.layout=l;renderAll();if(!quiet)setStatus(kind==="showcase"?"已套用：全幅插画 · 竞技卡":"已套用：古典双槽 · 边框卡");
 }
-function projectPayload(){return {format:"card-assembly-studio",version:7,exportedAt:new Date().toISOString(),projectName:projectName,cards:cards,selected:selected,skins:skins,ruleTerms:ruleTerms,userAssets:userAssets,customTemplates:customTemplates,favoriteAssets:favoriteAssets,snapshots:snapshots,aiStyle:$("#aiStyle").value,aiReferenceImage:aiReferenceImage,aiQuality:aiQuality,printSettings:printSettings}}
+function projectPayload(){return {format:"card-assembly-studio",version:7,exportedAt:new Date().toISOString(),projectName:projectName,cards:cards,selected:selected,skins:skins,ruleTerms:ruleTerms,userAssets:userAssets,customTemplates:customTemplates,favoriteAssets:favoriteAssets,snapshots:snapshots,aiStyle:$("#aiStyle").value,printSettings:printSettings}}
 function downloadText(text,name,type){var blob=new Blob([text],{type:type||"text/plain;charset=utf-8"}),url=URL.createObjectURL(blob);download(url,name);setTimeout(function(){URL.revokeObjectURL(url)},1000)}
 
 $("#projectExport").onclick=function(){downloadText(JSON.stringify(projectPayload(),null,2),safeFilename(projectName)+".cardstudio","application/json");setStatus("项目文件已保存，包含卡牌、规则词条、皮肤、模板与图片素材")};
@@ -951,7 +949,7 @@ $("#projectFile").onchange=async function(){
     recordHistory();cards=(p.cards||[]).map(normalizeCard);if(!cards.length)throw new Error("项目中没有卡牌");
     skins=(p.skins||BASE_SKINS).map(function(x){x.appearance=normalizeAppearance(x.appearance);return x});
     userAssets=p.userAssets||[];ruleTerms=p.ruleTerms||[];customTemplates=p.customTemplates||{};favoriteAssets=p.favoriteAssets||[];snapshots=p.snapshots||[];
-    TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);selected=cards[0].id;if(p.aiStyle){aiStyle=p.aiStyle;$("#aiStyle").value=p.aiStyle}if(p.aiReferenceImage!==undefined)aiReferenceImage=p.aiReferenceImage;if(p.projectName)projectName=p.projectName;if(p.aiQuality)aiQuality=(p.version&&p.version<7&&p.aiQuality==="low")?"high":p.aiQuality;if(p.printSettings)printSettings=Object.assign({sheet:"a4",crop:true},p.printSettings);
+    TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);selected=cards[0].id;if(p.aiStyle){aiStyle=p.aiStyle;$("#aiStyle").value=p.aiStyle}if(p.projectName)projectName=p.projectName;if(p.printSettings)printSettings=Object.assign({sheet:"a4",crop:true},p.printSettings);
     renderAll();setStatus("项目已打开："+cards.length+" 张卡牌");
   }catch(e){setStatus("打开项目失败："+e.message)}
   this.value="";
@@ -1106,7 +1104,7 @@ dbGet("project-v3").then(function(savedDb){
     userAssets=p.userAssets||[];ruleTerms=p.ruleTerms||[];customTemplates=p.customTemplates||{};favoriteAssets=p.favoriteAssets||[];snapshots=p.snapshots||[];
     TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);
     selected=p.selected&&cards.some(function(c){return c.id===p.selected})?p.selected:cards[0].id;
-    if(p.aiStyle){aiStyle=p.aiStyle;$("#aiStyle").value=p.aiStyle}if(p.aiReferenceImage!==undefined)aiReferenceImage=p.aiReferenceImage;if(p.projectName)projectName=p.projectName;if(p.aiQuality)aiQuality=(p.version&&p.version<7&&p.aiQuality==="low")?"high":p.aiQuality;if(p.printSettings)printSettings=Object.assign({sheet:"a4",crop:true},p.printSettings);
+    if(p.aiStyle){aiStyle=p.aiStyle;$("#aiStyle").value=p.aiStyle}if(p.projectName)projectName=p.projectName;if(p.printSettings)printSettings=Object.assign({sheet:"a4",crop:true},p.printSettings);
     renderAll();setStatus("已恢复完整项目（含图片）");
   }else{scheduleDbSave()}
 }).catch(function(){dbReady=true;scheduleDbSave()});
