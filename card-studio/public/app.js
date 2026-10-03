@@ -406,15 +406,16 @@ function moveMarquee(e){
   var refs=m.base.slice();allLayerModels(current()).forEach(function(layer){var p=layer.layout;if(p.visible===false||p.locked)return;var hit=p.x<x+w&&p.x+p.w>x&&p.y<y+h&&p.y+p.h>y;if(hit)refs.push({type:layer.type,id:layer.id})});setSelection(refs,refs[refs.length-1]||null);
 }
 function endMarquee(){if(!marqueeState)return;if(marqueeState.box&&marqueeState.box.remove)marqueeState.box.remove();marqueeState=null}
-function addExtra(kind){
-  recordHistory();var c=current(),n=(c.extraElements||[]).length+1,text=kind==="number"?(c.cardNumber||("CARD-"+String(n).padStart(3,"0"))):"双击或在右侧编辑文本";
-  var el={id:uid(),kind:kind,text:kind==="number"?"{编号}":text,fontSize:kind==="number"?10:12,color:c.appearance.text,align:kind==="number"?"center":"left",layout:{x:kind==="number"?68:15,y:kind==="number"?94:50,w:kind==="number"?27:45,h:kind==="number"?4:9,r:0,z:45,locked:false,opacity:1,visible:true}};
-  c.extraElements.push(el);renderPreviewOnly();selectedElement={type:"extra",id:el.id};refreshElementPanel();persist();
+function addExtra(kind,pos){
+  recordHistory();var c=current(),n=(c.extraElements||[]).length+1,text=kind==="number"?(c.cardNumber||("CARD-"+String(n).padStart(3,"0"))):"输入文字";
+  var x=pos&&pos.x!=null?pos.x:(kind==="number"?68:15),y=pos&&pos.y!=null?pos.y:(kind==="number"?94:50);
+  var el={id:uid(),kind:kind,text:kind==="number"?"{编号}":text,fontSize:kind==="number"?10:12,color:c.appearance.text,align:kind==="number"?"center":"left",layout:{x:x,y:y,w:kind==="number"?27:45,h:kind==="number"?4:9,r:0,z:45,locked:false,opacity:1,visible:true}};
+  c.extraElements.push(el);renderPreviewOnly();setSelection([{type:"extra",id:el.id}],{type:"extra",id:el.id});persist();
 }
 function addFreeImage(asset){
   recordHistory();if(!asset.id)asset.id=uid();if(!userAssets.some(function(x){return x.id===asset.id}))userAssets.push(asset);
   var c=current(),el={id:uid(),kind:"image",name:asset.name||"图标",assetId:asset.id,src:asset.dataUrl||"",layout:{x:40,y:42,w:20,h:20,r:0,z:18,locked:false,opacity:1,visible:true}};
-  c.extraElements.push(el);renderAll();selectedElement={type:"extra",id:el.id};refreshElementPanel();persist();setStatus("小素材已放到卡面：拖动、缩放或旋转即可");
+  c.extraElements.push(el);renderAll();setSelection([{type:"extra",id:el.id}],{type:"extra",id:el.id});persist();setStatus("小素材已放到卡面：拖动、缩放或旋转即可");
 }
 function labelLayoutForImage(p,pos){
   var h=6,g=1;if(pos==="center")return {x:p.x,y:p.y+p.h/2-h/2,w:p.w,h:h,r:0,z:(p.z||18)+1,locked:false,opacity:1,visible:true};
@@ -426,7 +427,7 @@ function labelLayoutForImage(p,pos){
 function addLabelToSelectedImage(){
   var n=findSelectedNode(),m=getElementModel(current(),n);if(!m||m.type!=="extra"||m.element.kind!=="image"){setStatus("请先在卡面选中一个图标或小素材");return}
   recordHistory();var pos=$("#imageLabelPosition").value,el={id:uid(),kind:"text",text:"输入文字",fontSize:11,color:current().appearance.text,align:"center",parentId:m.id,labelPosition:pos,layout:labelLayoutForImage(m.layout,pos)};
-  current().extraElements.push(el);renderPreviewOnly();selectedElement={type:"extra",id:el.id};refreshElementPanel();$("#elementText").focus();$("#elementText").select();persist();setStatus("文字已添加；现在直接输入即可，移动图标时文字会跟随");
+  current().extraElements.push(el);renderPreviewOnly();setSelection([{type:"extra",id:el.id}],{type:"extra",id:el.id});$("#elementText").focus();$("#elementText").select();persist();setStatus("文字已添加；现在直接输入即可，移动图标时文字会跟随");
 }
 var renderPreviewOnly=function(){
   var c=current(),t=TEMPLATES[c.templateId];
@@ -570,13 +571,24 @@ $("#safeMode").onclick=function(){setLayoutMode(false)};
 $("#layoutMode").onclick=function(){setLayoutMode(true,true)};
 $("#layoutQuickButton").onclick=function(){setLayoutMode(!layoutEditing,true)};
 $("#preview").addEventListener("pointerdown",function(e){
-  if(!layoutEditing)return;var handle=e.target.closest("[data-handle]"),node=e.target.closest(".layout-node");if(!node)return;
-  beginLayoutPointer(e,node,handle?handle.getAttribute("data-handle"):"move");
+  if(!layoutEditing)return;var handle=e.target.closest("[data-handle]"),node=e.target.closest(".layout-node");
+  if(node){beginLayoutPointer(e,node,handle?handle.getAttribute("data-handle"):"move");return}
+  if(e.target.closest(".card"))beginMarquee(e);
 });
-window.addEventListener("pointermove",moveLayoutPointer);window.addEventListener("pointerup",endLayoutPointer);window.addEventListener("pointercancel",endLayoutPointer);
-$("#preview").addEventListener("click",function(e){if(layoutEditing){var n=e.target.closest(".layout-node");if(n){e.preventDefault();e.stopPropagation();selectLayoutNode(n)}}});
-["X","Y","W","H","R","Z"].forEach(function(k){$("#el"+k).addEventListener("change",function(){var m=selectedModel(current());if(!m)return;recordHistory();var map={X:"x",Y:"y",W:"w",H:"h",R:"r",Z:"z"};m.layout[map[k]]=num(this.value,m.layout[map[k]]);renderPreviewOnly();refreshElementPanel();persist()})});
-$("#elOpacity").addEventListener("pointerdown",function(){if(selectedModel(current()))recordHistory()});$("#elOpacity").addEventListener("input",function(){var m=selectedModel(current());if(!m)return;m.layout.opacity=clamp(num(this.value,100)/100,0,1);$("#elOpacityValue").textContent=Math.round(m.layout.opacity*100)+"%";renderPreviewOnly();refreshElementPanel();persist()});
+window.addEventListener("pointermove",function(e){moveLayoutPointer(e);moveMarquee(e)});
+window.addEventListener("pointerup",function(){endLayoutPointer();endMarquee()});window.addEventListener("pointercancel",function(){endLayoutPointer();endMarquee()});
+$("#preview").addEventListener("click",function(e){if(layoutEditing&&e.target.closest(".layout-node")){e.preventDefault();e.stopPropagation()}});
+$("#preview").addEventListener("dblclick",function(e){
+  if(!layoutEditing)return;var node=e.target.closest(".layout-node"),card=e.target.closest(".card");
+  if(!node&&card){var r=card.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*100,y=(e.clientY-r.top)/r.height*100;addExtra("text",{x:clamp(x-12,0,88),y:clamp(y-3,0,96)});setTimeout(function(){var n=findSelectedNode();if(n){n.contentEditable="true";n.focus();document.execCommand&&document.execCommand("selectAll",false,null)}},0);return}
+  if(node&&node.classList.contains("free-text-element")){selectLayoutNode(node,e.ctrlKey||e.metaKey||e.shiftKey);node.contentEditable="true";node.focus();document.execCommand&&document.execCommand("selectAll",false,null)}
+});
+["X","Y","W","H","R","Z"].forEach(function(k){$("#el"+k).addEventListener("change",function(){var m=selectedModel(current()),models=selectedModels(current());if(!m)return;recordHistory();var v=num(this.value,m.layout[{X:"x",Y:"y",W:"w",H:"h",R:"r",Z:"z"}[k]]);
+  if((k==="X"||k==="Y")&&models.length>1){var f=k==="X"?"x":"y",d=v-m.layout[f];models.filter(function(x){return !x.layout.locked}).forEach(function(x){x.layout[f]+=d})}
+  else if((k==="W"||k==="H")&&models.length>1){var f=k==="W"?"w":"h",scale=Math.max(.05,v/m.layout[f]),g=selectionBounds(models);models.filter(function(x){return !x.layout.locked}).forEach(function(x){if(k==="W"){x.layout.x=g.x+(x.layout.x-g.x)*scale;x.layout.w*=scale}else{x.layout.y=g.y+(x.layout.y-g.y)*scale;x.layout.h*=scale}})}
+  else m.layout[{X:"x",Y:"y",W:"w",H:"h",R:"r",Z:"z"}[k]]=v;
+  renderPreviewOnly();refreshElementPanel();persist()})});
+$("#elOpacity").addEventListener("pointerdown",function(){if(selectedModels(current()).length)recordHistory()});$("#elOpacity").addEventListener("input",function(){var models=selectedModels(current());if(!models.length)return;var v=clamp(num(this.value,100)/100,0,1);models.forEach(function(m){m.layout.opacity=v});$("#elOpacityValue").textContent=(models.length>1?"所选 → ":"")+Math.round(v*100)+"%";renderPreviewOnly();refreshElementPanel();persist()});
 $("#addTextElement").onclick=function(){setLayoutMode(true);addExtra("text")};$("#addNumberElement").onclick=function(){setLayoutMode(true);addExtra("number")};
 $("#addImageElement").onclick=function(){setLayoutMode(true,false);$("#freeImageFile").click()};
 $("#freeImageFile").onchange=async function(){var f=this.files&&this.files[0];if(!f)return;try{var asset={id:uid(),name:f.name.replace(/\.[^.]+$/,""),category:"icon",dataUrl:await fileToDataUrl(f)};addFreeImage(asset)}catch(e){setStatus("导入小素材失败："+e.message)}this.value=""};
@@ -584,12 +596,12 @@ $("#addImageLabel").onclick=addLabelToSelectedImage;
 $("#detachImageLabel").onclick=function(){var m=selectedModel(current());if(!m||m.type!=="extra"||!m.element.parentId)return;recordHistory();m.element.parentId="";m.element.labelPosition="";renderPreviewOnly();refreshElementPanel();persist();setStatus("文字已解除跟随，现在可以完全独立摆放")};
 $("#elementText").addEventListener("input",function(){var m=selectedModel(current());if(m&&m.type==="extra"){m.element.text=this.value;renderPreviewOnly();persist()}});
 $("#elementText").addEventListener("focus",function(){if(!this.disabled)recordHistory()});
-$("#toggleElementVisibility").onclick=function(){var m=selectedModel(current());if(!m)return;recordHistory();m.layout.visible=m.layout.visible===false?true:false;renderPreviewOnly();refreshElementPanel();persist()};
-$("#toggleElementLock").onclick=function(){var m=selectedModel(current());if(!m)return;recordHistory();m.layout.locked=!m.layout.locked;renderPreviewOnly();refreshElementPanel();persist()};
-function moveSelectedLayer(delta){var m=selectedModel(current());if(!m)return;recordHistory();m.layout.z=Math.max(2,(m.layout.z||20)+delta);renderPreviewOnly();refreshElementPanel();persist()}
+$("#toggleElementVisibility").onclick=function(){var models=selectedModels(current());if(!models.length)return;recordHistory();var show=models.every(function(m){return m.layout.visible===false});models.forEach(function(m){m.layout.visible=show});renderPreviewOnly();refreshElementPanel();persist()};
+$("#toggleElementLock").onclick=function(){var models=selectedModels(current());if(!models.length)return;recordHistory();var unlock=models.every(function(m){return m.layout.locked});models.forEach(function(m){m.layout.locked=!unlock});renderPreviewOnly();refreshElementPanel();persist()};
+function moveSelectedLayer(delta){var models=selectedModels(current());if(!models.length)return;recordHistory();models.forEach(function(m){m.layout.z=Math.max(2,(m.layout.z||20)+delta)});renderPreviewOnly();refreshElementPanel();persist()}
 $("#layerUp").onclick=function(){moveSelectedLayer(1)};$("#layerDown").onclick=function(){moveSelectedLayer(-1)};
-$("#bringFront").onclick=function(){var m=selectedModel(current());if(!m)return;recordHistory();var max=Math.max.apply(null,allLayerModels(current()).map(function(x){return x.layout.z||0}));m.layout.z=max+1;renderPreviewOnly();refreshElementPanel();persist()};
-$("#sendBack").onclick=function(){var m=selectedModel(current());if(!m)return;recordHistory();m.layout.z=2;renderPreviewOnly();refreshElementPanel();persist()};
+$("#bringFront").onclick=function(){var models=selectedModels(current());if(!models.length)return;recordHistory();var max=Math.max.apply(null,allLayerModels(current()).map(function(x){return x.layout.z||0}));models.sort(function(a,b){return (a.layout.z||0)-(b.layout.z||0)}).forEach(function(m,i){m.layout.z=max+1+i});renderPreviewOnly();refreshElementPanel();persist()};
+$("#sendBack").onclick=function(){var models=selectedModels(current());if(!models.length)return;recordHistory();models.sort(function(a,b){return (a.layout.z||0)-(b.layout.z||0)}).forEach(function(m,i){m.layout.z=2+i});renderPreviewOnly();refreshElementPanel();persist()};
 $("#deleteElement").onclick=function(){if(!selectedElement||selectedElement.type!=="extra"){setStatus("模板字段不能删除，可锁定或移出画布；只有自定义元素可以删除");return}recordHistory();var id=selectedElement.id,el=current().extraElements.find(function(x){return x.id===id});current().extraElements=current().extraElements.filter(function(x){return x.id!==id&&!(el&&el.kind==="image"&&x.parentId===id)});selectedElement=null;renderPreviewOnly();refreshElementPanel();persist()};
 $("#duplicateElement").onclick=function(){var m=selectedModel(current());if(!m)return;recordHistory();if(m.type==="extra"){var x=clone(m.element),oldId=x.id;x.id=uid();x.layout.x+=3;x.layout.y+=3;current().extraElements.push(x);if(x.kind==="image"){current().extraElements.filter(function(e){return e.parentId===oldId}).forEach(function(e){var y=clone(e);y.id=uid();y.parentId=x.id;y.layout.x+=3;y.layout.y+=3;current().extraElements.push(y)})}selectedElement={type:"extra",id:x.id}}else{var tokenMap={cost:"费用",title:"名称",faction:"系别",rarityText:"稀有度",type:"兵种",stat_attack:"攻击",stat_health:"血量",stat_move:"移速",stat_range:"射程"},x={id:uid(),kind:"text",text:"{"+(tokenMap[m.id]||"名称")+"}",fontSize:12,color:current().appearance.text,align:"left",layout:clone(m.layout)};x.layout.x+=3;x.layout.y+=3;x.layout.z=45;current().extraElements.push(x);selectedElement={type:"extra",id:x.id}}renderPreviewOnly();refreshElementPanel();persist()};
 $("#resetLayout").onclick=function(){recordHistory();current().layout=makeLayout(current().templateId);renderPreviewOnly();selectedElement=null;refreshElementPanel();persist();setStatus("已恢复当前卡牌的模板默认布局")};
