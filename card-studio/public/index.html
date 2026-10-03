@@ -260,7 +260,7 @@
 
     <section>
       <h3>9. 标签化卡查 / TTS</h3>
-      <label>卡牌编号<input data-form="cardNumber" placeholder="例如 SET01-001"></label>
+      <div class="grid"><label>系列名<input data-form="setName" placeholder="例如 荣耀之星"></label><label>卡牌编号<input data-form="cardNumber" placeholder="例如 SET01-001"></label><label>年份<input data-form="year" placeholder="2026"></label><label>署名<input data-form="credit" placeholder="作者 / AI绘画 / 工作室"></label></div>
       <label>标签<input data-form="tags" placeholder="单位,王国,守备,长枪"></label>
       <label>规则关键词<input data-form="rulesKeywords" placeholder="部署,守备,相邻据点"></label>
       <div class="grid top-gap"><label>编号前缀<input id="numberPrefix" value="SET01-"></label><label>起始号<input id="numberStart" type="number" value="1"></label></div><div class="row"><button id="batchNumber">批量生成卡号</button><button id="openCardSearch">打开卡查</button><button id="exportTTS">导出 TTS 数据</button></div>
