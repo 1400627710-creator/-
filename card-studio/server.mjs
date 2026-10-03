@@ -6,14 +6,17 @@ import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 const DEFAULT_CARD_ART_DIRECTION = [
-  "Use a traditional hand-painted fantasy oil illustration aesthetic.",
-  "Show natural bristle brushwork, layered pigment, subtle canvas tooth, hand-mixed color variation, and painterly edges.",
-  "Favor restrained antique-book color harmony, atmospheric chiaroscuro, and believable material texture.",
-  "The result should feel authored by a human painter rather than glossy digital concept art.",
-  "Avoid photorealism, plastic 3D rendering, neon cyberpunk lighting, vector-flat graphics, anime cel shading, typography, logos, frames, and UI."
+  "Create production-ready collectible tabletop card artwork, not a generic poster.",
+  "Use a premium hand-painted fantasy illustration aesthetic with intentional brushwork, rich material texture, atmospheric depth, controlled edges, and a clear value hierarchy.",
+  "Compose for a portrait card around a 0.72 width-to-height ratio: one unmistakable focal subject, readable silhouette, strong gesture, and purposeful negative space.",
+  "Keep the top 16 percent calmer and lower-detail for title and cost overlays; keep the bottom 27 percent calmer and darker or simpler for rules text. Do not place a face, weapon tip, or critical storytelling detail in those overlay-safe zones unless explicitly requested.",
+  "Use cinematic but coherent lighting, foreground/midground/background separation, restrained color harmony, and enough local contrast around the focal subject to survive card-size printing.",
+  "The image must remain visually strong when cropped full bleed. Avoid accidental tangencies at the card edges and avoid clutter behind text-safe areas.",
+  "Never render typography, letters, numbers, logos, card borders, badges, watermarks, UI, or fake game text.",
+  "Avoid plastic 3D rendering, cheap mobile-game gloss, muddy low-contrast detail, oversharpening, and flat vector graphics unless the requested style explicitly calls for them."
 ].join(" ");
 
-const APP_VERSION = "2.1.0";
+const APP_VERSION = "2.2.0";
 const app = express();
 const root = dirname(fileURLToPath(import.meta.url));
 
@@ -57,7 +60,7 @@ app.post("/api/generate-image", async (req, res) => {
   const cardName = String(body.cardName || "").trim();
   const faction = String(body.faction || "").trim();
   const cardType = String(body.cardType || "").trim();
-  const quality = ["low","medium","high"].includes(body.quality) ? body.quality : "low";
+  const quality = ["low","medium","high","xhigh","max"].includes(body.quality) ? body.quality : "high";
 
   if (!prompt) {
     return res.status(400).json({ error: "请输入插画关键词。" });
@@ -81,7 +84,7 @@ app.post("/api/generate-image", async (req, res) => {
     const result = await client.images.generate({
       model: process.env.OPENAI_IMAGE_MODEL || "gpt-image-2.5-flare",
       prompt: fullPrompt,
-      size: "1024x1536",
+      size: "1024x1408",
       quality,
       output_format: "png",
       background: "opaque"
@@ -115,7 +118,7 @@ app.post("/api/redraw-image", async (req, res) => {
   const cardName = String(body.cardName || "").trim();
   const faction = String(body.faction || "").trim();
   const cardType = String(body.cardType || "").trim();
-  const quality = ["low","medium","high"].includes(body.quality) ? body.quality : "low";
+  const quality = ["low","medium","high","xhigh","max"].includes(body.quality) ? body.quality : "high";
   if (!imageDataUrl.startsWith("data:image/")) return res.status(400).json({ error: "当前卡牌没有可用于重绘的图片。" });
   if (!prompt) return res.status(400).json({ error: "请输入重绘要求。" });
 
@@ -140,7 +143,7 @@ app.post("/api/redraw-image", async (req, res) => {
     form.append("model", process.env.OPENAI_IMAGE_EDIT_MODEL || "gpt-image-2.5-sunburst");
     form.append("image", new Blob([bytes], { type: mime }), "card-art.png");
     form.append("prompt", fullPrompt);
-    form.append("size", "1024x1536");
+    form.append("size", "1024x1408");
     form.append("quality", quality);
     form.append("output_format", "png");
 
