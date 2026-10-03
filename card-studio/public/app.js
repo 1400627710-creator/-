@@ -698,6 +698,8 @@ function syncArtControls(){var a=current().appearance,x=a.artFocusX==null?50:a.a
 $("#artZoom").addEventListener("pointerdown",function(){recordHistory()});$("#artZoom").addEventListener("input",function(){current().appearance.artZoom=num(this.value,100);$("#artZoomValue").textContent=Math.round(num(this.value,100))+"%";renderPreviewOnly();persist()});
 $("#autoPalette").onclick=async function(){var c=current();if(!c.art){setStatus("请先上传或生成插画，再自动配色");return}var btn=this;btn.disabled=true;try{var p=await paletteFromArt(c.art);recordHistory();Object.assign(c.appearance,p);renderAll();setStatus("已从插画提取主色：卡框、强调色和底色已自动协调")}catch(e){setStatus("自动配色失败："+e.message)}btn.disabled=false};
 $("#setStyleReference").onclick=function(){var c=current();if(!c.art){setStatus("当前卡牌还没有插画，无法设为风格母版");return}recordHistory();aiReferenceImage=c.art;syncStyleReferenceStatus();persist();setStatus("已把当前插画设为整套风格母版")};
+$("#uploadStyleReference").onclick=function(){$("#styleReferenceFile").click()};
+$("#styleReferenceFile").onchange=async function(){var f=this.files&&this.files[0];if(!f)return;try{recordHistory();aiReferenceImage=await fileToDataUrl(f);syncStyleReferenceStatus();persist();setStatus("已上传整套风格母版："+f.name)}catch(e){setStatus("风格母版上传失败："+e.message)}this.value=""};
 $("#clearStyleReference").onclick=function(){if(!aiReferenceImage)return;recordHistory();aiReferenceImage="";syncStyleReferenceStatus();persist();setStatus("已清除整套风格母版")};
 $("#aiStyle").addEventListener("change",persist);$("#resetAiStyle").onclick=function(){$("#aiStyle").value=DEFAULT_AI_STYLE;$("#aiStylePreset").value="premium";aiStyle=DEFAULT_AI_STYLE;persist();setStatus("已恢复高端幻想卡牌默认风格")};
 $("#aiGenerate").onclick=async function(){
