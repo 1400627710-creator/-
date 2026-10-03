@@ -10,12 +10,12 @@
 <script src="/vendor/html-to-image/dist/html-to-image.js"></script>
 <script src="/vendor/jspdf/dist/jspdf.umd.min.js"></script>
 <script src="/vendor/jszip/dist/jszip.min.js"></script>
-<link rel="stylesheet" href="/styles.css?v=2.1.0">
+<link rel="stylesheet" href="/styles.css?v=2.2.0">
 </head>
 <body>
 <header class="top">
   <div class="brand">
-    <b>卡牌组装流水线</b><span class="version-badge">v2.1.0 · 独立图层自由布局</span>
+    <b>卡牌组装流水线</b><span class="version-badge">v2.2.0 · 独立图层自由布局</span>
     <input id="projectName" class="project-name" value="未命名卡牌项目" aria-label="项目名称">
   </div>
   <div class="actions">
@@ -84,6 +84,10 @@
       <h3>1. 模板</h3>
       <div id="templateCards" class="template-cards"></div>
       <div class="row mini-gap"><button id="cloneTemplate">另存为自定义模板</button><button id="deleteTemplate">删除自定义模板</button></div>
+      <div class="finish-presets">
+        <b>成品视觉版式</b><small>不是换颜色，而是重新安排信息层级</small>
+        <div class="row"><button id="presetShowcase" class="primary">全幅插画 · 竞技卡</button><button id="presetClassicFrame">古典双槽 · 边框卡</button></div>
+      </div>
     </section>
 
     <section>
@@ -186,7 +190,13 @@
         <button id="saveApiKey">保存 AI Key</button>
         <small id="apiKeyStatus">正在检查...</small>
       </div>
-      <label>AI 质量<select id="aiQuality"><option value="low">草稿 / 快速</option><option value="medium">中等</option><option value="high">高质量</option></select></label>
+      <label>AI 质量<select id="aiQuality"><option value="low">草稿 LOW</option><option value="medium">预览 MEDIUM</option><option value="high" selected>高质量 HIGH（默认）</option><option value="xhigh">精细 XHIGH</option><option value="max">终稿 MAX</option></select></label>
+      <p class="micro-help ai-quality-help">建议：构图试验用 MEDIUM；准备真正上卡时用 HIGH / XHIGH；最终成品用 MAX。</p>
+      <div class="art-focus-box"><b>插画构图微调</b><small>无需重生成，也能把人物脸部/主体移到正确位置</small>
+        <label>横向焦点 <span id="artFocusXValue">50%</span><input id="artFocusX" type="range" min="0" max="100" value="50"></label>
+        <label>纵向焦点 <span id="artFocusYValue">50%</span><input id="artFocusY" type="range" min="0" max="100" value="50"></label>
+        <label>插画缩放 <span id="artZoomValue">100%</span><input id="artZoom" type="range" min="100" max="180" value="100"></label>
+      </div>
       <div class="row"><button id="aiGenerate" class="primary">生成新图</button><button id="aiRedraw">基于现图重绘</button></div>
       <div class="row mini-gap"><button id="batchImages">批量导入图片</button><button id="batchAI">缺图卡牌批量 AI</button></div>
       <input id="batchImageFiles" type="file" accept="image/*" multiple hidden>
@@ -207,7 +217,8 @@
         </select>
       </div>
       <div id="assetList" class="asset-list"></div>
-      <div class="upload-asset-box"><select id="uploadAssetCategory"><option value="icon">卡面图标</option><option value="frameImage">图片边框</option><option value="textureImage">图片底纹</option></select><button id="uploadAssetBtn">上传自定义素材</button><input id="customAssetFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden></div>
+      <div class="smart-frame-box"><b>智能卡框导入</b><small>普通白底边框图也能直接使用：自动去白底、保留线稿与灰色功能区，并自动套用古典双槽版式。</small><button id="smartFrameBtn" class="primary wide">✨ 一键导入普通卡框图</button><input id="smartFrameFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></div>
+      <div class="upload-asset-box"><select id="uploadAssetCategory"><option value="icon">卡面图标</option><option value="frameImage">透明图片边框</option><option value="textureImage">图片底纹</option></select><button id="uploadAssetBtn">上传其他素材</button><input id="customAssetFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden></div>
       <div id="customAssetList" class="custom-assets"></div>
     </section>
 
@@ -313,6 +324,6 @@
 </div>
 
 <div class="hidden-export"><div id="exportCard"></div></div>
-<script src="/app.js?v=2.1.0"></script>
+<script src="/app.js?v=2.2.0"></script>
 </body>
 </html>
