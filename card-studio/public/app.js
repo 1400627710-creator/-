@@ -554,8 +554,8 @@ var renderCustomAssets=function(){var box=$("#customAssetList");if(!box)return;v
 var activeToolMode=loadJson("card-studio-tool-mode","content");
 function setToolMode(mode){
   var valid=["content","text","layout","visual","rules","export"];if(valid.indexOf(mode)<0)mode="content";activeToolMode=mode;
-  $("#rightModeTabs [data-tool-mode]").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-tool-mode")===mode)});
-  $(".right [data-tool-group]").forEach(function(sec){sec.hidden=sec.getAttribute("data-tool-group")!==mode});
+  $$("#rightModeTabs [data-tool-mode]").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-tool-mode")===mode)});
+  $$(".right [data-tool-group]").forEach(function(sec){sec.hidden=sec.getAttribute("data-tool-group")!==mode});
   localStorage.setItem("card-studio-tool-mode",JSON.stringify(mode));
 }
 $("#rightModeTabs").addEventListener("click",function(e){var b=e.target.closest("[data-tool-mode]");if(!b)return;var mode=b.getAttribute("data-tool-mode");setToolMode(mode);if(mode==="layout"&&!layoutEditing)setLayoutMode(true,false)});
