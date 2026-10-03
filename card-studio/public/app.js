@@ -151,7 +151,7 @@ var normalizeCard=function(c){
   if(c.rarity==null)c.rarity="普通";
   if(c.tags==null)c.tags="";
   if(c.rulesKeywords==null)c.rulesKeywords="";
-  if(c.cardNumber==null)c.cardNumber="";if(c.setName==null)c.setName="";if(c.year==null)c.year="";if(c.credit==null)c.credit="";
+  if(c.cardNumber==null)c.cardNumber="";if(c.setName==null)c.setName="";if(c.year==null)c.year="";if(c.credit==null)c.credit="";if(!c.textStyles||typeof c.textStyles!=="object")c.textStyles={};
   var oldLayout=c.layout||{},t=TEMPLATES[c.templateId]||TEMPLATES.unit,nextLayout=makeLayout(c.templateId);
   function legacy(base,patch){return Object.assign({},base||{},patch||{})}
   if(oldLayout.head&&!oldLayout.title){nextLayout.title=legacy(nextLayout.title,{x:oldLayout.head.x,y:oldLayout.head.y,w:oldLayout.head.w,h:Math.max(6,(oldLayout.head.h||17)*.58),r:oldLayout.head.r,z:oldLayout.head.z,locked:oldLayout.head.locked,opacity:oldLayout.head.opacity,visible:oldLayout.head.visible});nextLayout.faction=legacy(nextLayout.faction,{x:oldLayout.head.x,y:(oldLayout.head.y||0)+Math.max(7,(oldLayout.head.h||17)*.58),w:Math.max(30,(oldLayout.head.w||80)*.78),h:Math.max(4,(oldLayout.head.h||17)*.3),r:oldLayout.head.r,z:oldLayout.head.z,locked:oldLayout.head.locked,opacity:oldLayout.head.opacity,visible:oldLayout.head.visible})}
@@ -160,7 +160,7 @@ var normalizeCard=function(c){
   if(oldLayout.stats){var stats=t.stats||[],gap=2,totalW=oldLayout.stats.w||86,n=Math.max(1,stats.length),cell=(totalW-gap*(n-1))/n;stats.forEach(function(st,i){var key="stat_"+st[0];if(!oldLayout[key])nextLayout[key]=legacy(nextLayout[key],{x:(oldLayout.stats.x||7)+i*(cell+gap),y:oldLayout.stats.y,w:cell,h:oldLayout.stats.h,r:oldLayout.stats.r,z:oldLayout.stats.z,locked:oldLayout.stats.locked,opacity:oldLayout.stats.opacity,visible:oldLayout.stats.visible})})}
   Object.keys(oldLayout).forEach(function(k){if(DEFAULT_LAYOUT[k])nextLayout[k]=Object.assign({},nextLayout[k],oldLayout[k])});
   c.layout=nextLayout;Object.keys(c.layout).forEach(function(k){c.layout[k]=Object.assign({},DEFAULT_LAYOUT[k]||{x:10,y:10,w:30,h:10,r:0,z:40,locked:false,opacity:1,visible:true},c.layout[k]||{});if(c.layout[k].opacity==null)c.layout[k].opacity=1;if(c.layout[k].visible==null)c.layout[k].visible=true});
-  if(!Array.isArray(c.extraElements))c.extraElements=[];c.extraElements.forEach(function(el){var wasLegacy=el.layout&&el.layout.opacity==null,oldZ=el.layout&&el.layout.z;el.layout=Object.assign({x:10,y:10,w:30,h:8,r:0,z:40,locked:false,opacity:1,visible:true},el.layout||{});if(wasLegacy&&el.kind==="image"&&oldZ===46)el.layout.z=18;if(el.layout.opacity==null)el.layout.opacity=1;if(el.layout.visible==null)el.layout.visible=true});
+  if(!Array.isArray(c.extraElements))c.extraElements=[];c.extraElements.forEach(function(el){var wasLegacy=el.layout&&el.layout.opacity==null,oldZ=el.layout&&el.layout.z;el.layout=Object.assign({x:10,y:10,w:30,h:8,r:0,z:40,locked:false,opacity:1,visible:true},el.layout||{});if(wasLegacy&&el.kind==="image"&&oldZ===46)el.layout.z=18;if(el.layout.opacity==null)el.layout.opacity=1;if(el.layout.visible==null)el.layout.visible=true;if(el.kind!=="image"){if(el.bold==null)el.bold=false;if(el.fontStyle==null)el.fontStyle=""}});
   if(c.art==null)c.art="";
   return c;
 };
@@ -238,13 +238,26 @@ var raritySymbol=function(style){
   return "★";
 };
 var assetById=function(id){return userAssets.find(function(x){return x.id===id})};
+var FONT_STACKS={
+  default:'Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif',
+  serif:'Georgia,"Noto Serif SC","Songti SC",serif',
+  display:'"Arial Narrow","Microsoft YaHei",sans-serif',
+  soft:'"Trebuchet MS","PingFang SC",sans-serif'
+};
+var FIXED_TEXT_KEYS=["title","faction","type","rarityText","effect","cost","stat_attack","stat_health","stat_move","stat_range"];
+function baseTextStyle(card,key,a){
+  var group=key==="title"?"title":key==="effect"?"effect":key==="cost"?"cost":key.indexOf("stat_")===0?"stats":"meta";
+  return {size:a[group+"Size"],color:a[group+"Color"],align:a[group+"Align"],bold:!!a[group+"Bold"],fontStyle:a.fontStyle||"default"};
+}
+function textStyleFor(card,key,a){return Object.assign(baseTextStyle(card,key,a),(card.textStyles&&card.textStyles[key])||{})}
+function textCss(card,key,a,sizeOverride){var t=textStyleFor(card,key,a),family=FONT_STACKS[t.fontStyle]||FONT_STACKS.default;return "font-size:"+(sizeOverride==null?t.size:sizeOverride)+"px;color:"+t.color+";text-align:"+t.align+";font-weight:"+(t.bold?900:500)+";font-family:"+family}
 var cardHtml=function(card,editable){
   var t=TEMPLATES[card.templateId]||TEMPLATES.unit,a=normalizeAppearance(card.appearance),ce=editable?' contenteditable="true"':"";
   var desc=renderRichText(card.description,card);
   var artEmpty=card.art?"":'<div class="art-empty">插画区域<br><small>上传图片或使用 AI 生成</small></div>';
   var layoutId=t.baseLayout||t.id;
   var classes=["card","tpl-"+layoutId,"frame-"+a.frameStyle,"texture-"+a.textureStyle,"cost-"+a.costStyle,"rarity-"+a.rarityStyle,"font-"+a.fontStyle,"finish-"+(a.finishStyle||"premium"),a.frameImageAssetId?"has-custom-frame":""].filter(Boolean).join(" ");
-  var titleRenderSize=a.autoFitText===false?a.titleSize:Math.max(15,a.titleSize-Math.max(0,String(card.name||"").length-9)*.75),effectLen=String(card.description||"").replace(/\[\[[^\]]+\]\]/g,"").length,effectRenderSize=a.autoFitText===false?a.effectSize:Math.max(10,a.effectSize-(effectLen>220?3:effectLen>165?2:effectLen>115?1:0));
+  var titleTs=textStyleFor(card,"title",a),effectTs=textStyleFor(card,"effect",a),titleRenderSize=a.autoFitText===false?titleTs.size:Math.max(15,titleTs.size-Math.max(0,String(card.name||"").length-9)*.75),effectLen=String(card.description||"").replace(/\[\[[^\]]+\]\]/g,"").length,effectRenderSize=a.autoFitText===false?effectTs.size:Math.max(10,effectTs.size-(effectLen>220?3:effectLen>165?2:effectLen>115?1:0));
   var style="--p:"+a.primary+";--s:"+a.secondary+";--a:"+a.accent+";--f:"+a.frame+";--t:"+a.text+";--stats-count:"+Math.max(1,t.stats.length)+";--title-size:"+titleRenderSize+"px;--title-color:"+a.titleColor+";--title-align:"+a.titleAlign+";--title-weight:"+(a.titleBold?900:500)+";--effect-size:"+effectRenderSize+"px;--effect-color:"+a.effectColor+";--effect-align:"+a.effectAlign+";--effect-weight:"+(a.effectBold?800:400)+";--meta-size:"+a.metaSize+"px;--meta-color:"+a.metaColor+";--meta-align:"+a.metaAlign+";--meta-weight:"+(a.metaBold?800:500)+";--stats-size:"+a.statsSize+"px;--stats-color:"+a.statsColor+";--stats-align:"+a.statsAlign+";--stats-weight:"+(a.statsBold?900:500)+";--cost-size:"+a.costSize+"px;--cost-color:"+a.costColor+";--cost-align:"+a.costAlign+";--cost-weight:"+(a.costBold?900:500);
   var frameAsset=assetById(a.frameImageAssetId),textureAsset=assetById(a.textureImageAssetId),iconAsset=assetById(a.iconAssetId);
   var customFrame=frameAsset?'<img class="custom-frame-layer" src="'+esc(frameAsset.dataUrl)+'">':"";
@@ -252,24 +265,24 @@ var cardHtml=function(card,editable){
   var customIcon=iconAsset?'<img class="card-custom-icon" src="'+esc(iconAsset.dataUrl)+'">':"";
   function lp(key){var p=(card.layout&&card.layout[key])||DEFAULT_LAYOUT[key]||{x:0,y:0,w:10,h:10,r:0,z:20,opacity:1,visible:true};return 'left:'+p.x+'%;top:'+p.y+'%;width:'+p.w+'%;height:'+p.h+'%;z-index:'+p.z+';opacity:'+(p.opacity==null?1:p.opacity)+';transform:rotate('+p.r+'deg)'}
   function handles(){return editable?'<i class="layout-handle resize" data-handle="resize"></i><i class="layout-handle rotate" data-handle="rotate"></i>':""}
-  function node(key,cls,inner,attrs){var p=(card.layout&&card.layout[key])||DEFAULT_LAYOUT[key]||{};if(p.visible===false)return "";return '<div class="layout-node '+cls+(p.locked?' locked':'')+'" data-layout-key="'+key+'" style="'+lp(key)+'" '+(attrs||"")+'>'+inner+handles()+'</div>'}
-  var statNodes=(t.stats||[]).map(function(st){return node("stat_"+st[0],"stat stat-layer",'<small>'+st[1]+'</small><strong data-edit="'+st[0]+'"'+ce+'>'+esc(card[st[0]])+'</strong>')}).join("");
+  function node(key,cls,inner,attrs,extraCss){var p=(card.layout&&card.layout[key])||DEFAULT_LAYOUT[key]||{};if(p.visible===false)return "";return '<div class="layout-node '+cls+(p.locked?' locked':'')+'" data-layout-key="'+key+'" style="'+lp(key)+(extraCss?";"+extraCss:"")+'" '+(attrs||"")+'>'+inner+handles()+'</div>'}
+  var statNodes=(t.stats||[]).map(function(st){var k="stat_"+st[0];return node(k,"stat stat-layer",'<small>'+st[1]+'</small><strong style="'+textCss(card,k,a)+'" data-edit="'+st[0]+'"'+ce+'>'+esc(card[st[0]])+'</strong>')}).join("");
   var extras=(card.extraElements||[]).map(function(el){
     var p=el.layout||{x:10,y:10,w:30,h:8,r:0,z:18,locked:false,opacity:1,visible:true};if(p.visible===false)return "";
     var base='left:'+p.x+'%;top:'+p.y+'%;width:'+p.w+'%;height:'+p.h+'%;z-index:'+p.z+';opacity:'+(p.opacity==null?1:p.opacity)+';transform:rotate('+p.r+'deg);';
     if(el.kind==="image"){var asset=el.assetId&&assetById(el.assetId),src=el.src||(asset&&asset.dataUrl)||"";return '<div class="layout-node free-image-element '+(p.locked?"locked":"")+'" data-extra-id="'+el.id+'" style="'+base+'"><img src="'+esc(src)+'" alt="'+esc(el.name||"自由素材")+'" draggable="false">'+handles()+'</div>'}
     var inner=esc(resolveVars(el.text||"",card)).replace(/\\n/g,"<br>");
-    return '<div class="layout-node free-text-element '+(el.kind==="number"?"number-element ":"")+(el.parentId?"attached-label ":"")+(p.locked?"locked":"")+'" data-extra-id="'+el.id+'" data-parent-id="'+esc(el.parentId||"")+'" style="'+base+'font-size:'+(el.fontSize||11)+'px;color:'+(el.color||a.text)+';text-align:'+(el.align||"left")+'">'+inner+handles()+'</div>'
+    return '<div class="layout-node free-text-element '+(el.kind==="number"?"number-element ":"")+(el.parentId?"attached-label ":"")+(p.locked?"locked":"")+'" data-extra-id="'+el.id+'" data-parent-id="'+esc(el.parentId||"")+'" style="'+base+'font-size:'+(el.fontSize||11)+'px;color:'+(el.color||a.text)+';text-align:'+(el.align||"left")+';font-weight:'+(el.bold?900:500)+';font-family:'+(FONT_STACKS[el.fontStyle||a.fontStyle]||FONT_STACKS.default)+'">'+inner+handles()+'</div>'
   }).join("");
   return '<div class="'+classes+'" style="'+style+'">'+customFrame+customTexture+customIcon+
     node("art","art",artEmpty)+ '<div class="shade"></div><div class="texture-layer"></div><div class="trim"></div>'+
-    node("cost","cost-badge",'<span data-edit="cost"'+ce+'>'+esc(card.cost)+'</span>')+
-    node("title","head title-layer",'<div class="title" data-edit="name"'+ce+'>'+esc(card.name)+'</div>')+
-    node("faction","faction faction-layer",'<span data-edit="faction"'+ce+'>'+esc(card.faction)+'</span>')+
+    node("cost","cost-badge",'<span data-edit="cost"'+ce+'>'+esc(card.cost)+'</span>',"",textCss(card,"cost",a))+
+    node("title","head title-layer",'<div class="title" style="'+textCss(card,"title",a,titleRenderSize)+'" data-edit="name"'+ce+'>'+esc(card.name)+'</div>')+
+    node("faction","faction faction-layer",'<span data-edit="faction"'+ce+'>'+esc(card.faction)+'</span>',"",textCss(card,"faction",a))+
     node("rarityMark","rarity-mark rarity-"+a.rarityStyle,raritySymbol(a.rarityStyle),'title="'+esc(card.rarity)+'"')+
-    node("type","meta meta-single type-layer",'<span data-edit="unitType"'+ce+'>'+esc(card.unitType)+'</span>')+
-    node("rarityText","meta meta-single rarity-text-layer",'<span data-edit="rarity"'+ce+'>'+esc(card.rarity)+'</span>')+
-    node("effect","effect",'<span data-edit="description"'+ce+'>'+desc+'</span>')+
+    node("type","meta meta-single type-layer",'<span data-edit="unitType"'+ce+'>'+esc(card.unitType)+'</span>',"",textCss(card,"type",a))+
+    node("rarityText","meta meta-single rarity-text-layer",'<span data-edit="rarity"'+ce+'>'+esc(card.rarity)+'</span>',"",textCss(card,"rarityText",a))+
+    node("effect","effect",'<span data-edit="description"'+ce+'>'+desc+'</span>',"",textCss(card,"effect",a,effectRenderSize))+
     statNodes+node("tags","tags",esc(card.tags))+node("footerLeft","card-footer footer-left",esc([card.setName,card.cardNumber,card.year].filter(Boolean).join("  ·  ")))+node("footerRight","card-footer footer-right",esc(card.credit))+extras+'</div>';
 };
 var LAYOUT_LABELS={art:"插画",cost:"费用",title:"名称",faction:"系别",rarityMark:"稀有度标记",type:"类型",rarityText:"稀有度文字",effect:"效果文本",tags:"检索标签",footerLeft:"系列 / 编号 / 年份",footerRight:"署名",stat_attack:"攻击",stat_health:"血量",stat_move:"移速",stat_range:"射程"};
