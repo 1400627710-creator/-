@@ -548,7 +548,7 @@ function setToolMode(mode){
   $(".right [data-tool-group]").forEach(function(sec){sec.hidden=sec.getAttribute("data-tool-group")!==mode});
   localStorage.setItem("card-studio-tool-mode",JSON.stringify(mode));
 }
-$("#rightModeTabs").addEventListener("click",function(e){var b=e.target.closest("[data-tool-mode]");if(b)setToolMode(b.getAttribute("data-tool-mode"))});
+$("#rightModeTabs").addEventListener("click",function(e){var b=e.target.closest("[data-tool-mode]");if(!b)return;var mode=b.getAttribute("data-tool-mode");setToolMode(mode);if(mode==="layout"&&!layoutEditing)setLayoutMode(true,false)});
 var renderAll=function(){$("#projectName").value=projectName;if($("#aiStyle"))$("#aiStyle").value=aiStyle;if($("#aiStylePreset"))$("#aiStylePreset").value=detectAiStylePreset(aiStyle);if($("#aiQuality"))$("#aiQuality").value=aiQuality;$("#sheetSize").value=printSettings.sheet;$("#cropMarks").checked=!!printSettings.crop;renderTemplateFilter();renderList();renderCard();renderSnapshots();renderCustomAssets();updateHistoryButtons();setToolMode(activeToolMode);persist()};
 
 var patch=function(field,value,record){
@@ -562,12 +562,12 @@ var patchAppearance=function(field,value){
 };
 var setTemplate=function(id){
   if(!TEMPLATES[id]||current().templateId===id)return;
-  recordHistory();current().templateId=id;
+  recordHistory();clearSelection();current().templateId=id;
   if(!current().unitType||["单位","法术","建筑","事件"].indexOf(current().unitType)>=0)current().unitType=TEMPLATES[id].short;
   renderAll();setStatus("已切换为"+TEMPLATES[id].name+"，布局自动适配");
 };
 
-$("#safeMode").onclick=function(){setLayoutMode(false)};
+$("#safeMode").onclick=function(){setLayoutMode(false);setToolMode("content")};
 $("#layoutMode").onclick=function(){setLayoutMode(true,true)};
 $("#layoutQuickButton").onclick=function(){setLayoutMode(!layoutEditing,true)};
 $("#preview").addEventListener("pointerdown",function(e){
@@ -720,7 +720,7 @@ $("#termQuickList").onclick=function(e){var b=e.target.closest("[data-quick-term
 $("#insertKnownTerm").onclick=function(){if(!ruleTerms.length){openTermLibrary();setStatus("词条库还是空的，请先建立一个规则词条");return}openTermLibrary()};
 $("#autoMarkTerms").onclick=function(){var before=current().description,after=autoMarkKnownTerms(before);if(after===before){setStatus("当前效果中没有发现尚未标记的已知词条");return}recordHistory();current().description=after;$("#description").value=after;renderPreviewOnly();persist();setStatus("已自动识别当前卡牌中的规则词条")};
 $("#autoMarkAllCards").onclick=function(){if(!ruleTerms.length)return;recordHistory();var changed=0;cards.forEach(function(c){var x=autoMarkKnownTerms(c.description);if(x!==c.description){c.description=x;changed++}});renderAll();renderRuleTermLibrary();setStatus("已自动识别 "+changed+" 张卡牌中的规则词条")};
-$("#openRuleTerms").onclick=function(){openTermLibrary()};
+$("#openRuleTerms").onclick=function(){openTermLibrary()};$("#openRuleTermsRules").onclick=function(){openTermLibrary()};
 $("#closeRuleTerms").onclick=function(){$("#ruleTermsModal").hidden=true};
 $("#ruleTermsModal").addEventListener("click",function(e){if(e.target===this)this.hidden=true});
 $("#termSearch").addEventListener("input",renderRuleTermLibrary);
