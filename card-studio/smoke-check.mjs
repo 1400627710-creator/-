@@ -72,7 +72,8 @@ if (!server.includes('"xhigh","max"')) throw new Error("XHIGH/MAX AI quality sup
 if (!server.includes('1024x1392')) throw new Error("Card-aspect AI output size is missing.");
 if (!server.includes('APP_VERSION = "2.2.0"')) throw new Error("Server runtime version marker is missing.");
 
-if (!app.includes("version:7")) throw new Error("Independent-layer project schema version is missing.");\nif (!app.includes('"\\if (!app.includes("version:7")) throw new Error("Independent-layer project schema version is missing.");"')) throw new Error("Rule-term regex escaping regression.");
+if (!app.includes("version:7")) throw new Error("Independent-layer project schema version is missing.");
+if (!app.includes("function escapeRegExp") || app.includes("\\function renderRichText")) throw new Error("Rule-term regex escaping regression.");
 if (!html.includes("每个字段独立")) throw new Error("Independent-module guidance is missing.");
 if (!html.includes("智能卡框导入") || !html.includes("全幅插画 · 竞技卡")) throw new Error("Production layout or smart-frame UI is missing.");
 console.log("Card Studio smoke check passed.");
