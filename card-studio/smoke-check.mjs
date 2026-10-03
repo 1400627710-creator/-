@@ -13,7 +13,7 @@ new vm.Script(app);
 const requiredIds = [
   "projectName","preview","cardList","cardSearch","templateFilter","factionFilter","rarityFilter","sortCards","templateCards",
   "dynamicStats","description","textTarget","textSize","textColor","textAlign","textBold","applyTextAll",
-  "aiPrompt","aiStylePreset","aiStyle","resetAiStyle","aiQuality","aiGenerate","aiRedraw","apiKeyInput","saveApiKey","apiKeyStatus","artFocusX","artFocusY","artZoom","autoPalette",
+  "aiPrompt","aiStylePreset","aiStyle","resetAiStyle","aiQuality","aiGenerate","aiRedraw","apiKeyInput","saveApiKey","apiKeyStatus","artFocusX","artFocusY","artZoom","autoPalette","setStyleReference","clearStyleReference","styleReferenceStatus",
   "assetList","customAssetList","skinList","projectExport","projectImport","projectFile",
   "batchImages","batchAI","batchImageFiles","smartFrameBtn","smartFrameFile","uploadAssetBtn","customAssetFile",
   "batchRename","exportManifest","exportJsonList","batchPngZip","batchJpgZip",
@@ -49,17 +49,17 @@ const badSelectors = app.split("\n").filter((line) => {
 if (badSelectors.length) throw new Error("querySelector used where querySelectorAll helper is required.");
 
 for (const id of [
-  "projectExport","projectImport","batchImages","batchAI","smartFrameBtn","uploadAssetBtn","autoPalette","presetShowcase","presetClassicFrame","batchRename",
+  "projectExport","projectImport","batchImages","batchAI","smartFrameBtn","uploadAssetBtn","autoPalette","setStyleReference","clearStyleReference","presetShowcase","presetClassicFrame","batchRename",
   "batchPngZip","batchJpgZip","saveApiKey","aiRedraw","resetAiStyle","applyTextAll","sheetSize","cropMarks","layoutMode","addImageElement","addImageLabel","detachImageLabel","addTextElement","addNumberElement","toggleElementVisibility","layerUp","layerDown","resetLayout","openCardSearch","exportTTS","markRuleTerm","openRuleTerms","saveRuleTerm","insertRuleTerm"
 ]) {
   if (!app.includes('$("#' + id + '")')) throw new Error("Missing handler reference for #" + id);
 }
 
-for (const marker of ["indexedDB.open", "projectPayload", "customTemplates", "userAssets", "SHEETS", "factionFilter", "rarityFilter", "DEFAULT_LAYOUT", "stat_attack", "stat_health", "rarityText", "allLayerModels", "renderLayerPanel", "selectedModel", "opacity", "visible", "extraElements", "addFreeImage", "addLabelToSelectedImage", "parentId", "renderCardLibrary", "ttsCard", "renderRichText", "extractRuleTerms", "ruleTerms", "byTerm", "botanical", "canvas", "classical", "DEFAULT_AI_STYLE", "AI_STYLE_PRESETS", "makeSmartFrameDataUrl", "applyCompositionPreset", "paletteFromArt", "autoFitText"]) {
+for (const marker of ["indexedDB.open", "projectPayload", "customTemplates", "userAssets", "SHEETS", "factionFilter", "rarityFilter", "DEFAULT_LAYOUT", "stat_attack", "stat_health", "rarityText", "allLayerModels", "renderLayerPanel", "selectedModel", "opacity", "visible", "extraElements", "addFreeImage", "addLabelToSelectedImage", "parentId", "renderCardLibrary", "ttsCard", "renderRichText", "extractRuleTerms", "ruleTerms", "byTerm", "botanical", "canvas", "classical", "DEFAULT_AI_STYLE", "AI_STYLE_PRESETS", "makeSmartFrameDataUrl", "applyCompositionPreset", "paletteFromArt", "autoFitText", "aiReferenceImage", "requestGeneratedArt"]) {
   if (!app.includes(marker)) throw new Error("Missing implemented feature marker: " + marker);
 }
 
-for (const endpoint of ["/api/health","/api/settings/api-key","/api/generate-image","/api/redraw-image"]) {
+for (const endpoint of ["/api/health","/api/settings/api-key","/api/generate-image","/api/generate-image-reference","/api/redraw-image"]) {
   if (!server.includes(endpoint)) throw new Error("Missing server endpoint: " + endpoint);
 }
 
@@ -72,7 +72,7 @@ if (!server.includes('"xhigh","max"')) throw new Error("XHIGH/MAX AI quality sup
 if (!server.includes('1024x1392')) throw new Error("Card-aspect AI output size is missing.");
 if (!server.includes('APP_VERSION = "2.2.0"')) throw new Error("Server runtime version marker is missing.");
 
-if (!app.includes("version:7")) throw new Error("Independent-layer project schema version is missing.");
+if (!app.includes("version:7")) throw new Error("Independent-layer project schema version is missing.");\nif (!app.includes('"\\if (!app.includes("version:7")) throw new Error("Independent-layer project schema version is missing.");"')) throw new Error("Rule-term regex escaping regression.");
 if (!html.includes("每个字段独立")) throw new Error("Independent-module guidance is missing.");
 if (!html.includes("智能卡框导入") || !html.includes("全幅插画 · 竞技卡")) throw new Error("Production layout or smart-frame UI is missing.");
 console.log("Card Studio smoke check passed.");
