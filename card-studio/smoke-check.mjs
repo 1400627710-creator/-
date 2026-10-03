@@ -13,22 +13,22 @@ new vm.Script(app);
 const requiredIds = [
   "projectName","preview","cardList","cardSearch","templateFilter","factionFilter","rarityFilter","sortCards","templateCards",
   "dynamicStats","description","textTarget","textSize","textColor","textAlign","textBold","applyTextAll",
-  "aiPrompt","aiStylePreset","aiStyle","resetAiStyle","aiQuality","aiGenerate","aiRedraw","apiKeyInput","saveApiKey","apiKeyStatus","artFocusX","artFocusY","artZoom","autoPalette","setStyleReference","uploadStyleReference","styleReferenceFile","clearStyleReference","styleReferenceStatus",
+  "aiPrompt","aiStylePreset","aiStyle","resetAiStyle","aiQuality","aiGenerate","aiRedraw","artFocusX","artFocusY","artZoom","autoPalette","setStyleReference","uploadStyleReference","styleReferenceFile","clearStyleReference","styleReferenceStatus",
   "assetList","customAssetList","skinList","projectExport","projectImport","projectFile",
   "batchImages","batchAI","batchImageFiles","smartFrameBtn","smartFrameFile","uploadAssetBtn","customAssetFile",
   "batchRename","exportManifest","exportJsonList","batchPngZip","batchJpgZip",
   "sheetSize","cropMarks","singlePdf","batchPdf","batchPdfTop","exportCard",
-  "safeMode","layoutMode","layoutQuickButton","layoutPanel","addImageElement","freeImageFile","imageLabelTools","imageLabelPosition","addImageLabel","detachImageLabel","addTextElement","addNumberElement","elX","elY","elW","elH","elR","elZ","elOpacity","elOpacityValue","selectedLayerName","toggleElementVisibility","layerUp","layerDown","layerList","resetLayout","copyLayoutAll",
+  "safeMode","layoutMode","layoutQuickButton","rightModeTabs","layoutPanel","selectionCount","alignLeft","alignHCenter","alignRight","alignTop","alignVCenter","alignBottom","distributeH","distributeV","selectAllLayers","lockAspect","snapEnabled","addImageElement","freeImageFile","imageLabelTools","imageLabelPosition","addImageLabel","detachImageLabel","addTextElement","addNumberElement","elX","elY","elW","elH","elR","elZ","elOpacity","elOpacityValue","selectedLayerName","toggleElementVisibility","layerUp","layerDown","layerList","resetLayout","copyLayoutAll",
   "openCardSearch","cardSearchModal","librarySearch","libraryResults","tagCloud","exportTTS",
-  "markRuleTerm","openRuleTerms","termQuickColor","termQuickList","ruleTermsModal","termSearch","termList","termName","termColor","termCategory","termTags","termDescription","saveRuleTerm","insertRuleTerm"
+  "markRuleTerm","openRuleTerms","openRuleTermsRules","termQuickColor","termQuickList","ruleTermsModal","termSearch","termList","termName","termColor","termCategory","termTags","termDescription","saveRuleTerm","insertRuleTerm"
 ];
 
-if (!html.includes("v2.2.0 · 独立图层自由布局")) throw new Error("Visible 2.2.0 version badge is missing.");
+if (!html.includes("v2.3.0 · 独立图层自由布局")) throw new Error("Visible 2.3.0 version badge is missing.");
 if (!html.includes("自由布局（独立图层）")) throw new Error("High-visibility free-layout wording is missing.");
-if (!html.includes("styles.css?v=2.2.0") || !html.includes("app.js?v=2.2.0")) throw new Error("2.2.0 browser cache busting is missing.");
-if (!launcher.includes("CARD_STUDIO_PORT=8793") || !quickLauncher.includes("CARD_STUDIO_PORT=8793")) throw new Error("Launchers must use the dedicated 2.2.0 port.");
-if (!launcher.includes("?v=2.2.0") || !quickLauncher.includes("?v=2.2.0")) throw new Error("Launchers must open the cache-busted 2.2.0 URL.");
-if (pkg.version !== "2.2.0") throw new Error("Package version must be 2.2.0.");
+if (!html.includes("styles.css?v=2.3.0") || !html.includes("app.js?v=2.3.0")) throw new Error("2.3.0 browser cache busting is missing.");
+if (!launcher.includes("CARD_STUDIO_PORT=8794") || !quickLauncher.includes("CARD_STUDIO_PORT=8794")) throw new Error("Launchers must use the dedicated 2.3.0 port.");
+if (!launcher.includes("?v=2.3.0") || !quickLauncher.includes("?v=2.3.0")) throw new Error("Launchers must open the cache-busted 2.3.0 URL.");
+if (pkg.version !== "2.3.0") throw new Error("Package version must be 2.3.0.");
 
 const missing = requiredIds.filter((id) => !html.includes('id="' + id + '"'));
 if (missing.length) throw new Error("Missing required DOM ids: " + missing.join(", "));
@@ -50,16 +50,16 @@ if (badSelectors.length) throw new Error("querySelector used where querySelector
 
 for (const id of [
   "projectExport","projectImport","batchImages","batchAI","smartFrameBtn","uploadAssetBtn","autoPalette","setStyleReference","uploadStyleReference","clearStyleReference","presetShowcase","presetClassicFrame","batchRename",
-  "batchPngZip","batchJpgZip","saveApiKey","aiRedraw","resetAiStyle","applyTextAll","sheetSize","cropMarks","layoutMode","addImageElement","addImageLabel","detachImageLabel","addTextElement","addNumberElement","toggleElementVisibility","layerUp","layerDown","resetLayout","openCardSearch","exportTTS","markRuleTerm","openRuleTerms","saveRuleTerm","insertRuleTerm"
+  "batchPngZip","batchJpgZip","aiRedraw","resetAiStyle","applyTextAll","sheetSize","cropMarks","layoutMode","addImageElement","addImageLabel","detachImageLabel","addTextElement","addNumberElement","toggleElementVisibility","layerUp","layerDown","alignLeft","alignHCenter","alignRight","alignTop","alignVCenter","alignBottom","distributeH","distributeV","selectAllLayers","resetLayout","openCardSearch","exportTTS","markRuleTerm","openRuleTerms","openRuleTermsRules","saveRuleTerm","insertRuleTerm"
 ]) {
   if (!app.includes('$("#' + id + '")')) throw new Error("Missing handler reference for #" + id);
 }
 
-for (const marker of ["indexedDB.open", "projectPayload", "customTemplates", "userAssets", "SHEETS", "factionFilter", "rarityFilter", "DEFAULT_LAYOUT", "stat_attack", "stat_health", "rarityText", "allLayerModels", "renderLayerPanel", "selectedModel", "opacity", "visible", "extraElements", "addFreeImage", "addLabelToSelectedImage", "parentId", "renderCardLibrary", "ttsCard", "renderRichText", "extractRuleTerms", "ruleTerms", "byTerm", "botanical", "canvas", "classical", "DEFAULT_AI_STYLE", "AI_STYLE_PRESETS", "makeSmartFrameDataUrl", "applyCompositionPreset", "paletteFromArt", "autoFitText", "aiReferenceImage", "requestGeneratedArt", "footerLeft", "footerRight", "setName", "credit"]) {
+for (const marker of ["indexedDB.open", "projectPayload", "customTemplates", "userAssets", "SHEETS", "factionFilter", "rarityFilter", "DEFAULT_LAYOUT", "stat_attack", "stat_health", "rarityText", "allLayerModels", "renderLayerPanel", "selectedModel", "opacity", "visible", "extraElements", "addFreeImage", "addLabelToSelectedImage", "parentId", "renderCardLibrary", "ttsCard", "renderRichText", "extractRuleTerms", "ruleTerms", "byTerm", "botanical", "canvas", "classical", "DEFAULT_AI_STYLE", "AI_STYLE_PRESETS", "makeSmartFrameDataUrl", "applyCompositionPreset", "paletteFromArt", "autoFitText", "aiReferenceImage", "requestGeneratedArt", "selectedElements", "beginMarquee", "selectionBounds", "snappedMove", "SKIN_THEME_KEYS", "mergeThemeAppearance", "setToolMode", "footerLeft", "footerRight", "setName", "credit"]) {
   if (!app.includes(marker)) throw new Error("Missing implemented feature marker: " + marker);
 }
 
-for (const endpoint of ["/api/health","/api/settings/api-key","/api/generate-image","/api/generate-image-reference","/api/redraw-image"]) {
+for (const endpoint of ["/api/health","/api/generate-image","/api/generate-image-reference","/api/redraw-image"]) {
   if (!server.includes(endpoint)) throw new Error("Missing server endpoint: " + endpoint);
 }
 
@@ -70,13 +70,17 @@ if (!server.includes("DEFAULT_CARD_ART_DIRECTION")) throw new Error("Production 
 if (!server.includes('"gpt-image-2.5-sunburst"')) throw new Error("Quality-first GPT Image 2.5 Sunburst default is missing.");
 if (!server.includes('"xhigh","max"')) throw new Error("XHIGH/MAX AI quality support is missing.");
 if (!server.includes('1024x1392')) throw new Error("Card-aspect AI output size is missing.");
-if (!server.includes('APP_VERSION = "2.2.0"')) throw new Error("Server runtime version marker is missing.");
+if (!server.includes('APP_VERSION = "2.3.0"')) throw new Error("Server runtime version marker is missing.");
+if (server.includes("/api/settings/api-key") || html.includes("apiKeyInput") || app.includes("saveApiKey")) throw new Error("User-facing AI key workflow must remain removed in the private prototype.");
 
 if (!app.includes("version:7")) throw new Error("Independent-layer project schema version is missing.");
 if (!app.includes("function escapeRegExp") || app.includes("\\function renderRichText")) throw new Error("Rule-term regex escaping regression.");
 if (!html.includes("每个字段独立")) throw new Error("Independent-module guidance is missing.");
 if (!html.includes("智能卡框导入") || !html.includes("全幅插画 · 竞技卡")) throw new Error("Production layout or smart-frame UI is missing.");
 if (!html.includes('data-form="setName"') || !html.includes('data-form="credit"')) throw new Error("Collectible footer metadata fields are missing.");
+for (const group of ["content","text","layout","visual","rules","export"]) if (!html.includes('data-tool-mode="'+group+'"') || !html.includes('data-tool-group="'+group+'"')) throw new Error("Missing focused workspace group: "+group);
+for (const marker of ["beginMarquee","selectedElements","alignSelection","distributeSelection","snappedMove","selection-bounds"]) if (!(app+html+fs.readFileSync(new URL("./public/styles.css", import.meta.url), "utf8")).includes(marker)) throw new Error("Missing pro editor marker: "+marker);
+if (!app.includes("mergeThemeAppearance(current().appearance,skin.appearance)")) throw new Error("Skin application must preserve frame/image asset references.");
 console.log("Card Studio smoke check passed.");
 
 if (app.includes('$("#preview .layout-node.selected").forEach')) throw new Error("single-selector helper used for layout selection list");
