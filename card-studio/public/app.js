@@ -86,7 +86,9 @@ var DEFAULT_LAYOUT={
   stat_health:{x:29,y:87,w:20,h:10,r:0,z:25,locked:false,opacity:1,visible:true},
   stat_move:{x:51,y:87,w:20,h:10,r:0,z:25,locked:false,opacity:1,visible:true},
   stat_range:{x:73,y:87,w:20,h:10,r:0,z:25,locked:false,opacity:1,visible:true},
-  tags:{x:8,y:58,w:70,h:5,r:0,z:20,locked:false,opacity:1,visible:true}
+  tags:{x:8,y:58,w:70,h:5,r:0,z:20,locked:false,opacity:1,visible:true},
+  footerLeft:{x:6,y:95,w:56,h:3.2,r:0,z:32,locked:false,opacity:.9,visible:true},
+  footerRight:{x:64,y:95,w:30,h:3.2,r:0,z:32,locked:false,opacity:.9,visible:true}
 };
 var makeLayout=function(templateId){var out=clone(DEFAULT_LAYOUT),t=TEMPLATES[templateId]||TEMPLATES.unit,stats=t.stats||[],gap=2,totalW=86,n=Math.max(1,stats.length),cell=(totalW-gap*(n-1))/n;stats.forEach(function(st,i){var key="stat_"+st[0];out[key].x=7+i*(cell+gap);out[key].w=cell});return out};
 var makeCard=function(templateId,name){
@@ -95,7 +97,7 @@ var makeCard=function(templateId,name){
     id:uid(),templateId:t.id,name:name||("新"+t.short+"卡"),cost:1,faction:"中立",
     description:"在这里填写卡牌效果。可使用 {费用}、{攻击} 等变量。",
     attack:t.id==="event"?0:1,health:t.id==="event"?0:1,move:t.id==="unit"?2:0,range:t.id==="unit"?1:0,
-    unitType:t.short,rarity:"普通",tags:"",rulesKeywords:"",cardNumber:"",art:"",appearance:clone(DEFAULT_APPEARANCE),layout:makeLayout(t.id),extraElements:[]
+    unitType:t.short,rarity:"普通",tags:"",rulesKeywords:"",cardNumber:"",setName:"",year:String(new Date().getFullYear()),credit:"",art:"",appearance:clone(DEFAULT_APPEARANCE),layout:makeLayout(t.id),extraElements:[]
   };
 };
 var sample=[
@@ -105,7 +107,7 @@ var sample=[
   Object.assign(makeCard("event","突发浓雾"),{cost:0,faction:"环境",description:"本回合所有超过 2 格的远程攻击获得 -1 命中。\\n回合结束时弃置此事件。",unitType:"战场事件",tags:"环境,全局"})
 ];
 
-var vars={"名称":"name","费用":"cost","系别":"faction","攻击":"attack","血量":"health","移速":"move","射程":"range","兵种":"unitType","稀有度":"rarity","编号":"cardNumber"};
+var vars={"名称":"name","费用":"cost","系别":"faction","攻击":"attack","血量":"health","移速":"move","射程":"range","兵种":"unitType","稀有度":"rarity","编号":"cardNumber","系列":"setName","年份":"year","署名":"credit"};
 
 var loadJson=function(key,fallback){try{var v=JSON.parse(localStorage.getItem(key)||"null");return v==null?fallback:v}catch(e){return fallback}};
 var dbReady=false,dbSaveTimer=null;
@@ -151,7 +153,7 @@ var normalizeCard=function(c){
   if(c.rarity==null)c.rarity="普通";
   if(c.tags==null)c.tags="";
   if(c.rulesKeywords==null)c.rulesKeywords="";
-  if(c.cardNumber==null)c.cardNumber="";
+  if(c.cardNumber==null)c.cardNumber="";if(c.setName==null)c.setName="";if(c.year==null)c.year="";if(c.credit==null)c.credit="";
   var oldLayout=c.layout||{},t=TEMPLATES[c.templateId]||TEMPLATES.unit,nextLayout=makeLayout(c.templateId);
   function legacy(base,patch){return Object.assign({},base||{},patch||{})}
   if(oldLayout.head&&!oldLayout.title){nextLayout.title=legacy(nextLayout.title,{x:oldLayout.head.x,y:oldLayout.head.y,w:oldLayout.head.w,h:Math.max(6,(oldLayout.head.h||17)*.58),r:oldLayout.head.r,z:oldLayout.head.z,locked:oldLayout.head.locked,opacity:oldLayout.head.opacity,visible:oldLayout.head.visible});nextLayout.faction=legacy(nextLayout.faction,{x:oldLayout.head.x,y:(oldLayout.head.y||0)+Math.max(7,(oldLayout.head.h||17)*.58),w:Math.max(30,(oldLayout.head.w||80)*.78),h:Math.max(4,(oldLayout.head.h||17)*.3),r:oldLayout.head.r,z:oldLayout.head.z,locked:oldLayout.head.locked,opacity:oldLayout.head.opacity,visible:oldLayout.head.visible})}
@@ -270,9 +272,9 @@ var cardHtml=function(card,editable){
     node("type","meta meta-single type-layer",'<span data-edit="unitType"'+ce+'>'+esc(card.unitType)+'</span>')+
     node("rarityText","meta meta-single rarity-text-layer",'<span data-edit="rarity"'+ce+'>'+esc(card.rarity)+'</span>')+
     node("effect","effect",'<span data-edit="description"'+ce+'>'+desc+'</span>')+
-    statNodes+node("tags","tags",esc(card.tags))+extras+'</div>';
+    statNodes+node("tags","tags",esc(card.tags))+node("footerLeft","card-footer footer-left",esc([card.setName,card.cardNumber,card.year].filter(Boolean).join("  ·  ")))+node("footerRight","card-footer footer-right",esc(card.credit))+extras+'</div>';
 };
-var LAYOUT_LABELS={art:"插画",cost:"费用",title:"名称",faction:"系别",rarityMark:"稀有度标记",type:"类型",rarityText:"稀有度文字",effect:"效果文本",tags:"检索标签",stat_attack:"攻击",stat_health:"血量",stat_move:"移速",stat_range:"射程"};
+var LAYOUT_LABELS={art:"插画",cost:"费用",title:"名称",faction:"系别",rarityMark:"稀有度标记",type:"类型",rarityText:"稀有度文字",effect:"效果文本",tags:"检索标签",footerLeft:"系列 / 编号 / 年份",footerRight:"署名",stat_attack:"攻击",stat_health:"血量",stat_move:"移速",stat_range:"射程"};
 function layerLabel(card,type,id,element){
   if(type==="extra"){if(element&&element.kind==="image")return "图片："+(element.name||"小素材");if(element&&element.kind==="number")return "编号："+(element.text||"{编号}");return "文字："+String(element&&element.text||"自定义文本").slice(0,12)}
   var t=TEMPLATES[card.templateId]||TEMPLATES.unit;if(id.indexOf("stat_")===0){var field=id.slice(5),st=(t.stats||[]).find(function(x){return x[0]===field});if(st)return st[2]}
@@ -280,7 +282,7 @@ function layerLabel(card,type,id,element){
 }
 function fixedLayerKeys(card){
   var t=TEMPLATES[card.templateId]||TEMPLATES.unit,keys=["art","cost","title","faction","rarityMark","type","rarityText","effect"];
-  (t.stats||[]).forEach(function(st){keys.push("stat_"+st[0])});keys.push("tags");return keys;
+  (t.stats||[]).forEach(function(st){keys.push("stat_"+st[0])});keys.push("tags","footerLeft","footerRight");return keys;
 }
 function allLayerModels(card){
   var out=fixedLayerKeys(card).map(function(k){return {type:"layout",id:k,layout:card.layout[k],label:layerLabel(card,"layout",k)}});
@@ -673,7 +675,7 @@ $("#importFile").onchange=async function(){
       c.description=String(pick(r,["description","描述","效果","卡牌效果"],""));c.attack=num(pick(r,["attack","攻击","威力","火力"],0));
       c.health=num(pick(r,["health","血量","生命","耐久"],0));c.move=num(pick(r,["move","移速","移动"],0));c.range=num(pick(r,["range","射程"],0));
       c.unitType=String(pick(r,["unitType","兵种","类型","法术类型","建筑类型","事件类型"],TEMPLATES[tid].short));
-      c.rarity=String(pick(r,["rarity","稀有度"],"普通"));c.tags=String(pick(r,["tags","关键词","标签"],""));c.rulesKeywords=String(pick(r,["rulesKeywords","规则关键词","规则标签"],""));c.cardNumber=String(pick(r,["cardNumber","编号","卡号","ID"],""));c.art=String(pick(r,["art","插画","图片","背景"],""));
+      c.rarity=String(pick(r,["rarity","稀有度"],"普通"));c.setName=String(pick(r,["setName","系列","系列名"],""));c.year=String(pick(r,["year","年份"],""));c.credit=String(pick(r,["credit","署名","作者"],""));c.tags=String(pick(r,["tags","关键词","标签"],""));c.rulesKeywords=String(pick(r,["rulesKeywords","规则关键词","规则标签"],""));c.cardNumber=String(pick(r,["cardNumber","编号","卡号","ID"],""));c.art=String(pick(r,["art","插画","图片","背景"],""));
       c.appearance=clone(current().appearance);return c;
     }).filter(function(c){return c.name});
     if(!imported.length)throw new Error("没有读取到卡牌数据");
@@ -817,12 +819,12 @@ function applyCompositionPreset(kind,quiet){
     l.art={x:0,y:0,w:100,h:100,r:0,z:1,locked:true,opacity:1,visible:true};
     l.title={x:6,y:4,w:66,h:7.5,r:0,z:34,locked:false,opacity:1,visible:true};l.faction={x:6,y:11.5,w:66,h:4.5,r:0,z:33,locked:false,opacity:.88,visible:true};
     l.type={x:6,y:15.5,w:60,h:4.5,r:0,z:32,locked:false,opacity:.82,visible:true};l.cost={x:79,y:4,w:8,h:8,r:0,z:36,locked:false,opacity:1,visible:true};l.rarityMark={x:88,y:4,w:7,h:8,r:0,z:36,locked:false,opacity:1,visible:true};
-    l.rarityText.visible=false;l.tags.visible=false;l.effect={x:6,y:72,w:88,h:20,r:0,z:30,locked:false,opacity:1,visible:true};
+    l.rarityText.visible=false;l.tags.visible=false;l.footerLeft={x:6,y:95,w:56,h:3.2,r:0,z:32,locked:false,opacity:.9,visible:true};l.footerRight={x:64,y:95,w:30,h:3.2,r:0,z:32,locked:false,opacity:.9,visible:true};l.effect={x:6,y:72,w:88,h:20,r:0,z:30,locked:false,opacity:1,visible:true};
     var stats=t.stats||[],sw=9,sg=1,start=94-(stats.length*sw+Math.max(0,stats.length-1)*sg);stats.forEach(function(st,i){l["stat_"+st[0]]={x:start+i*(sw+sg),y:66,w:sw,h:5.5,r:0,z:35,locked:false,opacity:1,visible:true}});
     a.finishStyle="premium";a.frameStyle="minimal";a.textureStyle="clean";a.titleSize=24;a.effectSize=13;a.metaSize=11;a.statsSize=17;a.statsColor="#111827";a.costSize=20;a.costColor="#111827";a.artFocusX=50;a.artFocusY=46;a.artZoom=105;
   }else{
     l.art={x:0,y:0,w:100,h:100,r:0,z:1,locked:true,opacity:1,visible:true};l.cost={x:3.5,y:1.2,w:17,h:12.5,r:0,z:34,locked:false,opacity:1,visible:true};l.rarityMark={x:79.5,y:1.2,w:17,h:12.5,r:0,z:34,locked:false,opacity:1,visible:true};
-    l.title={x:22,y:4,w:56,h:6.5,r:0,z:35,locked:false,opacity:1,visible:true};l.faction={x:22,y:10.5,w:56,h:4,r:0,z:34,locked:false,opacity:.9,visible:true};l.type={x:22,y:14.5,w:56,h:4,r:0,z:34,locked:false,opacity:.85,visible:true};l.rarityText.visible=false;l.tags.visible=false;l.effect={x:8,y:70,w:84,h:23,r:0,z:30,locked:false,opacity:1,visible:true};
+    l.title={x:22,y:4,w:56,h:6.5,r:0,z:35,locked:false,opacity:1,visible:true};l.faction={x:22,y:10.5,w:56,h:4,r:0,z:34,locked:false,opacity:.9,visible:true};l.type={x:22,y:14.5,w:56,h:4,r:0,z:34,locked:false,opacity:.85,visible:true};l.rarityText.visible=false;l.tags.visible=false;l.footerLeft.visible=false;l.footerRight.visible=false;l.effect={x:8,y:70,w:84,h:23,r:0,z:30,locked:false,opacity:1,visible:true};
     var stats=t.stats||[],sw=10,sg=1,start=92-(stats.length*sw+Math.max(0,stats.length-1)*sg);stats.forEach(function(st,i){l["stat_"+st[0]]={x:start+i*(sw+sg),y:64,w:sw,h:5.5,r:0,z:35,locked:false,opacity:1,visible:true}});
     a.finishStyle="frame";a.frameStyle="minimal";a.textureStyle="clean";a.titleSize=20;a.titleColor="#f8fafc";a.effectSize=13;a.effectColor="#1f2937";a.metaSize=10;a.metaColor="#f8fafc";a.statsSize=16;a.statsColor="#111827";a.costSize=20;a.costColor="#111827";a.artFocusX=50;a.artFocusY=44;a.artZoom=108;
   }
@@ -911,7 +913,7 @@ $("#batchRename").onclick=function(){
 $("#clearAllArt").onclick=function(){recordHistory();cards.forEach(function(c){c.art=""});renderAll();setStatus("已清空全部插画")};
 
 function manifestRows(){
-  return cards.map(function(c,i){var t=TEMPLATES[c.templateId]||TEMPLATES.unit;return {序号:i+1,编号:c.cardNumber,名称:c.name,模板:t.name,费用:c.cost,系别:c.faction,类型:c.unitType,稀有度:c.rarity,攻击:c.attack,血量:c.health,移速:c.move,射程:c.range,标签:c.tags,规则关键词:c.rulesKeywords,效果:c.description,有插画:c.art?"是":"否"}})
+  return cards.map(function(c,i){var t=TEMPLATES[c.templateId]||TEMPLATES.unit;return {序号:i+1,系列:c.setName,编号:c.cardNumber,年份:c.year,署名:c.credit,名称:c.name,模板:t.name,费用:c.cost,系别:c.faction,类型:c.unitType,稀有度:c.rarity,攻击:c.attack,血量:c.health,移速:c.move,射程:c.range,标签:c.tags,规则关键词:c.rulesKeywords,效果:c.description,有插画:c.art?"是":"否"}})
 }
 $("#exportManifest").onclick=function(){var csv="\uFEFF"+Papa.unparse(manifestRows());downloadText(csv,"卡牌导出清单.csv","text/csv;charset=utf-8");setStatus("CSV 清单已导出")};
 $("#exportJsonList").onclick=function(){downloadText(JSON.stringify(manifestRows(),null,2),"卡牌导出清单.json","application/json");setStatus("JSON 清单已导出")};
