@@ -431,7 +431,7 @@ function addLabelToSelectedImage(){
 }
 var renderPreviewOnly=function(){
   var c=current(),t=TEMPLATES[c.templateId];
-  $("#preview").innerHTML=cardHtml(c,true);setArt($("#preview"),c);$("#preview").classList.toggle("layout-editing",layoutEditing);renderLayerPanel();
+  $("#preview").innerHTML=cardHtml(c,true);setArt($("#preview"),c);$("#preview").classList.toggle("layout-editing",layoutEditing);applySelectionClasses();renderLayerPanel();
   $("#templateName").textContent=t.name;
 };
 var TEXT_TARGETS={title:"title",effect:"effect",meta:"meta",stats:"stats",cost:"cost"};
@@ -602,23 +602,61 @@ function moveSelectedLayer(delta){var models=selectedModels(current());if(!model
 $("#layerUp").onclick=function(){moveSelectedLayer(1)};$("#layerDown").onclick=function(){moveSelectedLayer(-1)};
 $("#bringFront").onclick=function(){var models=selectedModels(current());if(!models.length)return;recordHistory();var max=Math.max.apply(null,allLayerModels(current()).map(function(x){return x.layout.z||0}));models.sort(function(a,b){return (a.layout.z||0)-(b.layout.z||0)}).forEach(function(m,i){m.layout.z=max+1+i});renderPreviewOnly();refreshElementPanel();persist()};
 $("#sendBack").onclick=function(){var models=selectedModels(current());if(!models.length)return;recordHistory();models.sort(function(a,b){return (a.layout.z||0)-(b.layout.z||0)}).forEach(function(m,i){m.layout.z=2+i});renderPreviewOnly();refreshElementPanel();persist()};
-$("#deleteElement").onclick=function(){if(!selectedElement||selectedElement.type!=="extra"){setStatus("模板字段不能删除，可锁定或移出画布；只有自定义元素可以删除");return}recordHistory();var id=selectedElement.id,el=current().extraElements.find(function(x){return x.id===id});current().extraElements=current().extraElements.filter(function(x){return x.id!==id&&!(el&&el.kind==="image"&&x.parentId===id)});selectedElement=null;renderPreviewOnly();refreshElementPanel();persist()};
-$("#duplicateElement").onclick=function(){var m=selectedModel(current());if(!m)return;recordHistory();if(m.type==="extra"){var x=clone(m.element),oldId=x.id;x.id=uid();x.layout.x+=3;x.layout.y+=3;current().extraElements.push(x);if(x.kind==="image"){current().extraElements.filter(function(e){return e.parentId===oldId}).forEach(function(e){var y=clone(e);y.id=uid();y.parentId=x.id;y.layout.x+=3;y.layout.y+=3;current().extraElements.push(y)})}selectedElement={type:"extra",id:x.id}}else{var tokenMap={cost:"费用",title:"名称",faction:"系别",rarityText:"稀有度",type:"兵种",stat_attack:"攻击",stat_health:"血量",stat_move:"移速",stat_range:"射程"},x={id:uid(),kind:"text",text:"{"+(tokenMap[m.id]||"名称")+"}",fontSize:12,color:current().appearance.text,align:"left",layout:clone(m.layout)};x.layout.x+=3;x.layout.y+=3;x.layout.z=45;current().extraElements.push(x);selectedElement={type:"extra",id:x.id}}renderPreviewOnly();refreshElementPanel();persist()};
-$("#resetLayout").onclick=function(){recordHistory();current().layout=makeLayout(current().templateId);renderPreviewOnly();selectedElement=null;refreshElementPanel();persist();setStatus("已恢复当前卡牌的模板默认布局")};
+$("#deleteElement").onclick=function(){var models=selectedModels(current());if(!models.length)return;recordHistory();var removeIds={};models.forEach(function(m){if(m.type==="extra"){removeIds[m.id]=1;if(m.element.kind==="image")(current().extraElements||[]).forEach(function(x){if(x.parentId===m.id)removeIds[x.id]=1})}else m.layout.visible=false});current().extraElements=(current().extraElements||[]).filter(function(x){return !removeIds[x.id]});clearSelection();renderPreviewOnly();persist();setStatus("已处理所选 "+models.length+" 个模块：自定义元素删除，模板字段隐藏")};
+function duplicateSelection(){
+  var models=selectedModels(current());if(!models.length)return;recordHistory();var out=[],c=current(),tokenMap={cost:"费用",title:"名称",faction:"系别",rarityText:"稀有度",type:"兵种",stat_attack:"攻击",stat_health:"血量",stat_move:"移速",stat_range:"射程",footerLeft:"系列",footerRight:"署名"};
+  models.forEach(function(m){if(m.type==="extra"){var x=clone(m.element);x.id=uid();x.parentId="";x.layout.x+=3;x.layout.y+=3;c.extraElements.push(x);out.push({type:"extra",id:x.id})}else{var x={id:uid(),kind:"text",text:"{"+(tokenMap[m.id]||"名称")+"}",fontSize:12,color:c.appearance.text,align:"left",layout:clone(m.layout)};x.layout.x+=3;x.layout.y+=3;x.layout.z=Math.max(45,x.layout.z||45);c.extraElements.push(x);out.push({type:"extra",id:x.id})}});
+  renderPreviewOnly();setSelection(out,out[out.length-1]);persist();setStatus("已复制 "+out.length+" 个模块");
+}
+$("#duplicateElement").onclick=duplicateSelection;
+$("#resetLayout").onclick=function(){recordHistory();current().layout=makeLayout(current().templateId);renderPreviewOnly();clearSelection();persist();setStatus("已恢复当前卡牌的模板默认布局")};
 $("#copyLayoutAll").onclick=function(){var c=current(),tid=c.templateId;recordHistory();cards.forEach(function(x){if(x.templateId===tid&&x.id!==c.id)x.layout=clone(c.layout)});renderAll();setStatus("布局已应用到同模板卡牌")};
+function editableSelectedModels(){return selectedModels(current()).filter(function(m){return !m.layout.locked&&m.layout.visible!==false})}
+function alignSelection(kind){
+  var ms=editableSelectedModels();if(ms.length<2){setStatus("至少选择两个未锁定模块才能对齐");return}recordHistory();var b=selectionBounds(ms);
+  ms.forEach(function(m){var p=m.layout;if(kind==="left")p.x=b.x;else if(kind==="hcenter")p.x=b.x+b.w/2-p.w/2;else if(kind==="right")p.x=b.x+b.w-p.w;else if(kind==="top")p.y=b.y;else if(kind==="vcenter")p.y=b.y+b.h/2-p.h/2;else if(kind==="bottom")p.y=b.y+b.h-p.h});
+  renderPreviewOnly();refreshElementPanel();persist();setStatus("已对齐 "+ms.length+" 个模块");
+}
+function distributeSelection(axis){
+  var ms=editableSelectedModels();if(ms.length<3){setStatus("至少选择三个未锁定模块才能等距分布");return}recordHistory();
+  if(axis==="h"){ms.sort(function(a,b){return a.layout.x-b.layout.x});var left=ms[0].layout.x,right=ms[ms.length-1].layout.x+ms[ms.length-1].layout.w,total=ms.reduce(function(n,m){return n+m.layout.w},0),gap=(right-left-total)/(ms.length-1),x=left;ms.forEach(function(m){m.layout.x=x;x+=m.layout.w+gap})}
+  else{ms.sort(function(a,b){return a.layout.y-b.layout.y});var top=ms[0].layout.y,bottom=ms[ms.length-1].layout.y+ms[ms.length-1].layout.h,total=ms.reduce(function(n,m){return n+m.layout.h},0),gap=(bottom-top-total)/(ms.length-1),y=top;ms.forEach(function(m){m.layout.y=y;y+=m.layout.h+gap})}
+  renderPreviewOnly();refreshElementPanel();persist();setStatus("已等距分布 "+ms.length+" 个模块");
+}
+$("#alignLeft").onclick=function(){alignSelection("left")};$("#alignHCenter").onclick=function(){alignSelection("hcenter")};$("#alignRight").onclick=function(){alignSelection("right")};
+$("#alignTop").onclick=function(){alignSelection("top")};$("#alignVCenter").onclick=function(){alignSelection("vcenter")};$("#alignBottom").onclick=function(){alignSelection("bottom")};
+$("#distributeH").onclick=function(){distributeSelection("h")};$("#distributeV").onclick=function(){distributeSelection("v")};
+$("#selectAllLayers").onclick=function(){var refs=allLayerModels(current()).filter(function(m){return m.layout.visible!==false&&!m.layout.locked}).map(function(m){return {type:m.type,id:m.id}});setSelection(refs,refs[refs.length-1]);setStatus("已选择全部可见且未锁定模块")};
+
 window.addEventListener("keydown",function(e){
   var tag=document.activeElement&&document.activeElement.tagName;
   if((e.key==="l"||e.key==="L")&&["INPUT","TEXTAREA","SELECT"].indexOf(tag)<0){e.preventDefault();setLayoutMode(!layoutEditing,true);return}
 });
-window.addEventListener("keydown",function(e){if(!layoutEditing||!selectedElement||["INPUT","TEXTAREA"].indexOf(document.activeElement.tagName)>=0)return;var m=selectedModel(current());if(!m||m.layout.locked)return;if(e.key==="Delete"&&selectedElement.type==="extra"){$("#deleteElement").click();return}var step=e.shiftKey?1:0.2,used=true;if(e.key==="ArrowLeft")m.layout.x-=step;else if(e.key==="ArrowRight")m.layout.x+=step;else if(e.key==="ArrowUp")m.layout.y-=step;else if(e.key==="ArrowDown")m.layout.y+=step;else used=false;if(used){e.preventDefault();renderPreviewOnly();refreshElementPanel();persist()}});
+window.addEventListener("keydown",function(e){
+  if(!layoutEditing||["INPUT","TEXTAREA","SELECT"].indexOf(document.activeElement&&document.activeElement.tagName)>=0)return;
+  var mod=e.ctrlKey||e.metaKey;if(mod&&(e.key==="a"||e.key==="A")){e.preventDefault();$("#selectAllLayers").click();return}
+  if(e.key==="Escape"){e.preventDefault();clearSelection();return}
+  if(!selectedElements.length)return;
+  if(mod&&(e.key==="d"||e.key==="D")){e.preventDefault();duplicateSelection();return}
+  if(e.key==="Delete"||e.key==="Backspace"){e.preventDefault();$("#deleteElement").click();return}
+  var ms=editableSelectedModels();if(!ms.length)return;var step=e.altKey?.05:(e.shiftKey?1:.2),used=true;
+  if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].indexOf(e.key)>=0){if(!e.repeat)recordHistory();ms.forEach(function(m){if(e.key==="ArrowLeft")m.layout.x-=step;else if(e.key==="ArrowRight")m.layout.x+=step;else if(e.key==="ArrowUp")m.layout.y-=step;else m.layout.y+=step})}
+  else if(e.key==="="||e.key==="+"){if(!e.repeat)recordHistory();var sc=e.shiftKey?1.05:1.01,g=selectionBounds(ms);ms.forEach(function(m){m.layout.x=g.x+(m.layout.x-g.x)*sc;m.layout.y=g.y+(m.layout.y-g.y)*sc;m.layout.w*=sc;m.layout.h*=sc})}
+  else if(e.key==="-"){if(!e.repeat)recordHistory();var sc=e.shiftKey?.95:.99,g=selectionBounds(ms);ms.forEach(function(m){m.layout.x=g.x+(m.layout.x-g.x)*sc;m.layout.y=g.y+(m.layout.y-g.y)*sc;m.layout.w*=sc;m.layout.h*=sc})}
+  else if(e.key==="q"||e.key==="Q"||e.key==="e"||e.key==="E"){if(!e.repeat)recordHistory();var dr=(e.key.toLowerCase()==="q"?-1:1)*(e.shiftKey?5:1);ms.forEach(function(m){m.layout.r=(m.layout.r||0)+dr})}
+  else if(e.key==="["||e.key==="]"){if(!e.repeat)recordHistory();var dz=e.key==="["?-1:1;ms.forEach(function(m){m.layout.z=Math.max(2,(m.layout.z||20)+dz)})}
+  else used=false;
+  if(used){e.preventDefault();renderPreviewOnly();refreshElementPanel();persist()}
+});
 $("#preview").addEventListener("focusin",function(e){
   var f=e.target&&e.target.getAttribute&&e.target.getAttribute("data-edit");
   if(f==="description")e.target.textContent=current().description||"";
 });
 $("#preview").addEventListener("focusout",function(e){
-  var f=e.target&&e.target.getAttribute&&e.target.getAttribute("data-edit");if(f)patch(f,e.target.innerText.trim(),true);
+  var f=e.target&&e.target.getAttribute&&e.target.getAttribute("data-edit");if(f){patch(f,e.target.innerText.trim(),true);return}
+  var n=e.target&&e.target.closest&&e.target.closest(".free-text-element[data-extra-id]");if(n&&n.contentEditable==="true"){var m=getElementModel(current(),n);if(m&&m.type==="extra"){m.element.text=n.innerText.trim();n.contentEditable="false";renderPreviewOnly();refreshElementPanel();persist()}}
 });
-$("#layerList").addEventListener("click",function(e){var row=e.target.closest("[data-layer-id]");if(!row)return;setLayoutMode(true,false);selectedElement={type:row.getAttribute("data-layer-type"),id:row.getAttribute("data-layer-id")};var m=selectedModel(current());if(!m)return;if(e.target.closest("[data-layer-eye]")){recordHistory();m.layout.visible=m.layout.visible===false?true:false;renderPreviewOnly();refreshElementPanel();persist();return}if(e.target.closest("[data-layer-lock]")){recordHistory();m.layout.locked=!m.layout.locked;renderPreviewOnly();refreshElementPanel();persist();return}document.querySelectorAll("#preview .layout-node.selected").forEach(function(x){x.classList.remove("selected")});var node=findSelectedNode();if(node)node.classList.add("selected");refreshElementPanel()});
+$("#layerList").addEventListener("click",function(e){var row=e.target.closest("[data-layer-id]");if(!row)return;setLayoutMode(true,false);var ref={type:row.getAttribute("data-layer-type"),id:row.getAttribute("data-layer-id")};if(e.ctrlKey||e.metaKey||e.shiftKey)addSelection(ref);else setSelection([ref],ref);var m=modelFromRef(current(),ref);if(!m)return;if(e.target.closest("[data-layer-eye]")){recordHistory();m.layout.visible=m.layout.visible===false?true:false;renderPreviewOnly();refreshElementPanel();persist();return}if(e.target.closest("[data-layer-lock]")){recordHistory();m.layout.locked=!m.layout.locked;renderPreviewOnly();refreshElementPanel();persist();return}document.querySelectorAll("#preview .layout-node.selected").forEach(function(x){x.classList.remove("selected")});var node=findSelectedNode();if(node)node.classList.add("selected");refreshElementPanel()});
 $("#cardList").addEventListener("click",function(e){var b=e.target.closest("[data-id]");if(!b)return;selected=b.getAttribute("data-id");renderAll()});
 $("#projectName").addEventListener("change",function(){projectName=this.value.trim()||"未命名卡牌项目";this.value=projectName;persist()});
 $("#cardSearch").addEventListener("input",renderList);$("#templateFilter").addEventListener("change",renderList);$("#factionFilter").addEventListener("change",renderList);$("#rarityFilter").addEventListener("change",renderList);$("#sortCards").addEventListener("change",renderList);
