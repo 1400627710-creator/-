@@ -476,7 +476,10 @@ var renderAssets=function(){
     return '<div class="asset-item"><button class="asset-main '+(active?"active":"")+'" data-asset="'+key+'"><strong>'+esc(x.item.name)+'</strong><small>'+CATEGORY_NAMES[x.category]+'</small></button><button class="asset-fav" data-asset-fav="'+key+'">'+(fav?"★":"☆")+'</button></div>';
   }).join("");
 };
-var appearanceEqual=function(a,b){return JSON.stringify(normalizeAppearance(a))===JSON.stringify(normalizeAppearance(b))};
+var SKIN_THEME_KEYS=["primary","secondary","accent","frame","text","frameStyle","textureStyle","costStyle","rarityStyle","fontStyle","titleSize","titleColor","titleAlign","titleBold","effectSize","effectColor","effectAlign","effectBold","metaSize","metaColor","metaAlign","metaBold","statsSize","statsColor","statsAlign","statsBold","costSize","costColor","costAlign","costBold"];
+function themeAppearance(a){var n=normalizeAppearance(a),out={};SKIN_THEME_KEYS.forEach(function(k){out[k]=clone(n[k])});return out}
+function mergeThemeAppearance(target,theme){var out=normalizeAppearance(target);SKIN_THEME_KEYS.forEach(function(k){if(theme&&theme[k]!==undefined)out[k]=clone(theme[k])});return out}
+var appearanceEqual=function(a,b){return JSON.stringify(themeAppearance(a))===JSON.stringify(themeAppearance(b))};
 var renderSkins=function(){
   var q=$("#skinSearch").value.trim().toLowerCase(),c=current();
   var list=skins.filter(function(s){return !q||s.name.toLowerCase().indexOf(q)>=0}).slice().sort(function(a,b){return Number(!!b.favorite)-Number(!!a.favorite)});
@@ -491,7 +494,15 @@ var renderSnapshots=function(){
   }).join(""):'<div class="empty-note">还没有快照。大改之前点“保存”。</div>';
 };
 var renderCustomAssets=function(){var box=$("#customAssetList");if(!box)return;var q=$("#assetSearch").value.trim().toLowerCase(),cat=$("#assetCategory").value;var list=userAssets.filter(function(a){var catOk=cat==="all"||cat==="custom"||(cat==="frame"&&a.category==="frameImage")||(cat==="texture"&&a.category==="textureImage")||(cat==="icon"&&a.category==="icon");return catOk&&(!q||[a.name,a.category].join(" ").toLowerCase().indexOf(q)>=0)}).slice().sort(function(a,b){return Number(!!b.favorite)-Number(!!a.favorite)});box.innerHTML=list.length?list.map(function(a){var label=a.category==="icon"?"卡面图标":a.category==="frameImage"?"图片边框":"图片底纹",place=a.category==="icon"?'<button data-place-custom="'+a.id+'">放到卡面</button>':"";return '<div class="custom-asset"><img src="'+esc(a.dataUrl)+'"><div><strong>'+esc(a.name)+'</strong><small>'+esc(label)+'</small></div><div class="asset-mini-actions">'+place+'<button data-apply-custom="'+a.id+'">应用</button><button data-fav-custom="'+a.id+'">'+(a.favorite?"★":"☆")+'</button><button data-remove-custom="'+a.id+'">删</button></div></div>'}).join(""):'<div class="empty-note">没有匹配的自定义图片素材。</div>'};
-var renderAll=function(){$("#projectName").value=projectName;if($("#aiStyle"))$("#aiStyle").value=aiStyle;if($("#aiStylePreset"))$("#aiStylePreset").value=detectAiStylePreset(aiStyle);if($("#aiQuality"))$("#aiQuality").value=aiQuality;$("#sheetSize").value=printSettings.sheet;$("#cropMarks").checked=!!printSettings.crop;renderTemplateFilter();renderList();renderCard();renderSnapshots();renderCustomAssets();updateHistoryButtons();persist()};
+var activeToolMode=loadJson("card-studio-tool-mode","content");
+function setToolMode(mode){
+  var valid=["content","text","layout","visual","rules","export"];if(valid.indexOf(mode)<0)mode="content";activeToolMode=mode;
+  $("#rightModeTabs [data-tool-mode]").forEach(function(b){b.classList.toggle("active",b.getAttribute("data-tool-mode")===mode)});
+  $(".right [data-tool-group]").forEach(function(sec){sec.hidden=sec.getAttribute("data-tool-group")!==mode});
+  localStorage.setItem("card-studio-tool-mode",JSON.stringify(mode));
+}
+$("#rightModeTabs").addEventListener("click",function(e){var b=e.target.closest("[data-tool-mode]");if(b)setToolMode(b.getAttribute("data-tool-mode"))});
+var renderAll=function(){$("#projectName").value=projectName;if($("#aiStyle"))$("#aiStyle").value=aiStyle;if($("#aiStylePreset"))$("#aiStylePreset").value=detectAiStylePreset(aiStyle);if($("#aiQuality"))$("#aiQuality").value=aiQuality;$("#sheetSize").value=printSettings.sheet;$("#cropMarks").checked=!!printSettings.crop;renderTemplateFilter();renderList();renderCard();renderSnapshots();renderCustomAssets();updateHistoryButtons();setToolMode(activeToolMode);persist()};
 
 var patch=function(field,value,record){
   var c=current();if(!c)return;
@@ -714,18 +725,6 @@ $("#aiGenerate").onclick=async function(){
   btn.disabled=false;
 };
 
-async function refreshAiKeyStatus(){
-  try{var res=await fetch("/api/health"),data=await res.json();$("#apiKeyStatus").textContent=data.aiConfigured?"AI 已配置，可直接生成":"尚未配置 AI Key";$("#apiKeyStatus").dataset.ready=data.aiConfigured?"1":"0"}catch(e){$("#apiKeyStatus").textContent="无法检查 AI 配置"}
-}
-$("#saveApiKey").onclick=async function(){
-  var key=$("#apiKeyInput").value.trim(),btn=this;btn.disabled=true;$("#apiKeyStatus").textContent="正在保存...";
-  try{
-    var res=await fetch("/api/settings/api-key",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({apiKey:key})}),data=await res.json();
-    if(!res.ok)throw new Error(data.error||"保存失败");
-    $("#apiKeyInput").value="";$("#apiKeyStatus").textContent=data.aiConfigured?"AI Key 已保存在本机":"AI Key 已清除";setStatus($("#apiKeyStatus").textContent);
-  }catch(e){$("#apiKeyStatus").textContent="保存失败："+e.message}
-  btn.disabled=false;
-};
 $("#aiRedraw").onclick=async function(){
   var c=current(),prompt=$("#aiPrompt").value.trim();if(!c.art){setStatus("请先上传或生成一张插画，再进行现图重绘");return}if(!prompt)return;
   var btn=this;btn.disabled=true;setStatus("AI 正在基于现图重绘...");
@@ -735,7 +734,7 @@ $("#aiRedraw").onclick=async function(){
   }catch(e){setStatus("AI 重绘失败："+e.message)}
   btn.disabled=false;
 };
-refreshAiKeyStatus();
+
 
 $("#assetSearch").oninput=function(){renderAssets();renderCustomAssets()};$("#assetCategory").onchange=function(){renderAssets();renderCustomAssets()};
 $("#assetList").onclick=function(e){
@@ -755,7 +754,7 @@ $("#skinSearch").oninput=renderSkins;
 $("#skinList").onclick=function(e){
   var fav=e.target.closest("[data-skin-fav]"),main=e.target.closest("[data-skin]");
   if(fav){var s=skins.find(function(x){return x.id===fav.getAttribute("data-skin-fav")});if(s){s.favorite=!s.favorite;renderSkins();persist()}return}
-  if(main){var skin=skins.find(function(x){return x.id===main.getAttribute("data-skin")});if(skin){recordHistory();current().appearance=clone(skin.appearance);renderCard();persist();setStatus("已应用皮肤："+skin.name)}}
+  if(main){var skin=skins.find(function(x){return x.id===main.getAttribute("data-skin")});if(skin){recordHistory();current().appearance=mergeThemeAppearance(current().appearance,skin.appearance);renderCard();persist();setStatus("已应用皮肤："+skin.name+"；卡框、图片素材与布局保持不变")}}
 };
 $$("[data-color]").forEach(function(el){
   el.addEventListener("focus",recordHistory);
@@ -763,11 +762,11 @@ $$("[data-color]").forEach(function(el){
   el.oninput=function(){current().appearance[el.getAttribute("data-color")]=el.value;renderPreviewOnly();persist()};
 });
 $("#saveSkin").onclick=function(){
-  var skin={id:uid(),name:"自定义皮肤 "+(skins.length+1),favorite:true,appearance:clone(current().appearance)};
+  var skin={id:uid(),name:"自定义皮肤 "+(skins.length+1),favorite:true,appearance:themeAppearance(current().appearance)};
   skins.push(skin);renderSkins();persist();setStatus("已保存为可复用皮肤");
 };
 $("#applyAll").onclick=function(){
-  recordHistory();var a=clone(current().appearance);cards.forEach(function(c){c.appearance=clone(a)});renderAll();setStatus("当前皮肤与素材已应用到全部 "+cards.length+" 张卡牌");
+  recordHistory();var a=themeAppearance(current().appearance);cards.forEach(function(c){c.appearance=mergeThemeAppearance(c.appearance,a)});renderAll();setStatus("当前皮肤主题已应用到全部 "+cards.length+" 张；各卡框与图片素材保持不变");
 };
 
 var waitFrame=function(){return new Promise(function(resolve){requestAnimationFrame(function(){requestAnimationFrame(resolve)})})};
