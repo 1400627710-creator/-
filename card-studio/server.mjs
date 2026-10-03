@@ -82,7 +82,7 @@ app.post("/api/generate-image", async (req, res) => {
     ].filter(Boolean).join(" ");
 
     const result = await client.images.generate({
-      model: process.env.OPENAI_IMAGE_MODEL || "gpt-image-2.5-flare",
+      model: process.env.OPENAI_IMAGE_MODEL || "gpt-image-2.5-sunburst",
       prompt: fullPrompt,
       size: "1024x1408",
       quality,
