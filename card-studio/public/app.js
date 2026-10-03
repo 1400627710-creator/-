@@ -235,7 +235,7 @@ var cardHtml=function(card,editable){
   var desc=renderRichText(card.description,card);
   var artEmpty=card.art?"":'<div class="art-empty">插画区域<br><small>上传图片或使用 AI 生成</small></div>';
   var layoutId=t.baseLayout||t.id;
-  var classes=["card","tpl-"+layoutId,"frame-"+a.frameStyle,"texture-"+a.textureStyle,"cost-"+a.costStyle,"rarity-"+a.rarityStyle,"font-"+a.fontStyle,"finish-"+(a.finishStyle||"premium")].join(" ");
+  var classes=["card","tpl-"+layoutId,"frame-"+a.frameStyle,"texture-"+a.textureStyle,"cost-"+a.costStyle,"rarity-"+a.rarityStyle,"font-"+a.fontStyle,"finish-"+(a.finishStyle||"premium"),a.frameImageAssetId?"has-custom-frame":""].filter(Boolean).join(" ");
   var style="--p:"+a.primary+";--s:"+a.secondary+";--a:"+a.accent+";--f:"+a.frame+";--t:"+a.text+";--stats-count:"+Math.max(1,t.stats.length)+";--title-size:"+a.titleSize+"px;--title-color:"+a.titleColor+";--title-align:"+a.titleAlign+";--title-weight:"+(a.titleBold?900:500)+";--effect-size:"+a.effectSize+"px;--effect-color:"+a.effectColor+";--effect-align:"+a.effectAlign+";--effect-weight:"+(a.effectBold?800:400)+";--meta-size:"+a.metaSize+"px;--meta-color:"+a.metaColor+";--meta-align:"+a.metaAlign+";--meta-weight:"+(a.metaBold?800:500)+";--stats-size:"+a.statsSize+"px;--stats-color:"+a.statsColor+";--stats-align:"+a.statsAlign+";--stats-weight:"+(a.statsBold?900:500)+";--cost-size:"+a.costSize+"px;--cost-color:"+a.costColor+";--cost-align:"+a.costAlign+";--cost-weight:"+(a.costBold?900:500);
   var frameAsset=assetById(a.frameImageAssetId),textureAsset=assetById(a.textureImageAssetId),iconAsset=assetById(a.iconAssetId);
   var customFrame=frameAsset?'<img class="custom-frame-layer" src="'+esc(frameAsset.dataUrl)+'">':"";
@@ -797,12 +797,12 @@ function applyCompositionPreset(kind,quiet){
     l.type={x:6,y:15.5,w:60,h:4.5,r:0,z:32,locked:false,opacity:.82,visible:true};l.cost={x:79,y:4,w:8,h:8,r:0,z:36,locked:false,opacity:1,visible:true};l.rarityMark={x:88,y:4,w:7,h:8,r:0,z:36,locked:false,opacity:1,visible:true};
     l.rarityText.visible=false;l.tags.visible=false;l.effect={x:6,y:72,w:88,h:20,r:0,z:30,locked:false,opacity:1,visible:true};
     var stats=t.stats||[],sw=9,sg=1,start=94-(stats.length*sw+Math.max(0,stats.length-1)*sg);stats.forEach(function(st,i){l["stat_"+st[0]]={x:start+i*(sw+sg),y:66,w:sw,h:5.5,r:0,z:35,locked:false,opacity:1,visible:true}});
-    a.finishStyle="premium";a.frameStyle="minimal";a.textureStyle="clean";a.titleSize=24;a.effectSize=13;a.metaSize=11;a.statsSize=17;a.costSize=20;a.artFocusX=50;a.artFocusY=46;a.artZoom=105;
+    a.finishStyle="premium";a.frameStyle="minimal";a.textureStyle="clean";a.titleSize=24;a.effectSize=13;a.metaSize=11;a.statsSize=17;a.statsColor="#111827";a.costSize=20;a.costColor="#111827";a.artFocusX=50;a.artFocusY=46;a.artZoom=105;
   }else{
     l.art={x:0,y:0,w:100,h:100,r:0,z:1,locked:true,opacity:1,visible:true};l.cost={x:3.5,y:1.2,w:17,h:12.5,r:0,z:34,locked:false,opacity:1,visible:true};l.rarityMark={x:79.5,y:1.2,w:17,h:12.5,r:0,z:34,locked:false,opacity:1,visible:true};
     l.title={x:22,y:4,w:56,h:6.5,r:0,z:35,locked:false,opacity:1,visible:true};l.faction={x:22,y:10.5,w:56,h:4,r:0,z:34,locked:false,opacity:.9,visible:true};l.type={x:22,y:14.5,w:56,h:4,r:0,z:34,locked:false,opacity:.85,visible:true};l.rarityText.visible=false;l.tags.visible=false;l.effect={x:8,y:70,w:84,h:23,r:0,z:30,locked:false,opacity:1,visible:true};
     var stats=t.stats||[],sw=10,sg=1,start=92-(stats.length*sw+Math.max(0,stats.length-1)*sg);stats.forEach(function(st,i){l["stat_"+st[0]]={x:start+i*(sw+sg),y:64,w:sw,h:5.5,r:0,z:35,locked:false,opacity:1,visible:true}});
-    a.finishStyle="frame";a.frameStyle="minimal";a.textureStyle="clean";a.titleSize=20;a.effectSize=13;a.metaSize=10;a.statsSize=16;a.costSize=20;a.artFocusX=50;a.artFocusY=44;a.artZoom=108;
+    a.finishStyle="frame";a.frameStyle="minimal";a.textureStyle="clean";a.titleSize=20;a.titleColor="#f8fafc";a.effectSize=13;a.effectColor="#1f2937";a.metaSize=10;a.metaColor="#f8fafc";a.statsSize=16;a.statsColor="#111827";a.costSize=20;a.costColor="#111827";a.artFocusX=50;a.artFocusY=44;a.artZoom=108;
   }
   c.layout=l;renderAll();if(!quiet)setStatus(kind==="showcase"?"已套用：全幅插画 · 竞技卡":"已套用：古典双槽 · 边框卡");
 }
