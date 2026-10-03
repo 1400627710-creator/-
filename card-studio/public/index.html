@@ -201,20 +201,23 @@
         <button id="clearArt">清空</button>
         <input id="artFile" type="file" accept="image/*" hidden>
       </div>
-      <label>AI 关键词<textarea id="aiPrompt" rows="3">战场中的主体，动态构图，环境叙事丰富</textarea></label>
-      <label>快速画风<select id="aiStylePreset"><option value="premium">高端幻想 · 概念厚涂（默认）</option><option value="inkAnime">动漫笔触 · 墨线厚涂</option><option value="oil">古典幻想 · 传统油画</option><option value="abstract">史诗光影 · 抽象笔触</option><option value="custom">自定义 / 保留当前文字</option></select></label>
-      <label>整套统一风格<textarea id="aiStyle" rows="4"></textarea></label><button id="resetAiStyle" class="wide ai-style-reset">恢复高端卡牌默认风格</button>
-      <div class="style-reference-box"><b>整套风格母版</b><small id="styleReferenceStatus">未设置。设置后，后续生图会参考同一张图的笔触、色彩和光影语言。</small><div class="row"><button id="setStyleReference">以当前插画为母版</button><button id="uploadStyleReference">上传参考图</button><button id="clearStyleReference">清除</button></div><input id="styleReferenceFile" type="file" accept="image/png,image/jpeg,image/webp" hidden></div>
-      <div class="private-ai-note">私人开发版：已取消 AI Key 输入、保存与验证界面。AI 接入方式后续单独设计。</div>
-      <label>AI 质量<select id="aiQuality"><option value="low">草稿 LOW</option><option value="medium">预览 MEDIUM</option><option value="high" selected>高质量 HIGH（默认）</option><option value="xhigh">精细 XHIGH</option><option value="max">终稿 MAX</option></select></label>
-      <p class="micro-help ai-quality-help">默认使用质量优先的 GPT Image 2.5 Sunburst。构图试验用 MEDIUM；准备真正上卡时用 HIGH / XHIGH；最终成品用 MAX。</p>
+      <div class="ai-prompt-planner">
+        <div class="tool-subtitle"><b>AI 绘画提示词规划</b><small>私人版暂不直连任何外部 AI 服务</small></div>
+        <label>画面要求<textarea id="aiPrompt" rows="3">战场中的主体，动态构图，环境叙事丰富</textarea></label>
+        <label>快速画风<select id="aiStylePreset"><option value="premium">高端幻想 · 概念厚涂（默认）</option><option value="inkAnime">动漫笔触 · 墨线厚涂</option><option value="oil">古典幻想 · 传统油画</option><option value="abstract">史诗光影 · 抽象笔触</option><option value="custom">自定义 / 保留当前文字</option></select></label>
+        <label>整套统一风格<textarea id="aiStyle" rows="4"></textarea></label>
+        <button id="resetAiStyle" class="wide ai-style-reset">恢复高端卡牌默认风格</button>
+        <div class="private-ai-note">当前版本不需要 Key、不保存密钥、不做登录或验证。这里仅生成完整提示词，复制后去你选择的 AI 绘图工具使用，再把成图上传回来。</div>
+        <div class="row"><button id="copyAiPrompt" class="primary">复制生图提示词</button><button id="copyRedrawPrompt">复制重绘提示词</button></div>
+        <label>完整提示词预览<textarea id="aiPromptPreview" rows="6" readonly></textarea></label>
+      </div>
       <div class="art-focus-box"><b>插画构图微调</b><small>无需重生成，也能把人物脸部/主体移到正确位置</small>
         <label>横向焦点 <span id="artFocusXValue">50%</span><input id="artFocusX" type="range" min="0" max="100" value="50"></label>
         <label>纵向焦点 <span id="artFocusYValue">50%</span><input id="artFocusY" type="range" min="0" max="100" value="50"></label>
         <label>插画缩放 <span id="artZoomValue">100%</span><input id="artZoom" type="range" min="100" max="180" value="100"></label><button id="autoPalette" class="wide">🎨 从插画自动协调卡框配色</button>
       </div>
       <div class="row"><button id="aiGenerate" class="primary">生成新图</button><button id="aiRedraw">基于现图重绘</button></div>
-      <div class="row mini-gap"><button id="batchImages">批量导入图片</button><button id="batchAI">缺图卡牌批量 AI</button></div>
+      <div class="row mini-gap"><button id="batchImages">批量导入图片</button></div>
       <input id="batchImageFiles" type="file" accept="image/*" multiple hidden>
     </section>
 
