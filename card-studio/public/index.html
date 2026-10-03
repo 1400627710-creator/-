@@ -185,13 +185,13 @@
     <section data-tool-group="text">
       <h3>文字样式</h3>
       <div class="grid">
-        <label>区域<select id="textTarget"><option value="title">标题</option><option value="effect">效果正文</option><option value="meta">系别 / 类型</option><option value="stats">数值</option><option value="cost">费用</option></select></label>
+        <label>文字模块<select id="textTarget"><option value="selected">当前自由编辑选择</option><option value="title">名称</option><option value="faction">系别</option><option value="type">类型</option><option value="rarityText">稀有度文字</option><option value="effect">效果正文</option><option value="cost">费用</option><option value="stat_attack">攻击 / 威力</option><option value="stat_health">血量 / 耐久</option><option value="stat_move">移速</option><option value="stat_range">射程</option></select></label>
         <label>字号<input id="textSize" type="number" min="8" max="40"></label>
         <label>颜色<input id="textColor" type="color"></label>
-        <label>对齐<select id="textAlign"><option value="left">左对齐</option><option value="center">居中</option><option value="right">右对齐</option></select></label>
+        <label>对齐<select id="textAlign"><option value="left">左对齐</option><option value="center">居中</option><option value="right">右对齐</option></select></label><label>字体<select id="textFont"><option value="default">默认黑体</option><option value="serif">古典书卷体</option><option value="display">醒目标题体</option><option value="soft">柔和正文体</option></select></label>
       </div>
       <label class="checkline"><input id="textBold" type="checkbox"> 加粗</label>
-      <button id="applyTextAll" class="wide">把当前区域文字样式应用到全部卡牌</button>
+      <div class="row"><button id="clearTextOverride">恢复该模块默认文字样式</button><button id="applyTextAll" class="primary">把该模块样式应用到全部卡牌</button></div><p class="micro-help">选择“当前自由编辑选择”时，文字设置会直接作用于你在卡面选中的单个文字模块；名称、系别、类型、攻击、血量等互不绑定。</p>
     </section>
 
     <section data-tool-group="visual">
