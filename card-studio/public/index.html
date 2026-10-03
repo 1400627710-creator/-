@@ -186,6 +186,7 @@
       <label>AI 关键词<textarea id="aiPrompt" rows="3">战场中的主体，动态构图，环境叙事丰富</textarea></label>
       <label>快速画风<select id="aiStylePreset"><option value="premium">高端幻想 · 概念厚涂（默认）</option><option value="inkAnime">动漫笔触 · 墨线厚涂</option><option value="oil">古典幻想 · 传统油画</option><option value="abstract">史诗光影 · 抽象笔触</option><option value="custom">自定义 / 保留当前文字</option></select></label>
       <label>整套统一风格<textarea id="aiStyle" rows="4"></textarea></label><button id="resetAiStyle" class="wide ai-style-reset">恢复高端卡牌默认风格</button>
+      <div class="style-reference-box"><b>整套风格母版</b><small id="styleReferenceStatus">未设置。设置后，后续生图会参考同一张图的笔触、色彩和光影语言。</small><div class="row"><button id="setStyleReference">以当前插画为母版</button><button id="clearStyleReference">清除母版</button></div></div>
       <div class="api-key-box">
         <label>AI Key（只保存在本机）<input id="apiKeyInput" type="password" placeholder="粘贴后点保存"></label>
         <button id="saveApiKey">保存 AI Key</button>
