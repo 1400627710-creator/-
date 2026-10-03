@@ -652,7 +652,18 @@ function duplicateSelection(){
 }
 $("#duplicateElement").onclick=duplicateSelection;
 $("#resetLayout").onclick=function(){recordHistory();current().layout=makeLayout(current().templateId);renderPreviewOnly();clearSelection();persist();setStatus("已恢复当前卡牌的模板默认布局")};
-$("#copyLayoutAll").onclick=function(){var c=current(),tid=c.templateId;recordHistory();cards.forEach(function(x){if(x.templateId===tid&&x.id!==c.id)x.layout=clone(c.layout)});renderAll();setStatus("布局已应用到同模板卡牌")};
+$("#copyLayoutAll").onclick=function(){
+  var c=current(),tid=c.templateId;recordHistory();var count=0;
+  cards.forEach(function(x){
+    if(x.templateId!==tid||x.id===c.id)return;
+    x.layout=clone(c.layout);x.textStyles=clone(c.textStyles||{});
+    var copies=clone(c.extraElements||[]),idMap={};
+    copies.forEach(function(el){var old=el.id;el.id=uid();idMap[old]=el.id});
+    copies.forEach(function(el){if(el.parentId&&idMap[el.parentId])el.parentId=idMap[el.parentId]});
+    x.extraElements=copies;count++;
+  });
+  renderAll();setStatus("完整自由版式已应用到 "+count+" 张同模板卡牌；各卡内容、编号和插画保持不变");
+};
 function editableSelectedModels(){return selectedModels(current()).filter(function(m){return !m.layout.locked&&m.layout.visible!==false})}
 function alignSelection(kind){
   var ms=editableSelectedModels();if(ms.length<2){setStatus("至少选择两个未锁定模块才能对齐");return}recordHistory();var b=selectionBounds(ms);
@@ -1080,7 +1091,9 @@ function ttsCard(c,index){return {id:c.id,setName:c.setName,number:c.cardNumber|
 $("#exportTTS").onclick=async function(){
   var btn=this;btn.disabled=true;setStatus("正在生成 TTS 模组数据...");
   try{
-    var zip=new JSZip(),data=cards.map(ttsCard),byTag={},byTerm={},byNumber={},byId={};
+    var zip=new JSZip(),data=cards.map(ttsCard),byTag={},byTerm={},byNumber={},byId={},numberSeen={},duplicates=[];
+    data.forEach(function(c){var key=String(c.number||"").trim();if(numberSeen[key])duplicates.push(key);else numberSeen[key]=c.id});
+    if(duplicates.length)throw new Error("发现重复卡牌编号："+Array.from(new Set(duplicates)).join("、")+"。请先保证每张卡编号唯一。");
     data.forEach(function(c){byId[c.id]=c.number;byNumber[c.number]=c.id;c.tags.concat(c.rulesKeywords).forEach(function(t){if(!byTag[t])byTag[t]=[];byTag[t].push(c.id)});c.termRefs.forEach(function(t){if(!byTerm[t])byTerm[t]=[];byTerm[t].push(c.id)})});
     zip.file("cards.json",JSON.stringify({format:"card-studio-tts",version:2,project:projectName,cards:data},null,2));
     zip.file("glossary.json",JSON.stringify({version:1,terms:ruleTerms},null,2));
