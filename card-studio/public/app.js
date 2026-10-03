@@ -681,13 +681,14 @@ $("#alignTop").onclick=function(){alignSelection("top")};$("#alignVCenter").oncl
 $("#distributeH").onclick=function(){distributeSelection("h")};$("#distributeV").onclick=function(){distributeSelection("v")};
 $("#selectAllLayers").onclick=function(){var refs=allLayerModels(current()).filter(function(m){return m.layout.visible!==false&&!m.layout.locked}).map(function(m){return {type:m.type,id:m.id}});setSelection(refs,refs[refs.length-1]);setStatus("已选择全部可见且未锁定模块")};
 
+function keyboardEditingText(){var el=document.activeElement,tag=el&&el.tagName;return !!el&&(["INPUT","TEXTAREA","SELECT"].indexOf(tag)>=0||el.isContentEditable||!!el.closest("[contenteditable=true]"))}
 window.addEventListener("keydown",function(e){
-  var tag=document.activeElement&&document.activeElement.tagName;if(["INPUT","TEXTAREA","SELECT"].indexOf(tag)>=0)return;
+  if(keyboardEditingText())return;
   if(e.key==="l"||e.key==="L"){e.preventDefault();setLayoutMode(!layoutEditing,true);return}
   var modeKeys={"1":"content","2":"text","3":"layout","4":"visual","5":"rules","6":"export"};if(modeKeys[e.key]){e.preventDefault();setToolMode(modeKeys[e.key]);if(modeKeys[e.key]==="layout"&&!layoutEditing)setLayoutMode(true,false);return}
 });
 window.addEventListener("keydown",function(e){
-  if(!layoutEditing||["INPUT","TEXTAREA","SELECT"].indexOf(document.activeElement&&document.activeElement.tagName)>=0)return;
+  if(!layoutEditing||keyboardEditingText())return;
   var mod=e.ctrlKey||e.metaKey;if(mod&&(e.key==="a"||e.key==="A")){e.preventDefault();$("#selectAllLayers").click();return}
   if(e.key==="Escape"){e.preventDefault();clearSelection();return}
   if(!selectedElements.length)return;
