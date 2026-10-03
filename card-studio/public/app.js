@@ -172,12 +172,12 @@ var current=function(){return cards.find(function(c){return c.id===selected})||c
 var stateSnapshot=function(){return JSON.stringify({projectName:projectName,cards:cards,selected:selected,skins:skins,favoriteAssets:favoriteAssets,ruleTerms:ruleTerms,userAssets:userAssets,customTemplates:customTemplates,aiStyle:$("#aiStyle")?$("#aiStyle").value:aiStyle,printSettings:printSettings})};
 var restoreState=function(raw){
   var s=typeof raw==="string"?JSON.parse(raw):clone(raw);
+  customTemplates=s.customTemplates||customTemplates;TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);
   cards=(s.cards||[]).map(normalizeCard);selected=s.selected&&cards.some(function(c){return c.id===s.selected})?s.selected:(cards[0]&&cards[0].id);
   skins=(s.skins||skins).map(function(x){x.appearance=normalizeAppearance(x.appearance);return x});
   favoriteAssets=s.favoriteAssets||favoriteAssets;
   userAssets=s.userAssets||userAssets;
   ruleTerms=s.ruleTerms||ruleTerms;
-  customTemplates=s.customTemplates||customTemplates;TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);
   if(s.projectName)projectName=s.projectName;if(s.aiStyle)aiStyle=s.aiStyle;if(s.printSettings)printSettings=Object.assign({sheet:"a4",crop:true},s.printSettings);
   renderAll();
 };
@@ -995,10 +995,10 @@ $("#projectFile").onchange=async function(){
   var file=this.files&&this.files[0];if(!file)return;
   try{
     var p=JSON.parse(await file.text());if(p.format!=="card-assembly-studio"&&!Array.isArray(p.cards))throw new Error("不是有效的卡牌项目文件");
-    recordHistory();cards=(p.cards||[]).map(normalizeCard);if(!cards.length)throw new Error("项目中没有卡牌");
+    recordHistory();customTemplates=p.customTemplates||{};TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);cards=(p.cards||[]).map(normalizeCard);if(!cards.length)throw new Error("项目中没有卡牌");
     skins=(p.skins||BASE_SKINS).map(function(x){x.appearance=normalizeAppearance(x.appearance);return x});
-    userAssets=p.userAssets||[];ruleTerms=p.ruleTerms||[];customTemplates=p.customTemplates||{};favoriteAssets=p.favoriteAssets||[];snapshots=p.snapshots||[];
-    TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);selected=cards[0].id;if(p.aiStyle){aiStyle=p.aiStyle;$("#aiStyle").value=p.aiStyle}if(p.projectName)projectName=p.projectName;if(p.printSettings)printSettings=Object.assign({sheet:"a4",crop:true},p.printSettings);
+    userAssets=p.userAssets||[];ruleTerms=p.ruleTerms||[];favoriteAssets=p.favoriteAssets||[];snapshots=p.snapshots||[];
+    selected=cards[0].id;if(p.aiStyle){aiStyle=p.aiStyle;$("#aiStyle").value=p.aiStyle}if(p.projectName)projectName=p.projectName;if(p.printSettings)printSettings=Object.assign({sheet:"a4",crop:true},p.printSettings);
     renderAll();setStatus("项目已打开："+cards.length+" 张卡牌");
   }catch(e){setStatus("打开项目失败："+e.message)}
   this.value="";
@@ -1140,9 +1140,8 @@ dbGet("project-v3").then(function(savedDb){
   dbReady=true;
   if(savedDb&&savedDb.project&&Array.isArray(savedDb.project.cards)&&savedDb.project.cards.length){
     var p=savedDb.project;
-    cards=p.cards.map(normalizeCard);skins=(p.skins||skins).map(function(x){x.appearance=normalizeAppearance(x.appearance);return x});
-    userAssets=p.userAssets||[];ruleTerms=p.ruleTerms||[];customTemplates=p.customTemplates||{};favoriteAssets=p.favoriteAssets||[];snapshots=p.snapshots||[];
-    TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);
+    customTemplates=p.customTemplates||{};TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);cards=p.cards.map(normalizeCard);skins=(p.skins||skins).map(function(x){x.appearance=normalizeAppearance(x.appearance);return x});
+    userAssets=p.userAssets||[];ruleTerms=p.ruleTerms||[];favoriteAssets=p.favoriteAssets||[];snapshots=p.snapshots||[];
     selected=p.selected&&cards.some(function(c){return c.id===p.selected})?p.selected:cards[0].id;
     if(p.aiStyle){aiStyle=p.aiStyle;$("#aiStyle").value=p.aiStyle}if(p.projectName)projectName=p.projectName;if(p.printSettings)printSettings=Object.assign({sheet:"a4",crop:true},p.printSettings);
     renderAll();setStatus("已恢复完整项目（含图片）");
