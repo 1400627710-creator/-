@@ -838,7 +838,7 @@ $("#projectFile").onchange=async function(){
     recordHistory();cards=(p.cards||[]).map(normalizeCard);if(!cards.length)throw new Error("项目中没有卡牌");
     skins=(p.skins||BASE_SKINS).map(function(x){x.appearance=normalizeAppearance(x.appearance);return x});
     userAssets=p.userAssets||[];ruleTerms=p.ruleTerms||[];customTemplates=p.customTemplates||{};favoriteAssets=p.favoriteAssets||[];snapshots=p.snapshots||[];
-    TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);selected=cards[0].id;if(p.aiStyle){aiStyle=p.aiStyle;$("#aiStyle").value=p.aiStyle}if(p.aiReferenceImage!==undefined)aiReferenceImage=p.aiReferenceImage;if(p.projectName)projectName=p.projectName;if(p.aiQuality)aiQuality=p.aiQuality;if(p.printSettings)printSettings=Object.assign({sheet:"a4",crop:true},p.printSettings);
+    TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);selected=cards[0].id;if(p.aiStyle){aiStyle=p.aiStyle;$("#aiStyle").value=p.aiStyle}if(p.aiReferenceImage!==undefined)aiReferenceImage=p.aiReferenceImage;if(p.projectName)projectName=p.projectName;if(p.aiQuality)aiQuality=(p.version&&p.version<7&&p.aiQuality==="low")?"high":p.aiQuality;if(p.printSettings)printSettings=Object.assign({sheet:"a4",crop:true},p.printSettings);
     renderAll();setStatus("项目已打开："+cards.length+" 张卡牌");
   }catch(e){setStatus("打开项目失败："+e.message)}
   this.value="";
@@ -993,7 +993,7 @@ dbGet("project-v3").then(function(savedDb){
     userAssets=p.userAssets||[];ruleTerms=p.ruleTerms||[];customTemplates=p.customTemplates||{};favoriteAssets=p.favoriteAssets||[];snapshots=p.snapshots||[];
     TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);
     selected=p.selected&&cards.some(function(c){return c.id===p.selected})?p.selected:cards[0].id;
-    if(p.aiStyle){aiStyle=p.aiStyle;$("#aiStyle").value=p.aiStyle}if(p.aiReferenceImage!==undefined)aiReferenceImage=p.aiReferenceImage;if(p.projectName)projectName=p.projectName;if(p.aiQuality)aiQuality=p.aiQuality;if(p.printSettings)printSettings=Object.assign({sheet:"a4",crop:true},p.printSettings);
+    if(p.aiStyle){aiStyle=p.aiStyle;$("#aiStyle").value=p.aiStyle}if(p.aiReferenceImage!==undefined)aiReferenceImage=p.aiReferenceImage;if(p.projectName)projectName=p.projectName;if(p.aiQuality)aiQuality=(p.version&&p.version<7&&p.aiQuality==="low")?"high":p.aiQuality;if(p.printSettings)printSettings=Object.assign({sheet:"a4",crop:true},p.printSettings);
     renderAll();setStatus("已恢复完整项目（含图片）");
   }else{scheduleDbSave()}
 }).catch(function(){dbReady=true;scheduleDbSave()});
