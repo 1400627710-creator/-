@@ -81,6 +81,15 @@ for (const marker of ["marquee-box","selection-bounds","selection-group-resize",
 if (!app.includes("mergeThemeAppearance(current().appearance,skin.appearance)")) throw new Error("Skin application must preserve frame/image asset references.");
 if (!app.includes("themeAppearance(current().appearance)")) throw new Error("Saved skins must contain theme-only appearance state.");
 if (!app.includes("shiftAttachedChildren") || !app.includes("idMap[p.oldParent]")) throw new Error("Attached icon labels must survive non-pointer movement and duplication.");
+if (!app.includes("keyboardEditingText") || !app.includes("el.isContentEditable")) throw new Error("Layout shortcuts must not fire while editing card text.");
+if (!app.includes("发现重复卡牌编号")) throw new Error("TTS export must reject duplicate card numbers.");
+if (!app.includes("x.extraElements=copies") || !app.includes("x.textStyles=clone(c.textStyles")) throw new Error("Copy-layout must include free elements and typography.");
+const restoreTemplatePos=app.indexOf("customTemplates=s.customTemplates||customTemplates"),restoreCardsPos=app.indexOf("cards=(s.cards||[]).map(normalizeCard)");
+if (restoreTemplatePos<0 || restoreCardsPos<0 || restoreTemplatePos>restoreCardsPos) throw new Error("Undo/restore must register custom templates before card normalization.");
+const importTemplatePos=app.indexOf("customTemplates=p.customTemplates||{};TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);cards=(p.cards||[]).map(normalizeCard)");
+if (importTemplatePos<0) throw new Error("Project import must register custom templates before card normalization.");
+const dbTemplatePos=app.indexOf("customTemplates=p.customTemplates||{};TEMPLATES=Object.assign({},BUILTIN_TEMPLATES,customTemplates);cards=p.cards.map(normalizeCard)");
+if (dbTemplatePos<0) throw new Error("IndexedDB restore must register custom templates before card normalization.");
 if (!app.includes("c.textStyles") || !app.includes("textStyleFor")) throw new Error("Per-module typography state is missing.");
 if (app.includes("上传图片或使用 AI 生成")) throw new Error("Obsolete direct-AI artwork hint returned.");
 
