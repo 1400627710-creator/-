@@ -465,7 +465,7 @@ var renderCard=function(){
   $("#description").value=c.description||"";
   $("#dynamicStats").innerHTML=t.stats.map(function(s){return '<label>'+s[2]+'<input type="number" data-stat="'+s[0]+'" value="'+esc(c[s[0]])+'"></label>'}).join("");
   $$("[data-color]").forEach(function(el){el.value=c.appearance[el.getAttribute("data-color")]});
-  refreshTextControls();refreshElementPanel();renderTermQuickList();syncArtControls();syncStyleReferenceStatus();
+  refreshTextControls();refreshElementPanel();renderTermQuickList();syncArtControls();refreshAiPromptPreview();
   renderTemplates();renderAssets();renderSkins();
 };
 var renderExport=function(card){$("#exportCard").innerHTML=cardHtml(card,false);setArt($("#exportCard"),card);$("#exportCard").classList.remove("layout-editing")}
@@ -806,43 +806,44 @@ $("#importFile").onchange=async function(){
 $("#uploadArt").onclick=function(){$("#artFile").click()};
 $("#artFile").onchange=function(){var file=this.files&&this.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(){patch("art",String(reader.result||""),true)};reader.readAsDataURL(file);this.value=""};
 $("#clearArt").onclick=function(){patch("art","",true)};
-$("#aiStyle").value=aiStyle;$("#aiQuality").value=["low","medium","high","xhigh","max"].indexOf(aiQuality)>=0?aiQuality:"high";
-function syncStyleReferenceStatus(){var el=$("#styleReferenceStatus");if(el)el.textContent=aiReferenceImage?"已设置母版：后续新图与批量补图会继承它的笔触、色彩与光影语言。":"未设置。设置后，后续生图会参考同一张图的笔触、色彩和光影语言。"}
-async function requestGeneratedArt(c,promptText){var endpoint=aiReferenceImage?"/api/generate-image-reference":"/api/generate-image",res=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({reference:aiReferenceImage,prompt:promptText,style:$("#aiStyle").value,cardName:c.name,faction:c.faction,cardType:TEMPLATES[c.templateId].name,quality:$("#aiQuality").value})}),data=await res.json();if(!res.ok)throw new Error(data.error||"生成失败");return data}
-
-function detectAiStylePreset(v){var keys=Object.keys(AI_STYLE_PRESETS);for(var i=0;i<keys.length;i++)if(AI_STYLE_PRESETS[keys[i]]===v)return keys[i];return "custom"}$("#aiStylePreset").value=detectAiStylePreset(aiStyle);
-$("#aiStylePreset").addEventListener("change",function(){if(this.value==="custom")return;$("#aiStyle").value=AI_STYLE_PRESETS[this.value];aiStyle=AI_STYLE_PRESETS[this.value];persist();setStatus("已切换整套画风："+this.options[this.selectedIndex].text)});
-$("#aiStyle").addEventListener("input",function(){aiStyle=this.value;$("#aiStylePreset").value=detectAiStylePreset(this.value)});
-$("#aiQuality").addEventListener("change",function(){aiQuality=this.value;localStorage.setItem("card-studio-ai-quality",JSON.stringify(aiQuality));persist()});
+$("#aiStyle").value=aiStyle;
+function detectAiStylePreset(v){var keys=Object.keys(AI_STYLE_PRESETS);for(var i=0;i<keys.length;i++)if(AI_STYLE_PRESETS[keys[i]]===v)return keys[i];return "custom"}
+$("#aiStylePreset").value=detectAiStylePreset(aiStyle);
+function buildAiPrompt(mode){
+  var c=current(),t=TEMPLATES[c.templateId]||TEMPLATES.unit,scene=$("#aiPrompt").value.trim(),style=$("#aiStyle").value.trim();
+  var lines=[
+    mode==="redraw"?"请以我随后提供的现有插画为基础进行重绘，保持主体身份和主要构图，除非下面要求明确改变。":"请生成一张全新的竖版桌游收藏卡插画，只生成插画本身。",
+    "画布比例约为 0.73 宽高比，适合作为卡牌满版背景。",
+    "顶部约 16% 保持较低细节和较稳定明度，给标题、费用与图标留出安全区；底部约 27% 保持较低干扰和较稳定明暗，给规则文字留出安全区。",
+    "主体必须有清晰剪影、明确动作和视觉焦点；不要把脸、武器尖端或关键叙事细节放进文字安全区。",
+    "禁止生成任何文字、字母、数字、Logo、水印、卡牌边框、徽章、UI 或伪游戏文字。",
+    "卡牌名称："+c.name,
+    "卡牌类型："+t.name,
+    "系别 / 阵营："+c.faction,
+    "游戏类型字段："+c.unitType,
+    style?"统一画风："+style:"",
+    scene?"本张画面要求："+scene:"",
+    c.description?"规则语义参考（只用于理解氛围，不要把文字画出来）："+resolveVars(c.description,c):""
+  ].filter(Boolean);
+  return lines.join("\n");
+}
+function refreshAiPromptPreview(){var box=$("#aiPromptPreview");if(box)box.value=buildAiPrompt("generate")}
+async function copyPrompt(mode){
+  var text=buildAiPrompt(mode),box=$("#aiPromptPreview");if(box)box.value=text;
+  try{if(navigator.clipboard&&navigator.clipboard.writeText)await navigator.clipboard.writeText(text);else throw new Error("clipboard unavailable")}
+  catch(e){var ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove()}
+  setStatus(mode==="redraw"?"重绘提示词已复制":"生图提示词已复制");
+}
+$("#aiStylePreset").addEventListener("change",function(){if(this.value==="custom")return;$("#aiStyle").value=AI_STYLE_PRESETS[this.value];aiStyle=AI_STYLE_PRESETS[this.value];refreshAiPromptPreview();persist();setStatus("已切换整套画风："+this.options[this.selectedIndex].text)});
+$("#aiStyle").addEventListener("input",function(){aiStyle=this.value;$("#aiStylePreset").value=detectAiStylePreset(this.value);refreshAiPromptPreview()});
+$("#aiStyle").addEventListener("change",persist);
+$("#aiPrompt").addEventListener("input",refreshAiPromptPreview);
+$("#resetAiStyle").onclick=function(){$("#aiStyle").value=DEFAULT_AI_STYLE;$("#aiStylePreset").value="premium";aiStyle=DEFAULT_AI_STYLE;refreshAiPromptPreview();persist();setStatus("已恢复高端幻想卡牌默认风格")};
+$("#copyAiPrompt").onclick=function(){copyPrompt("generate")};$("#copyRedrawPrompt").onclick=function(){copyPrompt("redraw")};
 function syncArtControls(){var a=current().appearance,x=a.artFocusX==null?50:a.artFocusX,y=a.artFocusY==null?50:a.artFocusY,z=a.artZoom||100;$("#artFocusX").value=x;$("#artFocusY").value=y;$("#artZoom").value=z;$("#artFocusXValue").textContent=Math.round(x)+"%";$("#artFocusYValue").textContent=Math.round(y)+"%";$("#artZoomValue").textContent=Math.round(z)+"%"}
 ["X","Y"].forEach(function(axis){var el=$("#artFocus"+axis);el.addEventListener("pointerdown",function(){recordHistory()});el.addEventListener("input",function(){current().appearance["artFocus"+axis]=num(this.value,50);$("#artFocus"+axis+"Value").textContent=Math.round(num(this.value,50))+"%";renderPreviewOnly();persist()})});
 $("#artZoom").addEventListener("pointerdown",function(){recordHistory()});$("#artZoom").addEventListener("input",function(){current().appearance.artZoom=num(this.value,100);$("#artZoomValue").textContent=Math.round(num(this.value,100))+"%";renderPreviewOnly();persist()});
-$("#autoPalette").onclick=async function(){var c=current();if(!c.art){setStatus("请先上传或生成插画，再自动配色");return}var btn=this;btn.disabled=true;try{var p=await paletteFromArt(c.art);recordHistory();Object.assign(c.appearance,p);renderAll();setStatus("已从插画提取主色：卡框、强调色和底色已自动协调")}catch(e){setStatus("自动配色失败："+e.message)}btn.disabled=false};
-$("#setStyleReference").onclick=function(){var c=current();if(!c.art){setStatus("当前卡牌还没有插画，无法设为风格母版");return}recordHistory();aiReferenceImage=c.art;syncStyleReferenceStatus();persist();setStatus("已把当前插画设为整套风格母版")};
-$("#uploadStyleReference").onclick=function(){$("#styleReferenceFile").click()};
-$("#styleReferenceFile").onchange=async function(){var f=this.files&&this.files[0];if(!f)return;try{recordHistory();aiReferenceImage=await fileToDataUrl(f);syncStyleReferenceStatus();persist();setStatus("已上传整套风格母版："+f.name)}catch(e){setStatus("风格母版上传失败："+e.message)}this.value=""};
-$("#clearStyleReference").onclick=function(){if(!aiReferenceImage)return;recordHistory();aiReferenceImage="";syncStyleReferenceStatus();persist();setStatus("已清除整套风格母版")};
-$("#aiStyle").addEventListener("change",persist);$("#resetAiStyle").onclick=function(){$("#aiStyle").value=DEFAULT_AI_STYLE;$("#aiStylePreset").value="premium";aiStyle=DEFAULT_AI_STYLE;persist();setStatus("已恢复高端幻想卡牌默认风格")};
-$("#aiGenerate").onclick=async function(){
-  var c=current(),btn=this,prompt=$("#aiPrompt").value.trim();if(!prompt)return;
-  btn.disabled=true;setStatus("AI 正在生成插画...");
-  try{
-    var data=await requestGeneratedArt(c,prompt);
-    patch("art",data.image,true);setStatus("AI 插画已自动适配卡面");
-  }catch(err){setStatus("AI 生成失败："+(err.message||"未知错误"))}
-  btn.disabled=false;
-};
-
-$("#aiRedraw").onclick=async function(){
-  var c=current(),prompt=$("#aiPrompt").value.trim();if(!c.art){setStatus("请先上传或生成一张插画，再进行现图重绘");return}if(!prompt)return;
-  var btn=this;btn.disabled=true;setStatus("AI 正在基于现图重绘...");
-  try{
-    var res=await fetch("/api/redraw-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:c.art,prompt:prompt,style:$("#aiStyle").value,cardName:c.name,faction:c.faction,cardType:TEMPLATES[c.templateId].name,quality:$("#aiQuality").value})});
-    var data=await res.json();if(!res.ok)throw new Error(data.error||"重绘失败");patch("art",data.image,true);setStatus("现图重绘完成");
-  }catch(e){setStatus("AI 重绘失败："+e.message)}
-  btn.disabled=false;
-};
-
+$("#autoPalette").onclick=async function(){var c=current();if(!c.art){setStatus("请先上传插画，再自动配色");return}var btn=this;btn.disabled=true;try{var p=await paletteFromArt(c.art);recordHistory();Object.assign(c.appearance,p);renderAll();setStatus("已从插画提取主色：卡框、强调色和底色已自动协调")}catch(e){setStatus("自动配色失败："+e.message)}btn.disabled=false};
 
 $("#assetSearch").oninput=function(){renderAssets();renderCustomAssets()};$("#assetCategory").onchange=function(){renderAssets();renderCustomAssets()};
 $("#assetList").onclick=function(e){
@@ -980,17 +981,6 @@ $("#batchImageFiles").onchange=async function(){
   var restFiles=files.filter(function(f){return !matchedFiles[f.name]}),restCards=remaining.filter(function(c){return !used[c.id]});
   for(var j=0;j<Math.min(restFiles.length,restCards.length);j++){restCards[j].art=await fileToDataUrl(restFiles[j]);used[restCards[j].id]=true}
   renderAll();setStatus("批量图片完成：已填入 "+Object.keys(used).length+" 张卡牌");this.value="";
-};
-
-async function generateForCard(c,promptText){var data=await requestGeneratedArt(c,promptText);c.art=data.image}
-$("#batchAI").onclick=async function(){
-  var targets=cards.filter(function(c){return !c.art});if(!targets.length){setStatus("没有缺图卡牌");return}
-  recordHistory();var btn=this;btn.disabled=true;
-  try{
-    for(var i=0;i<targets.length;i++){var c=targets[i];setStatus("AI 批量生图 "+(i+1)+"/"+targets.length+"："+c.name);await generateForCard(c,(c.description||"")+"。主体："+c.name)}
-    renderAll();setStatus("批量 AI 插画完成："+targets.length+" 张");
-  }catch(e){renderAll();setStatus("批量 AI 在中途停止："+e.message)}
-  btn.disabled=false;
 };
 
 $("#smartFrameBtn").onclick=function(){$("#smartFrameFile").click()};
