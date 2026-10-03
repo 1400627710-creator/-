@@ -593,6 +593,7 @@ $("#preview").addEventListener("click",function(e){if(layoutEditing&&e.target.cl
 $("#preview").addEventListener("dblclick",function(e){
   if(!layoutEditing)return;var node=e.target.closest(".layout-node"),card=e.target.closest(".card");if(node&&node.getAttribute("data-layout-key")==="art"){var am=getElementModel(current(),node);if(am&&am.layout.locked)node=null}
   if(!node&&card){var r=card.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*100,y=(e.clientY-r.top)/r.height*100;addExtra("text",{x:clamp(x-12,0,88),y:clamp(y-3,0,96)});setTimeout(function(){var n=findSelectedNode();if(n){n.contentEditable="true";n.focus();document.execCommand&&document.execCommand("selectAll",false,null)}},0);return}
+  if(node){var direct=e.target.closest("[data-edit]");if(direct){selectLayoutNode(node,e.ctrlKey||e.metaKey||e.shiftKey);direct.focus();document.execCommand&&document.execCommand("selectAll",false,null);return}}
   if(node&&node.classList.contains("free-text-element")){selectLayoutNode(node,e.ctrlKey||e.metaKey||e.shiftKey);node.contentEditable="true";node.focus();document.execCommand&&document.execCommand("selectAll",false,null)}
 });
 ["X","Y","W","H","R","Z"].forEach(function(k){$("#el"+k).addEventListener("change",function(){var m=selectedModel(current()),models=selectedModels(current());if(!m)return;recordHistory();var v=num(this.value,m.layout[{X:"x",Y:"y",W:"w",H:"h",R:"r",Z:"z"}[k]]);
