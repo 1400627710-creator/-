@@ -406,7 +406,7 @@ var renderCard=function(){
   $("#description").value=c.description||"";
   $("#dynamicStats").innerHTML=t.stats.map(function(s){return '<label>'+s[2]+'<input type="number" data-stat="'+s[0]+'" value="'+esc(c[s[0]])+'"></label>'}).join("");
   $$("[data-color]").forEach(function(el){el.value=c.appearance[el.getAttribute("data-color")]});
-  refreshTextControls();refreshElementPanel();renderTermQuickList();syncArtControls();
+  refreshTextControls();refreshElementPanel();renderTermQuickList();syncArtControls();syncStyleReferenceStatus();
   renderTemplates();renderAssets();renderSkins();
 };
 var renderExport=function(card){$("#exportCard").innerHTML=cardHtml(card,false);setArt($("#exportCard"),card);$("#exportCard").classList.remove("layout-editing")}
@@ -686,6 +686,9 @@ $("#uploadArt").onclick=function(){$("#artFile").click()};
 $("#artFile").onchange=function(){var file=this.files&&this.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(){patch("art",String(reader.result||""),true)};reader.readAsDataURL(file);this.value=""};
 $("#clearArt").onclick=function(){patch("art","",true)};
 $("#aiStyle").value=aiStyle;$("#aiQuality").value=["low","medium","high","xhigh","max"].indexOf(aiQuality)>=0?aiQuality:"high";
+function syncStyleReferenceStatus(){var el=$("#styleReferenceStatus");if(el)el.textContent=aiReferenceImage?"已设置母版：后续新图与批量补图会继承它的笔触、色彩与光影语言。":"未设置。设置后，后续生图会参考同一张图的笔触、色彩和光影语言。"}
+async function requestGeneratedArt(c,promptText){var endpoint=aiReferenceImage?"/api/generate-image-reference":"/api/generate-image",res=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({reference:aiReferenceImage,prompt:promptText,style:$("#aiStyle").value,cardName:c.name,faction:c.faction,cardType:TEMPLATES[c.templateId].name,quality:$("#aiQuality").value})}),data=await res.json();if(!res.ok)throw new Error(data.error||"生成失败");return data}
+
 function detectAiStylePreset(v){var keys=Object.keys(AI_STYLE_PRESETS);for(var i=0;i<keys.length;i++)if(AI_STYLE_PRESETS[keys[i]]===v)return keys[i];return "custom"}$("#aiStylePreset").value=detectAiStylePreset(aiStyle);
 $("#aiStylePreset").addEventListener("change",function(){if(this.value==="custom")return;$("#aiStyle").value=AI_STYLE_PRESETS[this.value];aiStyle=AI_STYLE_PRESETS[this.value];persist();setStatus("已切换整套画风："+this.options[this.selectedIndex].text)});
 $("#aiStyle").addEventListener("input",function(){aiStyle=this.value;$("#aiStylePreset").value=detectAiStylePreset(this.value)});
@@ -694,13 +697,14 @@ function syncArtControls(){var a=current().appearance,x=a.artFocusX==null?50:a.a
 ["X","Y"].forEach(function(axis){var el=$("#artFocus"+axis);el.addEventListener("pointerdown",function(){recordHistory()});el.addEventListener("input",function(){current().appearance["artFocus"+axis]=num(this.value,50);$("#artFocus"+axis+"Value").textContent=Math.round(num(this.value,50))+"%";renderPreviewOnly();persist()})});
 $("#artZoom").addEventListener("pointerdown",function(){recordHistory()});$("#artZoom").addEventListener("input",function(){current().appearance.artZoom=num(this.value,100);$("#artZoomValue").textContent=Math.round(num(this.value,100))+"%";renderPreviewOnly();persist()});
 $("#autoPalette").onclick=async function(){var c=current();if(!c.art){setStatus("请先上传或生成插画，再自动配色");return}var btn=this;btn.disabled=true;try{var p=await paletteFromArt(c.art);recordHistory();Object.assign(c.appearance,p);renderAll();setStatus("已从插画提取主色：卡框、强调色和底色已自动协调")}catch(e){setStatus("自动配色失败："+e.message)}btn.disabled=false};
+$("#setStyleReference").onclick=function(){var c=current();if(!c.art){setStatus("当前卡牌还没有插画，无法设为风格母版");return}recordHistory();aiReferenceImage=c.art;syncStyleReferenceStatus();persist();setStatus("已把当前插画设为整套风格母版")};
+$("#clearStyleReference").onclick=function(){if(!aiReferenceImage)return;recordHistory();aiReferenceImage="";syncStyleReferenceStatus();persist();setStatus("已清除整套风格母版")};
 $("#aiStyle").addEventListener("change",persist);$("#resetAiStyle").onclick=function(){$("#aiStyle").value=DEFAULT_AI_STYLE;$("#aiStylePreset").value="premium";aiStyle=DEFAULT_AI_STYLE;persist();setStatus("已恢复高端幻想卡牌默认风格")};
 $("#aiGenerate").onclick=async function(){
   var c=current(),btn=this,prompt=$("#aiPrompt").value.trim();if(!prompt)return;
   btn.disabled=true;setStatus("AI 正在生成插画...");
   try{
-    var res=await fetch("/api/generate-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:prompt,style:$("#aiStyle").value,cardName:c.name,faction:c.faction,cardType:TEMPLATES[c.templateId].name,quality:$("#aiQuality").value})});
-    var data=await res.json();if(!res.ok)throw new Error(data.error||"生成失败");
+    var data=await requestGeneratedArt(c,prompt);
     patch("art",data.image,true);setStatus("AI 插画已自动适配卡面");
   }catch(err){setStatus("AI 生成失败："+(err.message||"未知错误"))}
   btn.disabled=false;
@@ -867,10 +871,7 @@ $("#batchImageFiles").onchange=async function(){
   renderAll();setStatus("批量图片完成：已填入 "+Object.keys(used).length+" 张卡牌");this.value="";
 };
 
-async function generateForCard(c,promptText){
-  var res=await fetch("/api/generate-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:promptText,style:$("#aiStyle").value,cardName:c.name,faction:c.faction,cardType:TEMPLATES[c.templateId].name,quality:$("#aiQuality").value})});
-  var data=await res.json();if(!res.ok)throw new Error(data.error||"生成失败");c.art=data.image;
-}
+async function generateForCard(c,promptText){var data=await requestGeneratedArt(c,promptText);c.art=data.image}
 $("#batchAI").onclick=async function(){
   var targets=cards.filter(function(c){return !c.art});if(!targets.length){setStatus("没有缺图卡牌");return}
   recordHistory();var btn=this;btn.disabled=true;
