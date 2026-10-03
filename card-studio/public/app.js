@@ -239,10 +239,10 @@ var raritySymbol=function(style){
 };
 var assetById=function(id){return userAssets.find(function(x){return x.id===id})};
 var FONT_STACKS={
-  default:'Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif',
-  serif:'Georgia,"Noto Serif SC","Songti SC",serif',
-  display:'"Arial Narrow","Microsoft YaHei",sans-serif',
-  soft:'"Trebuchet MS","PingFang SC",sans-serif'
+  default:"Inter,'PingFang SC','Microsoft YaHei',system-ui,sans-serif",
+  serif:"Georgia,'Noto Serif SC','Songti SC',serif",
+  display:"'Arial Narrow','Microsoft YaHei',sans-serif",
+  soft:"'Trebuchet MS','PingFang SC',sans-serif"
 };
 var FIXED_TEXT_KEYS=["title","faction","type","rarityText","effect","cost","stat_attack","stat_health","stat_move","stat_range"];
 function baseTextStyle(card,key,a){
@@ -254,7 +254,7 @@ function textCss(card,key,a,sizeOverride){var t=textStyleFor(card,key,a),family=
 var cardHtml=function(card,editable){
   var t=TEMPLATES[card.templateId]||TEMPLATES.unit,a=normalizeAppearance(card.appearance),ce=editable?' contenteditable="true"':"";
   var desc=renderRichText(card.description,card);
-  var artEmpty=card.art?"":'<div class="art-empty">插画区域<br><small>上传图片或使用 AI 生成</small></div>';
+  var artEmpty=card.art?"":'<div class="art-empty">插画区域<br><small>上传图片，或先复制绘画提示词再导入成图</small></div>';
   var layoutId=t.baseLayout||t.id;
   var classes=["card","tpl-"+layoutId,"frame-"+a.frameStyle,"texture-"+a.textureStyle,"cost-"+a.costStyle,"rarity-"+a.rarityStyle,"font-"+a.fontStyle,"finish-"+(a.finishStyle||"premium"),a.frameImageAssetId?"has-custom-frame":""].filter(Boolean).join(" ");
   var titleTs=textStyleFor(card,"title",a),effectTs=textStyleFor(card,"effect",a),titleRenderSize=a.autoFitText===false?titleTs.size:Math.max(15,titleTs.size-Math.max(0,String(card.name||"").length-9)*.75),effectLen=String(card.description||"").replace(/\[\[[^\]]+\]\]/g,"").length,effectRenderSize=a.autoFitText===false?effectTs.size:Math.max(10,effectTs.size-(effectLen>220?3:effectLen>165?2:effectLen>115?1:0));
