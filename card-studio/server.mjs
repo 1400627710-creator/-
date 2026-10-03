@@ -8,7 +8,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 const DEFAULT_CARD_ART_DIRECTION = [
   "Create production-ready collectible tabletop card artwork, not a generic poster.",
   "Use a premium hand-painted fantasy illustration aesthetic with intentional brushwork, rich material texture, atmospheric depth, controlled edges, and a clear value hierarchy.",
-  "Compose for a portrait card around a 0.72 width-to-height ratio: one unmistakable focal subject, readable silhouette, strong gesture, and purposeful negative space.",
+  "Compose for a portrait card around a 0.73 width-to-height ratio: one unmistakable focal subject, readable silhouette, strong gesture, and purposeful negative space.",
   "Keep the top 16 percent calmer and lower-detail for title and cost overlays; keep the bottom 27 percent calmer and darker or simpler for rules text. Do not place a face, weapon tip, or critical storytelling detail in those overlay-safe zones unless explicitly requested.",
   "Use cinematic but coherent lighting, foreground/midground/background separation, restrained color harmony, and enough local contrast around the focal subject to survive card-size printing.",
   "The image must remain visually strong when cropped full bleed. Avoid accidental tangencies at the card edges and avoid clutter behind text-safe areas.",
@@ -84,7 +84,7 @@ app.post("/api/generate-image", async (req, res) => {
     const result = await client.images.generate({
       model: process.env.OPENAI_IMAGE_MODEL || "gpt-image-2.5-sunburst",
       prompt: fullPrompt,
-      size: "1024x1408",
+      size: "1024x1392",
       quality,
       output_format: "png",
       background: "opaque"
@@ -143,7 +143,7 @@ app.post("/api/redraw-image", async (req, res) => {
     form.append("model", process.env.OPENAI_IMAGE_EDIT_MODEL || "gpt-image-2.5-sunburst");
     form.append("image", new Blob([bytes], { type: mime }), "card-art.png");
     form.append("prompt", fullPrompt);
-    form.append("size", "1024x1408");
+    form.append("size", "1024x1392");
     form.append("quality", quality);
     form.append("output_format", "png");
 
