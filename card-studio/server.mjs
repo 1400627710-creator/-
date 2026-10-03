@@ -107,6 +107,24 @@ app.post("/api/generate-image", async (req, res) => {
   }
 });
 
+app.post("/api/generate-image-reference", async (req, res) => {
+  if (!process.env.OPENAI_API_KEY) return res.status(503).json({ error: "尚未配置 AI Key。" });
+  const body=req.body||{},reference=String(body.reference||""),prompt=String(body.prompt||"").trim(),style=String(body.style||"").trim(),cardName=String(body.cardName||"").trim(),faction=String(body.faction||"").trim(),cardType=String(body.cardType||"").trim(),quality=["low","medium","high","xhigh","max"].includes(body.quality)?body.quality:"high";
+  if(!reference.startsWith("data:image/"))return res.status(400).json({error:"风格参考图无效。"});if(!prompt)return res.status(400).json({error:"请输入插画关键词。"});
+  try{
+    const match=reference.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);if(!match)return res.status(400).json({error:"风格参考图格式不支持。"});
+    const fullPrompt=[
+      "Create a NEW vertical tabletop card illustration using the input image ONLY as a visual style reference.",
+      DEFAULT_CARD_ART_DIRECTION,
+      "Transfer its brushwork, palette logic, texture, lighting language, edge treatment, and overall visual medium. Do not copy the reference subject, pose, objects, composition, symbols, or identity unless explicitly requested.",
+      "The new subject and scene must follow the request below while remaining recognizably from the same card set.",
+      cardType?"Card template type: "+cardType+".":"",cardName?"New card subject: "+cardName+".":"",faction?"Faction mood: "+faction+".":"",style?"Unified set style: "+style+".":"","New scene request: "+prompt+"."
+    ].filter(Boolean).join(" ");
+    const form=new FormData();form.append("model",process.env.OPENAI_IMAGE_EDIT_MODEL||"gpt-image-2.5-sunburst");form.append("image",new Blob([Buffer.from(match[2],"base64")],{type:match[1]}),"style-reference.png");form.append("prompt",fullPrompt);form.append("size","1024x1392");form.append("quality",quality);form.append("output_format","png");
+    const response=await fetch("https://api.openai.com/v1/images/edits",{method:"POST",headers:{Authorization:"Bearer "+process.env.OPENAI_API_KEY},body:form}),data=await response.json();if(!response.ok)throw new Error((data.error&&data.error.message)||"参考图生图失败。");const image=data.data&&data.data[0];if(!image||!image.b64_json)throw new Error("图像服务没有返回图片。");res.json({image:"data:image/png;base64,"+image.b64_json});
+  }catch(error){console.error(error);res.status(500).json({error:error&&error.message?error.message:"参考图生图失败。"})}
+});
+
 app.post("/api/redraw-image", async (req, res) => {
   if (!process.env.OPENAI_API_KEY) {
     return res.status(503).json({ error: "尚未配置 AI Key。请在页面的“插画”区域填写并保存。" });
