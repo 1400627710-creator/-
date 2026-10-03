@@ -13,7 +13,7 @@ new vm.Script(app);
 
 const requiredIds = [
   "projectName","preview","cardList","cardSearch","templateFilter","factionFilter","rarityFilter","sortCards","templateCards",
-  "dynamicStats","description","textTarget","textSize","textColor","textAlign","textBold","applyTextAll",
+  "dynamicStats","description","textTarget","textSize","textColor","textAlign","textBold","textFont","clearTextOverride","applyTextAll",
   "aiPrompt","aiStylePreset","aiStyle","resetAiStyle","copyAiPrompt","copyRedrawPrompt","aiPromptPreview","artFocusX","artFocusY","artZoom","autoPalette",
   "assetList","customAssetList","skinList","projectExport","projectImport","projectFile",
   "batchImages","batchImageFiles","smartFrameBtn","smartFrameFile","uploadAssetBtn","customAssetFile",
@@ -56,7 +56,7 @@ for (const removed of ["openai","dotenv"]) if (pkg.dependencies?.[removed]) thro
 for (const id of [
   "projectExport","projectImport","batchImages","smartFrameBtn","uploadAssetBtn","autoPalette","copyAiPrompt","copyRedrawPrompt","presetShowcase","presetClassicFrame","batchRename",
   "batchPngZip","batchJpgZip","resetAiStyle","applyTextAll","sheetSize","cropMarks","layoutMode","addImageElement","addImageLabel","detachImageLabel","addTextElement","addNumberElement",
-  "toggleElementVisibility","toggleElementLock","layerUp","layerDown","bringFront","sendBack","alignLeft","alignHCenter","alignRight","alignTop","alignVCenter","alignBottom","distributeH","distributeV","selectAllLayers",
+  "toggleElementVisibility","toggleElementLock","layerUp","layerDown","bringFront","sendBack","clearTextOverride","textFont","alignLeft","alignHCenter","alignRight","alignTop","alignVCenter","alignBottom","distributeH","distributeV","selectAllLayers",
   "resetLayout","openCardSearch","exportTTS","markRuleTerm","openRuleTerms","openRuleTermsRules","saveRuleTerm","insertRuleTerm"
 ]) {
   if (!app.includes('$("#' + id + '")')) throw new Error("Missing handler reference for #" + id);
@@ -66,8 +66,8 @@ for (const marker of [
   "indexedDB.open","projectPayload","customTemplates","userAssets","SHEETS","DEFAULT_LAYOUT","allLayerModels","renderLayerPanel","selectedModel","extraElements",
   "addFreeImage","addLabelToSelectedImage","renderCardLibrary","ttsCard","renderRichText","extractRuleTerms","ruleTerms",
   "DEFAULT_AI_STYLE","AI_STYLE_PRESETS","buildAiPrompt","refreshAiPromptPreview","makeSmartFrameDataUrl","applyCompositionPreset","paletteFromArt","autoFitText",
-  "selectedElements","beginMarquee","selectionBounds","snappedMove","alignSelection","distributeSelection",
-  "SKIN_THEME_KEYS","mergeThemeAppearance","themeAppearance","setToolMode","footerLeft","footerRight","setName","credit"
+  "selectedElements","beginMarquee","selectionBounds","snappedMove","alignSelection","distributeSelection","toggleSelection","shiftAttachedChildren","setModelPosition",
+  "SKIN_THEME_KEYS","mergeThemeAppearance","themeAppearance","textStyles","FONT_STACKS","textStyleFor","textControlTargets","setToolMode","footerLeft","footerRight","setName","credit"
 ]) {
   if (!app.includes(marker)) throw new Error("Missing implemented feature marker: " + marker);
 }
@@ -80,6 +80,9 @@ if (!app.includes('$$("#rightModeTabs [data-tool-mode]").forEach') || !app.inclu
 for (const marker of ["marquee-box","selection-bounds","selection-group-resize","snap-guide","selected-primary"]) if (!css.includes(marker)) throw new Error("Missing free-editor CSS marker: " + marker);
 if (!app.includes("mergeThemeAppearance(current().appearance,skin.appearance)")) throw new Error("Skin application must preserve frame/image asset references.");
 if (!app.includes("themeAppearance(current().appearance)")) throw new Error("Saved skins must contain theme-only appearance state.");
+if (!app.includes("shiftAttachedChildren") || !app.includes("idMap[p.oldParent]")) throw new Error("Attached icon labels must survive non-pointer movement and duplication.");
+if (!app.includes("c.textStyles") || !app.includes("textStyleFor")) throw new Error("Per-module typography state is missing.");
+if (app.includes("上传图片或使用 AI 生成")) throw new Error("Obsolete direct-AI artwork hint returned.");
 
 for (const removed of [
   "apiKeyInput","saveApiKey","apiKeyStatus","aiQuality","aiGenerate","aiRedraw","batchAI",
