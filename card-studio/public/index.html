@@ -81,12 +81,12 @@
 
   <aside class="right">
     <div class="right-mode-tabs" id="rightModeTabs">
-      <button data-tool-mode="content" class="active">内容</button>
-      <button data-tool-mode="text">文字</button>
-      <button data-tool-mode="layout">自由编辑</button>
-      <button data-tool-mode="visual">视觉</button>
-      <button data-tool-mode="rules">规则 / 卡查</button>
-      <button data-tool-mode="export">导出 / 项目</button>
+      <button data-tool-mode="content" class="active">内容 <kbd>1</kbd></button>
+      <button data-tool-mode="text">文字 <kbd>2</kbd></button>
+      <button data-tool-mode="layout">自由编辑 <kbd>3</kbd></button>
+      <button data-tool-mode="visual">视觉 <kbd>4</kbd></button>
+      <button data-tool-mode="rules">规则 / 卡查 <kbd>5</kbd></button>
+      <button data-tool-mode="export">导出 / 项目 <kbd>6</kbd></button>
     </div>
     <section data-tool-group="content">
       <h3>1. 模板</h3>
@@ -277,7 +277,7 @@
       <div class="grid"><label>系列名<input data-form="setName" placeholder="例如 荣耀之星"></label><label>卡牌编号<input data-form="cardNumber" placeholder="例如 SET01-001"></label><label>年份<input data-form="year" placeholder="2026"></label><label>署名<input data-form="credit" placeholder="作者 / AI绘画 / 工作室"></label></div>
       <label>标签<input data-form="tags" placeholder="单位,王国,守备,长枪"></label>
       <label>规则关键词<input data-form="rulesKeywords" placeholder="部署,守备,相邻据点"></label>
-      <div class="grid top-gap"><label>编号前缀<input id="numberPrefix" value="SET01-"></label><label>起始号<input id="numberStart" type="number" value="1"></label></div><div class="row"><button id="batchNumber">批量生成卡号</button><button id="openCardSearch">打开卡查</button><button id="exportTTS">导出 TTS 数据</button></div>
+      <div class="row top-gap"><button id="openRuleTermsRules" class="wide">📚 打开规则词条仓库</button></div><div class="grid top-gap"><label>编号前缀<input id="numberPrefix" value="SET01-"></label><label>起始号<input id="numberStart" type="number" value="1"></label></div><div class="row"><button id="batchNumber">批量生成卡号</button><button id="openCardSearch">打开卡查</button><button id="exportTTS">导出 TTS 数据</button></div>
       <p class="micro-help">卡查会索引名称、编号、标签、系别、类型、稀有度、效果文字与规则关键词；TTS 导出会保留这些字段供未来模组脚本使用。</p>
     </section>
 
