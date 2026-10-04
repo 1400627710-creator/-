@@ -87,6 +87,23 @@ try{
     assert.match(await page.locator('#status').innerText(),/导入失败.*1000/);
     assert.deepEqual((await exportAssets(page,'after.csassets')).assets,before);
   });
+  await test('private-glossary-design-roundtrip',async page=>{
+    const term={id:'design.guard',name:'守护',color:'#336699',category:'状态',tags:'防御',description:'保护指定友军',aliases:['保护'],example:'守护本回合保护友军。',designNotes:'明确保护目标 <img src=x onerror="window.bad=true">'};
+    // Studio export and older glossary.json both contain the same term record.
+    await page.locator('#glossaryFile').setInputFiles({name:'glossary.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({version:1,terms:[term]}))});
+    await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('共享词条库已同步'));
+    await page.locator('#openGlossary').click();await page.locator('#termList [data-term]').filter({hasText:'守护'}).click();
+    assert.match(await page.locator('#termDetail').innerText(),/明确保护目标/);
+    assert.match(await page.locator('#termDetail').innerText(),/使用示例/);
+    assert.equal(await page.locator('#termDetail img').count(),0);assert.equal(await page.evaluate(()=>window.bad),undefined);
+    await page.locator('#termSearch').fill('保护');assert.equal(await page.locator('#termList [data-term]').count(),1);
+    await page.locator('[data-close="glossaryModal"]').click();await openMenu(page);
+    const project=JSON.parse(await download(page,'saveProject','with-glossary.cscard'));
+    assert.equal(project.sharedGlossary.terms[0].designNotes,term.designNotes);assert.equal(project.glossary.terms.length,0);
+    await page.waitForTimeout(650);await page.reload({waitUntil:'networkidle'});await page.locator('#openGlossary').click();
+    await page.waitForFunction(()=>document.querySelector('#termList').textContent.includes('守护'));
+    assert.equal(await page.locator('#termDetail img').count(),0);
+  });
   await test('offline-png',async page=>{
     const png=await download(page,'exportPng','offline.png');
     assert.equal(png.readUInt32BE(16),1380);assert.equal(png.readUInt32BE(20),1880);

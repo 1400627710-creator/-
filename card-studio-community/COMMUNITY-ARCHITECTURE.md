@@ -11,7 +11,8 @@ Community 是独立静态应用，不依赖 Studio 的 Node 服务，也不包�
 ## 数据层
 
 - 卡牌与当前项目的共创词条：浏览器 IndexedDB + `.cscard`
-- 正式共享词条：只读 `cardstudio-glossary-v1`
+- 正式共享词条：只读 `cardstudio-glossary-v1`，随自动保存和 `.cscard` 保留完整设计快照
+- 从 Studio 打开时：读取本机同源正式仓库，主动投稿写入独立待审队列；离线运行使用内置或手动导入快照
 - 底图：项目内安全栅格 Data URL，导出 `.cscard` 时按资源引用去重
 
 ## 公开/私有边界

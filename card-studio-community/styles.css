@@ -52,3 +52,10 @@ body.free-mode #moduleInspector{display:none!important}body:not(.free-mode) #fre
 .asset-inline-form label{display:block;font-size:10px;color:#6d6d72}
 .asset-inline-form input,.asset-inline-form select{display:block;width:100%;margin-top:5px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:8px 9px;min-height:34px}
 @media(max-width:980px){.asset-layout{grid-template-columns:1fr}.asset-list{border-right:0;border-bottom:1px solid var(--line);grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}.asset-dialog{max-height:92vh}}
+[hidden]{display:none!important}
+.glossary-toolbar{flex-wrap:wrap}
+.glossary-sync-status{padding:8px 20px;color:#73737b;font-size:12px;line-height:1.6}
+.term-design-section{margin-top:18px;border-top:1px solid #ddd;padding-top:14px}
+.term-design-section b{font-size:12px}
+.term-design-section p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7}
+.glossary-dialog .term-detail{overflow:auto;max-height:65vh}

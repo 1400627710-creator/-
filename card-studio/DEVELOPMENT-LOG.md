@@ -1,6 +1,6 @@
 # CardStudio 制卡工具开发总记录
 
-记录整理日期：2026-10-04（北京时间）
+记录更新日期：2026-10-05（北京时间）
 
 ## 记录范围与来源
 
@@ -11,7 +11,7 @@
 - [Studio 3.0.0 Beta 5](changelogs/CHANGELOG-3.0.0-beta5.md)
 - [Community 1.2.1](changelogs/CHANGELOG-1.2.1.md)
 
-首次提交只归档日志。本轮已取回 Studio Beta 5 与 Community 1.2.1 的原始源码，修复并验证后形成 **Studio 3.0.0 Beta 5.1** 和 **Community 1.2.2**。公开源码位于 [`card-studio-community/`](../card-studio-community/)；`card-studio/` 程序仍为 2.3.0 历史基线。Studio 核心继续私有，不上传至公开仓库。详见 [本轮流程验证](VERIFICATION-2026-10-04.md)。
+首次提交只归档日志。此前已取回 Studio Beta 5 与 Community 1.2.1 的原始源码，修复并验证后形成 Studio 3.0.0 Beta 5.1 和 Community 1.2.2。本轮在此基础上完成词条仓库互通，交付 **Studio 3.0.0 Beta 6** 和 **Community 1.3.0**。公开源码位于 [`card-studio-community/`](../card-studio-community/)；`card-studio/` 程序仍为 2.3.0 历史基线。Studio 核心继续私有，不上传至公开仓库。详见 [词条互通与本轮验证](VERIFICATION-2026-10-05.md)；[此前流程验证](VERIFICATION-2026-10-04.md) 保留。
 
 ## 一、项目定位
 
@@ -19,8 +19,8 @@ CardStudio 面向没有编程、专业绘图或 PS 基础的桌游作者，核�
 
 | 版本 | 工作定位 | 本轮交付版本 |
 | --- | --- | --- |
-| Studio 私人版 | 承载精细排版、类型主模板、项目检查及专业发布工作流 | 3.0.0 Beta 5.1 |
-| Community 社区版 | 提供轻量制卡与共享资料能力，优先保证易用、兼容和稳定 | 1.2.2 |
+| Studio 私人版 | 承载精细排版、类型主模板、项目检查及专业发布工作流 | 3.0.0 Beta 6 |
+| Community 社区版 | 提供轻量制卡与共享资料能力，优先保证易用、兼容和稳定 | 1.3.0 |
 
 共享词条与共享素材分别管理。词条表达规则语义；素材表达图像、卡框、底纹和图标等视觉资源，不能混成同一类导入、存储或导出对象。
 
@@ -115,3 +115,13 @@ CardStudio 面向没有编程、专业绘图或 PS 基础的桌游作者，核�
 - 两版常规自检及 Studio 一键诊断通过。AI 仅做本地模拟；Windows 启动脚本和 ZIP 编码检查通过，但未做 Windows 真机启动。
 - GitHub 的 `card-studio-community/` 现在提供 Community 1.2.2 源码、回归与浏览器 CI。Studio Beta 5.1 以私人更新包交付，未把核心代码加入公开仓库。
 - 代表卡变更前后预览、工作区收敛、语义版本和模块拆分仍为下一阶段待办；本轮未新增这些功能。
+
+## 九、两版词条仓库互通（2026-10-05）
+
+- [Studio Beta 6 更新日志](changelogs/CHANGELOG-3.0.0-beta6.md) 与 [Community 1.3.0 更新日志](../card-studio-community/CHANGELOG-1.3.0.md)：统一词条校验，增加检索别名、示例和设计说明，社区版完整展示已发布设计。
+- 私人版安装包带独立社区版。发布后共用本机持久词条仓库，可直接打开社区版或下载包含正式快照的离线包。
+- 共创投稿进入待审队列；重复去重，冲突默认保留原设计，取消不消费投稿，锁定卡引用名称受保护。审核合并后再次发布才进入正式仓库。
+- `.cscard` 与自动保存携带正式快照；初始空库不覆盖已导入内容。原项目格式兼容，Studio v20 与 Community v3 保持不变。
+- 公开仓库新增 [`shared-glossary/`](../shared-glossary/)，保存正式词条快照与同步脚本，维护仓库、在线 JSON、离线 JS 一致；Studio 可导入同一 JSON。用户真实本地词条尚未读取，初始快照为空，测试示例未作为正式规则发布。
+- 两版自检及私人版诊断通过；原有浏览器流程 11/11、社区回归 4/4、词条互通 6/6，共 21 项通过。发布持久化、重启、离线包、设计字段、投稿审核、冲突和无效导入均实际操作验证。详见 [使用说明与实际验证](VERIFICATION-2026-10-05.md) 及 [原始结果](verification/glossary-results-2026-10-05.json)。
+- GitHub 更新社区源码、共享数据格式、日志、验证和社区 ZIP；私人核心仍只随私人包交付。浏览器不配置 GitHub 凭据，发布按钮不自动上传本地词条至 GitHub。

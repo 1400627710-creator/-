@@ -1,6 +1,8 @@
-# CardStudio Community 1.2.2
+# CardStudio Community 1.3.0
 
-直接双击 `index.html` 即可使用。此次修复原生双击编辑、相同前缀图片误去重和素材累计超限静默丢弃；详见 [1.2.2 更新日志](CHANGELOG-1.2.2.md) 与 [流程验证记录](VERIFICATION-2026-10-04.md)。
+直接双击 `index.html` 即可使用。此次增加私人版完整词条设计查看、两版仓库同步与投稿审核；详见 [1.3.0 更新日志](CHANGELOG-1.3.0.md)、[词条互通说明](GLOSSARY-SHARING.md) 和 [流程验证记录](VERIFICATION-2026-10-05.md)。此前 1.2.2 的稳定性修复继续保留。
+
+要查看自己的私人词条，在 Studio Beta 6 词条库点击“发布到两版词条仓库”，然后“打开社区版”。要离线分享，在 Studio 点击“下载含词条的社区版”。标准源码包的初始词条库为空，也可手动导入自己的词条文件。
 
 
 
@@ -34,18 +36,18 @@
 - Studio 发布的正式词条属于只读共享库。
 - Community 可以为当前项目创建自己的共创词条。
 - 共创词条随 `.cscard` 项目一起分享，但不同项目之间不会自动串库。
-- 需要投稿时，才使用“项目 → 导出我的词条投稿”，交给 Studio 审核合并。
+- 从 Studio 打开时可点击“提交到私人版审核”，投稿进入私人版待审队列；独立运行时此按钮导出投稿 JSON，也可使用“项目 → 导出我的词条投稿”。
 - 共创词条改名时，当前项目中的 `[[旧词条]]` 引用会同步迁移。
 
 ## 和 CardStudio Studio 的关系
 
 Community 不包含 Studio 的 Master Template、Schema、Preflight、专业印刷、TTS、发布版本、AI Provider、完整资产管理等核心代码。它不是隐藏完整版功能，而是一套独立公开版。
 
-两版通过 `cardstudio-glossary-v1` 共享词条结构：Studio 发布正式词条快照，Community 读取并使用；Community 的本地共创词条可以导出给 Studio 审核。
+两版通过 `cardstudio-glossary-v1` 共享完整词条设计。Studio 维护正式词条，Community 读取并使用；投稿须经 Studio 审核、合并并再次发布。正式快照随 `.cscard` 与自动保存保留；搜索支持检索别名、示例和设计说明。
 
 ## 数据与安全边界
 
-Community 不需要账号或 API Key。直接双击 `index.html` 时不会主动访问网络；网页部署模式仅后台尝试读取同源 `shared-glossary.json`，失败或超时都不会阻塞制卡器。
+Community 不需要账号或 API Key。直接双击 `index.html` 时不会主动访问网络；独立网页部署读取同源 `shared-glossary.json`，从 Studio 打开时读取同源词条接口。主动投稿才写入私人版待审核区；同步失败或超时不会阻塞制卡器。
 
 `.cscard` 导入具有明确边界：
 
@@ -62,7 +64,7 @@ Community 不需要账号或 API Key。直接双击 `index.html` 时不会主动
 
 把整个文件夹放到静态网页托管即可。通过 `http://` / `https://` 打开时，Community 会在主界面已经可用之后后台读取同目录 `shared-glossary.json`；请求最多等待约 3.5 秒，不影响制卡主流程。
 
-你在 Studio 审核并发布新词条后，只需要替换这个 JSON，群友刷新网页即可同步。直接双击 `index.html` 时使用内置离线快照，也可以手动同步 JSON。
+独立静态网站发布新词条时需同时更新在线 JSON 和离线快照；公开仓库的 `shared-glossary/sync-glossary.mjs` 可维护两者一致。从 Studio 打开的社区版直接读取同一正式仓库；直接双击 `index.html` 时使用内置快照或导入的缓存，也可以手动导入 JSON。
 
 ## 1.0.2 稳定性重点
 
@@ -97,4 +99,4 @@ npx playwright install chromium
 npm run check:browser
 ```
 
-`check` 包含启动、项目、词条、自由模式和素材行为回归；`check:browser` 会真实点击界面、生成和重开项目、核对 PNG 尺寸、验证去重与容量拒绝，并从 `file://` 验证离线导出。结果写入 `test-results/`。公开仓库已加入同样的浏览器持续集成流程。
+`check` 包含启动、项目、词条设计与格式保护、自由模式和素材行为回归；`check:browser` 的 4 项流程会真实点击界面、生成和重开项目、核对 PNG 尺寸、验证去重与容量拒绝、完整设计和刷新保留，并从 `file://` 验证离线导出。结果写入 `test-results/`。公开仓库已加入同样的浏览器持续集成流程。

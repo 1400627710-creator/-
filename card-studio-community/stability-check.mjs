@@ -12,7 +12,7 @@ const initTail=js.slice(js.lastIndexOf('(async function init()'));
 if(/openGlossary\s*\(|openTermEditor\s*\(/.test(initTail))fail('启动流程不应主动打开词条界面');
 if(!js.includes('if(location.protocol==="file:")return'))fail('本地文件模式不应请求在线词条');
 const fetches=[...js.matchAll(/fetch\(([^\n]+)/g)].map(x=>x[1]);
-if(fetches.length!==1||!fetches[0].includes('shared-glossary.json'))fail('公开版只允许同源 shared-glossary.json 网络读取');
+if(fetches.length!==2||!fetches[0].includes('sharedGlossaryEndpoint()')||!fetches[1].includes('/api/glossary/contributions'))fail('网络词条交互必须限制为同源读取和主动投稿');
 if(glossary.schema!=='cardstudio-glossary-v1'||!Array.isArray(glossary.terms))fail('shared-glossary.json 结构错误');
 for(const forbidden of ['api.openai.com','stability.ai','ComfyUI','apiKey','Authorization: Bearer'])if(js.includes(forbidden)||html.includes(forbidden))fail('公开版出现私有/外部能力: '+forbidden);
 if(!js.includes('^data:image\\/(?:png|jpe?g|webp);base64,'))fail('项目导入图片未限制为 PNG/JPEG/WebP Base64');
@@ -24,7 +24,7 @@ if(/innerHTML=list\.map\(c=>.*background/i.test(js))fail('卡牌底图不应通�
 if(!js.includes('COMMUNITY_PROJECT_VERSION=3')||!js.includes('function buildProjectPayload()'))fail('共创项目缺少 v3 自由图层去重资源格式');
 if(!js.includes('p?.format!=="cardstudio-community"||!Array.isArray(p.cards)'))fail('共创项目格式校验不够严格');
 if(!js.includes('BASE_GLOSSARY={...g,terms:g.terms.map'))fail('手动同步词条库应写入共享库而不是投稿词条');
-if(!js.includes('sharedGlossary:location.protocol==="file:"?BASE_GLOSSARY:null'))fail('离线共享词条库没有进入本地恢复数据');
+if(!js.includes('sharedGlossary:BASE_GLOSSARY'))fail('共享词条库没有进入项目与本地恢复数据');
 if(!js.includes('m.x=clamp(m.x,0,100-m.w)'))fail('模块宽度变化后没有回收越界 X');
 if(js.includes('await loadHostedGlossary();'))fail('在线词条加载不应阻塞制卡器启动');
 if(!js.includes('loadHostedGlossary().catch(()=>{})'))fail('启动后没有后台同步在线词条');

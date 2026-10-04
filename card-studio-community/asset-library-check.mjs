@@ -11,4 +11,4 @@ if(!js.includes('MAX_LIBRARY_ASSETS=1000'))throw new Error('素材库缺少 1000
 if(!js.includes('roles.includes("frameImage")')||!js.includes('roles.includes("textureImage")')||!js.includes('roles.includes("art")'))throw new Error('Studio → Community 分类映射不完整');
 if(!js.includes('safeImageDataUrl'))throw new Error('素材库没有复用安全栅格数据校验');
 if(/svg/i.test(html.match(/id="assetLibraryUpload"[^>]+/i)?.[0]||''))throw new Error('素材上传入口不应接受 SVG');
-console.log('Community 1.2.2 shared asset library contract passed.');
+console.log('Community 1.3.0 shared asset library contract passed.');

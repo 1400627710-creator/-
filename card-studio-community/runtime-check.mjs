@@ -60,6 +60,7 @@ let lastBlob=null;
 const context={window:windowObj,document,location:{protocol:'file:'},console,Blob,URL:{createObjectURL(blob){lastBlob=blob;return 'blob:test'},revokeObjectURL(){}},setTimeout(){return 1},clearTimeout(){},Image:class{},FileReader:class{},Math,Date,JSON,Promise,Array,Object,String,Number,RegExp,Map,Set,Intl};
 windowObj.window=windowObj;windowObj.document=document;windowObj.location=context.location;
 vm.createContext(context);
+vm.runInContext(fs.readFileSync('glossary-format.js','utf8'),context,{filename:'glossary-format.js'});
 vm.runInContext(glossaryJs,context,{filename:'glossary-data.js'});
 vm.runInContext(appJs,context,{filename:'app.js'});
 await new Promise(r=>setImmediate(r));

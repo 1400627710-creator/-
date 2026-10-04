@@ -4,10 +4,12 @@ on:
   push:
     paths:
       - 'card-studio-community/**'
+      - 'shared-glossary/**'
       - '.github/workflows/cardstudio-community-check.yml'
   pull_request:
     paths:
       - 'card-studio-community/**'
+      - 'shared-glossary/**'
       - '.github/workflows/cardstudio-community-check.yml'
   workflow_dispatch:
 
@@ -28,6 +30,8 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: card-studio-community/package-lock.json
+      - name: Check shared glossary snapshots
+        run: node ../shared-glossary/sync-glossary.mjs --check
       - run: npm ci
       - run: npm run check
       - run: npx playwright install --with-deps chromium
