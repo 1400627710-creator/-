@@ -72,3 +72,16 @@ Testing/
 # Card Studio local secrets & dependencies
 card-studio/.env
 card-studio/node_modules/
+
+# Kadi: private capabilities, local data and private editor are not public source
+**/node_modules/
+**/.kadi-install.json
+**/device.json
+**/recovered-terms.json
+**/shared-data/
+card-studio/public/
+card-studio/server.mjs
+card-studio/package*.json
+releases/*private*.zip
+releases/*完整版*.zip
+

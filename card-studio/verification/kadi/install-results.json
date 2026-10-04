@@ -1,0 +1,15 @@
+{
+  "createdAt": "2026-10-04T22:13:38.313Z",
+  "checks": [
+    {
+      "name": "独立解压后安装配置自动启用管理，不依赖环境变量或平台账号",
+      "ok": true
+    },
+    {
+      "name": "首次配置移除后再次启动仍有管理权限与原图词条",
+      "ok": true
+    }
+  ],
+  "grantWasTestOnly": true,
+  "finalOwnerGrantConsumed": false
+}

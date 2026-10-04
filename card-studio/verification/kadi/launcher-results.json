@@ -1,0 +1,14 @@
+{
+  "createdAt": "2026-10-04T22:08:57.035Z",
+  "checks": [
+    {
+      "name": "旧服务仍运行，新版避开其端口并提示资料迁移",
+      "ok": true
+    },
+    {
+      "name": "已运行的同版本通过验证后复用",
+      "ok": true
+    }
+  ],
+  "nativeWindowsTested": false
+}

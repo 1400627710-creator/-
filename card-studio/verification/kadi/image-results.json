@@ -1,0 +1,39 @@
+{
+  "createdAt": "2026-10-04T22:10:25.377Z",
+  "counts": {
+    "terms": 1,
+    "assets": 4
+  },
+  "existingUploadIdempotent": true,
+  "storageReservationVerifiedInProduction": true,
+  "results": [
+    {
+      "name": "象牙黑饰边透明卡牌框",
+      "width": 1061,
+      "height": 1482,
+      "pixelsAndAlphaPreserved": true,
+      "thumbnailAvailable": true
+    },
+    {
+      "name": "透明背景维多利亚玫瑰装饰框",
+      "width": 1054,
+      "height": 1492,
+      "pixelsAndAlphaPreserved": true,
+      "thumbnailAvailable": true
+    },
+    {
+      "name": "黑白复古玫瑰装饰透明边框",
+      "width": 1055,
+      "height": 1491,
+      "pixelsAndAlphaPreserved": true,
+      "thumbnailAvailable": true
+    },
+    {
+      "name": "黑白玫瑰卷轴透明边框",
+      "width": 1024,
+      "height": 1536,
+      "pixelsAndAlphaPreserved": true,
+      "thumbnailAvailable": true
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+name: Kadi shared library check
+on:
+  push:
+    paths:
+      - 'cardstudio-public-repository/**'
+      - 'shared-glossary/**'
+      - '.github/workflows/kadi-shared-library-check.yml'
+  pull_request:
+    paths:
+      - 'cardstudio-public-repository/**'
+      - 'shared-glossary/**'
+      - '.github/workflows/kadi-shared-library-check.yml'
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: cardstudio-public-repository/package-lock.json
+      - run: npm ci
+        working-directory: cardstudio-public-repository
+      - run: npm run check
+        working-directory: cardstudio-public-repository
+      - run: node shared-glossary/sync-glossary.mjs

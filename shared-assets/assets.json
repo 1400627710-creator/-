@@ -1,0 +1,65 @@
+{
+  "schema": "kadi-assets-v1",
+  "assets": [
+    {
+      "id": "original.frame.1",
+      "name": "象牙黑饰边透明卡牌框",
+      "category": "frame",
+      "tags": "透明,卡框,黑白,原创素材",
+      "description": "用户原先制作的透明卡牌装饰框。完整原图保留，可直接设为卡框。",
+      "source": "卡递创作者提供的原卡框",
+      "license": "允许用于卡递作品，保留来源",
+      "author": "卡递创作者",
+      "width": 1061,
+      "height": 1482,
+      "filename": "frames/source-frame-1.png",
+      "repositoryId": "asset.380801242e1add18b6107f14",
+      "repositoryRevision": 1
+    },
+    {
+      "id": "original.frame.2",
+      "name": "透明背景维多利亚玫瑰装饰框",
+      "category": "frame",
+      "tags": "透明,卡框,黑白,原创素材",
+      "description": "用户原先制作的透明卡牌装饰框。完整原图保留，可直接设为卡框。",
+      "source": "卡递创作者提供的原卡框",
+      "license": "允许用于卡递作品，保留来源",
+      "author": "卡递创作者",
+      "width": 1054,
+      "height": 1492,
+      "filename": "frames/source-frame-2.png",
+      "repositoryId": "asset.f8ad7b3f63fa846ba8d1f992",
+      "repositoryRevision": 1
+    },
+    {
+      "id": "original.frame.3",
+      "name": "黑白复古玫瑰装饰透明边框",
+      "category": "frame",
+      "tags": "透明,卡框,黑白,原创素材",
+      "description": "用户原先制作的透明卡牌装饰框。完整原图保留，可直接设为卡框。",
+      "source": "卡递创作者提供的原卡框",
+      "license": "允许用于卡递作品，保留来源",
+      "author": "卡递创作者",
+      "width": 1055,
+      "height": 1491,
+      "filename": "frames/source-frame-3.png",
+      "repositoryId": "asset.6bcba2e9ca04e69d620c3246",
+      "repositoryRevision": 1
+    },
+    {
+      "id": "original.frame.4",
+      "name": "黑白玫瑰卷轴透明边框",
+      "category": "frame",
+      "tags": "透明,卡框,黑白,原创素材",
+      "description": "用户原先制作的透明卡牌装饰框。完整原图保留，可直接设为卡框。",
+      "source": "卡递创作者提供的原卡框",
+      "license": "允许用于卡递作品，保留来源",
+      "author": "卡递创作者",
+      "width": 1024,
+      "height": 1536,
+      "filename": "frames/source-frame-4.png",
+      "repositoryId": "asset.6b16c1456730e1f21f921144",
+      "repositoryRevision": 1
+    }
+  ]
+}

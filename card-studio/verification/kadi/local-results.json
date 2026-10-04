@@ -1,0 +1,8 @@
+{
+  "command": "npm run check / npm run diagnose",
+  "environment": "Linux, Node.js 24.19.0",
+  "exitCode": 0,
+  "localBehaviorChecks": 9,
+  "originalCoreChecksPassed": true,
+  "independentUnpackNpmCiPassed": true
+}

@@ -1,9 +1,7 @@
-# 离线词条快照（兼容用途）
+# 卡递词条快照
 
-当前在线词条与素材由 [公共资料服务](https://cardstudio-community-hub.tells-route3b.chatgpt.site/community/) 持久化保存。Studio Beta 7 发布与审核后，Community 1.4.0 直接读取线上版本，无需编辑 GitHub JSON。
+“再生”来自用户规则 v0.4，保留完整定义、来源和待明确的细节。新版卡递从旧浏览器保存与旧项目增量收录有效词条，空项目不清空“我的”。
 
-此目录的 glossary.json、Community/shared-glossary.json 与 glossary-data.js 保留旧格式离线快照和备份兼容。sync-glossary.mjs 可继续校验三份快照一致；当前初始快照为空，不能把它误当作线上目录。
+线上来源：https://cardstudio-community-hub.tells-route3b.chatgpt.site/api/repository/catalog
 
-Beta 6 的本机 shared-data 和下载社区包只属于同机/文件传递，未完成独立设备的在线互通。本次已更正：[使用与自查记录](../card-studio/CONNECTED-REPOSITORY-VERIFICATION-2026-10-05.md)。
-
-离线维护：node shared-glossary/sync-glossary.mjs /path/to/shared-glossary.json；校验：node shared-glossary/sync-glossary.mjs --check。脚本仅提取词条白名单字段，不要提交私人项目或密钥。
+`node shared-glossary/sync-glossary.mjs` 校验快照；传入词条 JSON 可增量合并，不修改项目或线上仓库，不按名称覆盖不同设计。日常共享只需卡递顶部词条库“共享”，不必使用 Git 或脚本。

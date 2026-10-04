@@ -1,7 +1,23 @@
 {
   "schema": "cardstudio-glossary-v1",
-  "version": "2026.10.04-community-seed",
-  "publishedAt": "2026-10-04T00:00:00.000Z",
-  "source": "CardStudio Shared Glossary",
-  "terms": []
+  "title": "卡递原创规则初始快照",
+  "terms": [
+    {
+      "id": "original.rules04.regeneration",
+      "name": "再生",
+      "color": "#487060",
+      "category": "死亡处理",
+      "tags": "再生,死亡,回手,初始状态",
+      "namespace": "原创桌游规则 v0.4",
+      "description": "带有 {再生} 标签的棋子死亡后，回到手牌并变为初始状态。",
+      "aliases": [],
+      "example": "",
+      "designNotes": "依据用户规则 v0.4 第八节。第十二节第 10 项仍待确认：回到手牌是否占手牌上限、是否消耗费用。本词条不补写尚未确认的机制。",
+      "source": "用户 GitHub《添加规则 v0.4》第八节与第十二节第10项；https://github.com/1400627710-creator/-/blob/9b6eefd4f4e44f085d237bf8131a19dfc7805f6a/%E6%B7%BB%E5%8A%A0%E8%A7%84%E5%88%99%20v0.4",
+      "license": "允许用于卡递作品，保留来源",
+      "author": "卡递创作者",
+      "repositoryId": "term.2bc6e2daaafb8d7e6408ae44",
+      "repositoryRevision": 1
+    }
+  ]
 }
