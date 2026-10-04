@@ -1,0 +1,86 @@
+{
+  "generatedAt": "2026-10-04T16:01:45.766Z",
+  "browser": "Chromium via Playwright",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "results": [
+    {
+      "name": "studio-startup",
+      "status": "passed",
+      "durationMs": 9
+    },
+    {
+      "name": "studio-create-save-export",
+      "status": "passed",
+      "durationMs": 3603
+    },
+    {
+      "name": "studio-template-freeze",
+      "status": "passed",
+      "durationMs": 1866
+    },
+    {
+      "name": "studio-locked-batch",
+      "status": "passed",
+      "durationMs": 450
+    },
+    {
+      "name": "studio-import-atomic",
+      "status": "passed",
+      "durationMs": 267
+    },
+    {
+      "name": "studio-full-check-pdf",
+      "status": "passed",
+      "durationMs": 3965
+    },
+    {
+      "name": "community-create-save-export",
+      "status": "passed",
+      "durationMs": 3129
+    },
+    {
+      "name": "community-assets-distinct",
+      "status": "passed",
+      "durationMs": 104
+    },
+    {
+      "name": "community-assets-capacity",
+      "status": "passed",
+      "durationMs": 218
+    },
+    {
+      "name": "shared-assets-roundtrip",
+      "status": "passed",
+      "durationMs": 5038
+    },
+    {
+      "name": "community-offline",
+      "status": "passed"
+    }
+  ],
+  "node": "24.19.0",
+  "playwright": "1.62.1",
+  "chromium": "153.0.0",
+  "studio": "3.0.0-beta5.1",
+  "community": "1.2.2",
+  "communityBrowserRegression": {
+    "generatedAt": "2026-10-04T15:55:58.604Z",
+    "results": [
+      {
+        "name": "create-edit-save-reopen-png",
+        "status": "passed"
+      },
+      {
+        "name": "distinct-assets-and-cumulative-capacity",
+        "status": "passed"
+      },
+      {
+        "name": "offline-png",
+        "status": "passed"
+      }
+    ]
+  }
+}

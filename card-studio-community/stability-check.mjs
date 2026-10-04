@@ -1,0 +1,53 @@
+import fs from 'node:fs';
+const html=fs.readFileSync('index.html','utf8');
+const css=fs.readFileSync('styles.css','utf8');
+const js=fs.readFileSync('app.js','utf8');
+const glossary=JSON.parse(fs.readFileSync('shared-glossary.json','utf8'));
+const fail=m=>{throw new Error(m)};
+if(!css.includes('[hidden]{display:none!important}'))fail('hidden 强制规则缺失');
+for(const id of ['glossaryModal','termEditorModal','projectMenu','inlineEditor','toast']){if(!new RegExp(`id="${id}"[^>]*\\bhidden\\b`).test(html))fail(`${id} 启动时没有 hidden`)}
+if(!js.includes('function closeTransientUi()'))fail('缺少启动 UI 复位');
+if(!js.includes('closeTransientUi();\n  try{'))fail('启动前没有先关闭临时 UI');
+const initTail=js.slice(js.lastIndexOf('(async function init()'));
+if(/openGlossary\s*\(|openTermEditor\s*\(/.test(initTail))fail('启动流程不应主动打开词条界面');
+if(!js.includes('if(location.protocol==="file:")return'))fail('本地文件模式不应请求在线词条');
+const fetches=[...js.matchAll(/fetch\(([^\n]+)/g)].map(x=>x[1]);
+if(fetches.length!==1||!fetches[0].includes('shared-glossary.json'))fail('公开版只允许同源 shared-glossary.json 网络读取');
+if(glossary.schema!=='cardstudio-glossary-v1'||!Array.isArray(glossary.terms))fail('shared-glossary.json 结构错误');
+for(const forbidden of ['api.openai.com','stability.ai','ComfyUI','apiKey','Authorization: Bearer'])if(js.includes(forbidden)||html.includes(forbidden))fail('公开版出现私有/外部能力: '+forbidden);
+if(!js.includes('^data:image\\/(?:png|jpe?g|webp);base64,'))fail('项目导入图片未限制为 PNG/JPEG/WebP Base64');
+if(!js.includes('MAX_PROJECT_BYTES=80*1024*1024')||!js.includes('MAX_CARDS=500')||!js.includes('MAX_MODULES=80'))fail('共创项目缺少资源上限保护');
+if(!js.includes('normalizeLocalTerms(localTerms).map'))fail('词条投稿必须只导出经过清理的本地共创词条');
+if(js.includes('const terms=allTerms().map'))fail('词条投稿不应把官方词条重新导出');
+if(!js.includes('if(dup)return setStatus'))fail('共创词条缺少同名去重');
+if(/innerHTML=list\.map\(c=>.*background/i.test(js))fail('卡牌底图不应通过 innerHTML 拼接');
+if(!js.includes('COMMUNITY_PROJECT_VERSION=3')||!js.includes('function buildProjectPayload()'))fail('共创项目缺少 v3 自由图层去重资源格式');
+if(!js.includes('p?.format!=="cardstudio-community"||!Array.isArray(p.cards)'))fail('共创项目格式校验不够严格');
+if(!js.includes('BASE_GLOSSARY={...g,terms:g.terms.map'))fail('手动同步词条库应写入共享库而不是投稿词条');
+if(!js.includes('sharedGlossary:location.protocol==="file:"?BASE_GLOSSARY:null'))fail('离线共享词条库没有进入本地恢复数据');
+if(!js.includes('m.x=clamp(m.x,0,100-m.w)'))fail('模块宽度变化后没有回收越界 X');
+if(js.includes('await loadHostedGlossary();'))fail('在线词条加载不应阻塞制卡器启动');
+if(!js.includes('loadHostedGlossary().catch(()=>{})'))fail('启动后没有后台同步在线词条');
+if(!js.includes('controller.abort(),3500'))fail('在线词条同步缺少超时保护');
+if(!js.includes('editorTa.addEventListener("blur",()=>{if(inlineEditing)commitInline(false,true)})'))fail('双击文字离开编辑器时没有先提交数据');
+if(!js.includes('localTerms=[];termSelectionId=null;selectedModuleId=null'))fail('新建项目没有隔离上一个项目的共创词条');
+if(!js.includes('localTerms=normalizeLocalTerms(g.terms)'))fail('打开项目应替换项目级共创词条，而不是与当前项目串库');
+if(!js.includes('MAX_IMAGE_DIMENSION=12000')||!js.includes('MAX_IMAGE_PIXELS=60000000'))fail('底图导入缺少像素尺寸上限');
+if(!js.includes('底图导入失败：'))fail('底图读取异常没有用户可见错误');
+if(!js.includes('function validTermName(name)'))fail('词条引用语法缺少名称边界校验');
+if(!js.includes('词条名称不能包含 [、] 或换行'))fail('共创词条没有阻止破坏 [[词条]] 语法的名称');
+if(!js.includes('m=>m.color=e.target.value,null,{autoColor:false}'))fail('手动改文字颜色没有正确关闭自动对比色');
+if(!js.includes('已按底图自动选择对比色",{autoColor:true}'))fail('一键自动对比色没有保持自动模式');
+console.log('Community stability/security contract passed. Startup is card editor-first; glossary is optional; shared project import is bounded.');
+
+// Community 1.2 classic free-layout contract
+for(const token of ['function setFreeMode(on)','function beginFreePointer','function beginMarquee','function snappedMove','function alignSelection','function distributeSelection','function addFreeImageFile','function addLabelToSelectedImage','function applyLayoutAll','function updateSelectionClasses'])if(!js.includes(token))fail('旧版自由模式能力缺失: '+token);
+for(const id of ['freeModeBtn','freeInspector','addFreeImage','addFreeText','addFreeNumber','duplicateSelection','deleteSelection','alignLeft','alignHCenter','alignRight','alignTop','alignVCenter','alignBottom','distributeH','distributeV','selectAllLayers','lockAspect','snapEnabled','elX','elY','elW','elH','elR','elZ','elOpacity','toggleElementVisibility','toggleElementLock','layerUp','layerDown','bringFront','sendBack','layerList','freeElementText','freeTextSize','freeTextWeight','freeTextColor','freeTextAlign','freeTextFont'])if(!html.includes(`id="${id}"`))fail('自由模式 DOM 缺失: '+id);
+if(!js.includes('version:COMMUNITY_PROJECT_VERSION')||!js.includes('assetRef:putAsset(src)'))fail('自由图片没有通过 v3 项目资源去重保存');
+if(!js.includes('m.kind==="image"?')&&!js.includes('if(m.kind==="image")'))fail('自由图片没有独立渲染路径');
+if(!js.includes('FONT_STACKS'))fail('自由文字字体样式没有进入渲染/导出模型');
+if(js.includes('image/svg+xml'))fail('安全公开版自由图片不应恢复 SVG 执行面');
+
+if(js.includes('setPointerCapture'))fail('自由模式不应对重绘后旧 DOM 使用 pointer capture；全局 pointer 监听已足够');
+if(!css.includes('body.free-mode .card-module{cursor:move;overflow:visible}')||!css.includes('.card-module>.module-content'))fail('自由模式控制柄必须可见，同时文字内容应在内部容器裁切');
+console.log('Community 1.2 complete free-layout contract passed.');

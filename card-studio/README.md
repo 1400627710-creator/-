@@ -7,7 +7,7 @@
 - [Studio 3.0.0 Beta 5 开发日志](changelogs/CHANGELOG-3.0.0-beta5.md)
 - [Community 1.2.1 开发日志](changelogs/CHANGELOG-1.2.1.md)
 
-这两份日志是 2026-10-04 归档的独立版本记录。本目录的程序代码仍为 2.3.0；日志归档不代表已经同步新版源代码、安装包或验证脚本。
+本目录保留 2.3.0 历史程序。新版 Community 1.2.2 源码与检查脚本已独立同步至 [card-studio-community](../card-studio-community/README.md)。Studio Beta 5.1 核心保持私有；公开 [修复日志](changelogs/CHANGELOG-3.0.0-beta5.1.md) 与 [实际流程验证](VERIFICATION-2026-10-04.md) 记录本轮结果。
 
 
 这是一个面向没有美术和 PS 基础的桌游作者的本地卡牌制作工具。定位不是专业绘图软件，而是：

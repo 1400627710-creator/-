@@ -1,0 +1,40 @@
+name: CardStudio Community checks
+
+on:
+  push:
+    paths:
+      - 'card-studio-community/**'
+      - '.github/workflows/cardstudio-community-check.yml'
+  pull_request:
+    paths:
+      - 'card-studio-community/**'
+      - '.github/workflows/cardstudio-community-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: card-studio-community
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: card-studio-community/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      - run: npx playwright install --with-deps chromium
+      - run: npm run check:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cardstudio-community-browser-results
+          path: card-studio-community/test-results/
+          if-no-files-found: ignore

@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+const must=['index.html','styles.css','app.js','glossary-data.js','README.md','CHANGELOG-1.0.2.md','CHANGELOG-1.1.0.md','CHANGELOG-1.2.0.md','CHANGELOG-1.2.1.md','asset-library-check.mjs','COMMUNITY-ARCHITECTURE.md','GLOSSARY-SHARING.md','SECURITY-MODEL.md','WEB-DEPLOY.md','shared-glossary.json','runtime-check.mjs','stability-check.mjs'];
+for(const f of must){if(!fs.existsSync(f))throw new Error('缺少文件: '+f)}
+const html=fs.readFileSync('index.html','utf8'),js=fs.readFileSync('app.js','utf8'),css=fs.readFileSync('styles.css','utf8');
+const ids=[...html.matchAll(/id="([^"]+)"/g)].map(m=>m[1]);
+const dup=ids.filter((x,i)=>ids.indexOf(x)!==i);if(dup.length)throw new Error('重复 HTML ID: '+[...new Set(dup)].join(','));
+for(const token of ['smartImportBase','exportPng','openGlossary','cardstudio-glossary-v1','commitInline','indexedDB','safeImageDataUrl','normalizeCards','MAX_PROJECT_BYTES','setFreeMode','beginMarquee','snappedMove','alignSelection','distributeSelection','addFreeImageFile','applyLayoutAll','fontStyle','openAssetLibrary','cardstudio-asset-library-v1','normalizeAssetLibrary','assetLibraryApproxBytes','importAssetLibraryFile','addFreeImageFromAsset'])if(!js.includes(token))throw new Error('核心能力缺失: '+token);
+for(const forbidden of ['ai-providers','OpenAI','Stability AI','ComfyUI','Master Template','project-v13'])if(js.includes(forbidden)||html.includes(forbidden))throw new Error('Community 不应包含 Studio 私有能力: '+forbidden);
+if(!css.includes('[hidden]{display:none!important}'))throw new Error('缺少强制 hidden 规则：模态框可能在启动时误显示');
+if(!html.includes('id="glossaryModal" class="modal" hidden')||!html.includes('id="termEditorModal" class="modal" hidden'))throw new Error('词条弹窗必须默认 hidden');
+if(!html.includes('image/png')||!html.includes('image/jpeg')||!html.includes('image/webp'))throw new Error('底图输入必须限制为安全的栅格格式');
+if(/fontWeight:750/.test(js))throw new Error('默认模块存在属性面板无法表示的 750 字重');
+if(!html.includes('CardStudio Community 1.2.2'))throw new Error('index.html 版本号不是 1.2.2');
+if(!js.includes('normalizeLocalTerms')||!js.includes('validTermName'))throw new Error('项目/词条隔离逻辑缺失');
+for(const id of ['freeModeBtn','freeInspector','addFreeImage','addFreeText','addFreeNumber','alignLeft','alignHCenter','alignRight','alignTop','alignVCenter','alignBottom','distributeH','distributeV','lockAspect','snapEnabled','elX','elY','elW','elH','elR','elZ','elOpacity','layerList','freeElementText','freeTextFont'])if(!html.includes(`id="${id}"`))throw new Error('自由模式 DOM 缺失: '+id);
+if(!js.includes('COMMUNITY_PROJECT_VERSION=3'))throw new Error('自由图片项目格式必须升级为 v3');
+for(const id of ['openAssetLibrary','assetLibraryModal','assetSearch','assetCategoryFilter','assetList','assetDetail','addAssetsToLibrary','assetLibraryUpload','importAssetLibrary','exportAssetLibrary'])if(!html.includes(`id="${id}"`))throw new Error('共享素材库 DOM 缺失: '+id);
+if(!js.includes('MAX_ASSET_LIBRARY_BYTES=120*1024*1024'))throw new Error('共享素材库缺少 120MB 总量边界');
+const opens=(css.match(/{/g)||[]).length,closes=(css.match(/}/g)||[]).length;if(opens!==closes)throw new Error(`CSS 括号不匹配 ${opens}/${closes}`);
+console.log(`CardStudio Community 1.2.2 self-check passed. ${ids.length} HTML IDs, CSS ${opens}/${closes}.`);
