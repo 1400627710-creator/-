@@ -1,5 +1,7 @@
 # 卡牌组装流水线 2.3
 
+当前私人版为 Studio Beta 7、社区版为 Community 1.4.0。新版的公共词条和素材使用持久化线上仓库；本目录仅保留 2.3 历史代码。请看 [本次实现与自查](CONNECTED-REPOSITORY-VERIFICATION-2026-10-05.md)、[Beta 7 日志](changelogs/CHANGELOG-3.0.0-beta7.md) 和 [在线社区版](https://cardstudio-community-hub.tells-route3b.chatgpt.site/community/)。
+
 ## 开发记录与版本说明
 
 [制卡工具开发总记录](DEVELOPMENT-LOG.md) 汇总 Studio 私人版与 Community 社区版的定位、开发纪律、版本进展和后续工作。

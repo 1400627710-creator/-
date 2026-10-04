@@ -5,11 +5,13 @@ on:
     paths:
       - 'card-studio-community/**'
       - 'shared-glossary/**'
+      - 'cardstudio-public-repository/**'
       - '.github/workflows/cardstudio-community-check.yml'
   pull_request:
     paths:
       - 'card-studio-community/**'
       - 'shared-glossary/**'
+      - 'cardstudio-public-repository/**'
       - '.github/workflows/cardstudio-community-check.yml'
   workflow_dispatch:
 
@@ -42,3 +44,13 @@ jobs:
           name: cardstudio-community-browser-results
           path: card-studio-community/test-results/
           if-no-files-found: ignore
+
+  repository-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node cardstudio-public-repository/tests/repository-check.mjs

@@ -65,7 +65,7 @@ function normalizeLocalTerms(terms){
   for(const raw of (Array.isArray(terms)?terms:[]).slice(0,MAX_TERMS)){
     if(raw?.source==="official")continue;
     const t={...normalizeTerm({...raw,source:"community"},"community"),source:"community"},name=t.name.toLowerCase();
-    if(!t.name||officialIds.has(t.id)||officialNames.has(name)||ids.has(t.id)||names.has(name))continue;
+    if(!t.name||ids.has(t.id)||names.has(name))continue;
     ids.add(t.id);names.add(name);out.push(t);
   }
   return out;
@@ -74,7 +74,7 @@ function normalizeLocalTerms(terms){
 function normalizeAsset(a){
   const roles=["template","frame","icon","decoration","illustration","other"];
   const category=roles.includes(a?.category)?a.category:"other";
-  return {id:safeId(a?.id,"a_"),name:safeText(a?.name||"未命名素材",120).trim()||"未命名素材",category,tags:safeText(Array.isArray(a?.tags)?a.tags.join(","):a?.tags,500),width:clamp(Number(a?.width)||0,0,20000),height:clamp(Number(a?.height)||0,0,20000),dataUrl:safeImageDataUrl(a?.dataUrl||a?.src||a?.image),source:safeText(a?.source||"community",40)};
+  return {id:safeId(a?.id,"a_"),name:safeText(a?.name||"未命名素材",120).trim()||"未命名素材",category,tags:safeText(Array.isArray(a?.tags)?a.tags.join(","):a?.tags,500),description:safeText(a?.description,4000),repositoryId:safeText(a?.repositoryId,96),repositoryRevision:Math.max(0,Number(a?.repositoryRevision)||0),width:clamp(Number(a?.width)||0,0,20000),height:clamp(Number(a?.height)||0,0,20000),dataUrl:safeImageDataUrl(a?.dataUrl||a?.src||a?.image),source:safeText(a?.source||"community",40)};
 }
 function normalizeAssetLibrary(list,limit=MAX_LIBRARY_ASSETS){
   const out=[],ids=new Set(),fingerprints=new Set();
@@ -424,6 +424,17 @@ if("ResizeObserver" in window)new ResizeObserver(syncPreviewScale).observe($("#c
 window.addEventListener("keydown",e=>{const editing=e.target.matches?.("input,textarea,select,[contenteditable=true]")||document.activeElement?.matches?.("input,textarea,select,[contenteditable=true]");if(e.key==="Escape"){if(e.target===editorTa)return;if(!$("#termEditorModal").hidden){e.preventDefault();$("#termEditorModal").hidden=true;return}if(!$("#glossaryModal").hidden){e.preventDefault();$("#glossaryModal").hidden=true;return}if(freeMode&&selectedModuleIds.length){e.preventDefault();clearSelection();return}closeTransientUi();return}if(editing)return;const mod=e.ctrlKey||e.metaKey;if(mod&&e.key.toLowerCase()==="z"){e.preventDefault();e.shiftKey?redo():undo();return}if(mod&&e.key.toLowerCase()==="y"){e.preventDefault();redo();return}if(e.key.toLowerCase()==="f"){e.preventDefault();toggleFocus();return}if(e.key.toLowerCase()==="l"){e.preventDefault();setFreeMode(!freeMode);return}if(freeMode&&mod&&e.key.toLowerCase()==="a"){e.preventDefault();$("#selectAllLayers").click();return}if(freeMode&&mod&&e.key.toLowerCase()==="d"){e.preventDefault();duplicateSelected();return}if(freeMode&&(e.key==="Delete"||e.key==="Backspace")){e.preventDefault();deleteSelected();return}const ms=freeMode?editableSelectedModules():(selectedModule()&&!selectedModule().locked?[selectedModule()]:[]);if(!ms.length)return;const step=e.altKey?.05:(e.shiftKey?1:.2);if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)){e.preventDefault();if(!e.repeat)recordHistory();for(const m of ms){let x=m.x,y=m.y;if(e.key==="ArrowLeft")x-=step;if(e.key==="ArrowRight")x+=step;if(e.key==="ArrowUp")y-=step;if(e.key==="ArrowDown")y+=step;if(freeMode)setModulePosition(m,x,y);else setModulePosition(m,clamp(x,0,Math.max(0,100-m.w)),clamp(y,0,Math.max(0,100-m.h)))}renderCard();renderInspector();queueSave();return}if(!freeMode)return;let used=true;if(e.key==="="||e.key==="+"){if(!e.repeat)recordHistory();const sc=e.shiftKey?1.05:1.01,g=selectionBounds(ms);for(const m of ms){m.x=g.x+(m.x-g.x)*sc;m.y=g.y+(m.y-g.y)*sc;m.w=clamp(m.w*sc,2,140);m.h=clamp(m.h*sc,2,140)}}else if(e.key==="-"){if(!e.repeat)recordHistory();const sc=e.shiftKey?.95:.99,g=selectionBounds(ms);for(const m of ms){m.x=g.x+(m.x-g.x)*sc;m.y=g.y+(m.y-g.y)*sc;m.w=clamp(m.w*sc,2,140);m.h=clamp(m.h*sc,2,140)}}else if(/[qQeE]/.test(e.key)){if(!e.repeat)recordHistory();const dr=(e.key.toLowerCase()==="q"?-1:1)*(e.shiftKey?5:1);for(const m of ms)m.r=(m.r||0)+dr}else if(e.key==="["||e.key==="]"){if(!e.repeat)recordHistory();const dz=e.key==="["?-1:1;for(const m of ms)m.z=clamp((m.z||20)+dz,1,999)}else used=false;if(used){e.preventDefault();renderCard();renderInspector();queueSave()}});
 
 function closeTransientUi(){["projectMenu","inlineEditor","glossaryModal","assetLibraryModal","termEditorModal","toast"].forEach(id=>{const el=$("#"+id);if(el)el.hidden=true})}
+function initializeCommunityRepository(){if(!window.initializePublicRepository)return;window.initializePublicRepository({
+  edition:'community',getTerms:()=>BASE_GLOSSARY.terms.filter(t=>!localTerms.some(x=>window.CARDSTUDIO_GLOSSARY.key(x.name)===window.CARDSTUDIO_GLOSSARY.key(t.name))).concat(localTerms),getAssets:()=>assetLibrary,setStatus,
+  saveTerm(raw){const old=localTerms.find(t=>t.id===raw.id),term={...window.CARDSTUDIO_GLOSSARY.normalizeTerm({...raw,id:old?old.id:uid('t_')}),source:'community'},next=localTerms.filter(t=>!old||t.id!==old.id).concat([term]);window.CARDSTUDIO_GLOSSARY.normalizeTerms(next);recordHistory();localTerms=next;renderAll();queueSave();return term},
+  saveAsset(raw){const a=normalizeAsset(raw);if(!a.dataUrl)throw Error('素材图片无效');const old=assetLibrary.find(x=>x.dataUrl===a.dataUrl);const next=old?assetLibrary.map(x=>x.id===old.id?{...a,id:old.id}:x):assetLibrary.concat([{...a,id:uid('a_')}]);if(next.length>MAX_LIBRARY_ASSETS||assetLibraryApproxBytes(next)>MAX_ASSET_LIBRARY_BYTES)throw Error('我的素材容量已满，请先导出或清理');recordHistory();assetLibrary=next;renderAll();queueSave();return old?next.find(x=>x.id===old.id):next[next.length-1]},
+  adoptTerm(raw,use){if(use&&(!selectedModule()||selectedModule().kind==='image'))throw Error('请先选中卡面上的文字模块');const term=window.CARDSTUDIO_GLOSSARY.normalizeTerm(raw),old=BASE_GLOSSARY.terms.find(t=>window.CARDSTUDIO_GLOSSARY.key(t.name)===window.CARDSTUDIO_GLOSSARY.key(term.name));if(old&&JSON.stringify(window.CARDSTUDIO_GLOSSARY.normalizeTerm(old))!==JSON.stringify(term)&&!confirm('当前项目使用过同名词条。确认采用公共仓库的这份完整设计？'))throw Error('已保留当前项目的词条版本');const next=BASE_GLOSSARY.terms.filter(t=>t!==old).concat([{...term,source:'official'}]);window.CARDSTUDIO_GLOSSARY.normalizeTerms(next);recordHistory();BASE_GLOSSARY={...BASE_GLOSSARY,terms:next};renderAll();queueSave();if(use)insertTerm(term.id)},
+  removeTerm(term){recordHistory();localTerms=localTerms.filter(t=>t.id!==term.id);BASE_GLOSSARY={...BASE_GLOSSARY,terms:BASE_GLOSSARY.terms.filter(t=>t.id!==term.id)};if(!allTerms().some(t=>t.name===term.name))state.cards.forEach(c=>c.modules.forEach(m=>{if(m.kind!=='image')m.text=String(m.text||'').split('[['+term.name+']]').join(term.name)}));renderAll();queueSave()},
+  removeAsset(asset){recordHistory();assetLibrary=assetLibrary.filter(a=>a.id!==asset.id);renderAll();queueSave()},
+  useAsset:asset=>putAssetOnCurrentCard(asset),
+  receiveCatalog(data){if(!BASE_GLOSSARY.terms.length&&data.terms.length){BASE_GLOSSARY=normalizeGlossary({schema:'cardstudio-glossary-v1',terms:data.terms,version:data.revision},'official');renderAll();queueSave()}},
+  savePendingUpload:payload=>dbPut('public-pending-upload',payload),readPendingUpload:()=>dbGet('public-pending-upload')
+})}
 (async function init(){
   closeTransientUi();
   try{
@@ -434,7 +445,7 @@ function closeTransientUi(){["projectMenu","inlineEditor","glossaryModal","asset
     setFreeMode(freeMode);
     closeTransientUi();
     setStatus(restored?"已恢复上次 Community 项目":"Community 已就绪");
-    loadHostedGlossary().catch(()=>{});
+    if(window.initializePublicRepository)initializeCommunityRepository();else loadHostedGlossary().catch(()=>{});
   }catch(e){
     console.error("Community startup recovery:",e);
     state={projectName:"我的卡牌集",cards:[makeCard("第一张卡")],selected:null};
@@ -442,7 +453,7 @@ function closeTransientUi(){["projectMenu","inlineEditor","glossaryModal","asset
     try{renderAll()}catch{}
     closeTransientUi();
     const status=$("#status");if(status)status.textContent="已进入安全空白项目";
-    loadHostedGlossary().catch(()=>{});
+    if(window.initializePublicRepository)initializeCommunityRepository();else loadHostedGlossary().catch(()=>{});
   }
 })();
 })();

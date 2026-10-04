@@ -1,0 +1,41 @@
+{
+  "ok": true,
+  "results": [
+    {
+      "name": "生产健康检查与持久化目录可公开读取",
+      "ok": true
+    },
+    {
+      "name": "匿名写入与伪造平台身份被拒绝",
+      "ok": true
+    },
+    {
+      "name": "线上发布与另一请求完整读回，过滤私人字段",
+      "ok": true
+    },
+    {
+      "name": "线上词条投稿隔离、审核发布与冲突校验",
+      "ok": true
+    },
+    {
+      "name": "线上图片投稿与审核；原文件完整读回",
+      "ok": true
+    },
+    {
+      "name": "线上跨站写入被拒绝",
+      "ok": true
+    }
+  ],
+  "origin": "https://cardstudio-community-hub.tells-route3b.chatgpt.site",
+  "temporaryRecords": [
+    {
+      "id": "term.09d68f82b156a75d9ea9db47",
+      "revision": 2
+    },
+    {
+      "id": "asset.d089b33c9596895c80d5fdb3",
+      "revision": 1
+    }
+  ],
+  "scope": "Real production HTTP. Submission uses temporary service admin; interactive ChatGPT sign-in is not verified."
+}

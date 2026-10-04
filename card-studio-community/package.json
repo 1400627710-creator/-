@@ -1,10 +1,10 @@
 {
   "name": "cardstudio-community",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check app.js && node self-check.mjs && node runtime-check.mjs && node stability-check.mjs && node asset-library-check.mjs && node glossary-check.mjs",
+    "check": "node --check public-repository.js && node --check app.js && node self-check.mjs && node runtime-check.mjs && node stability-check.mjs && node asset-library-check.mjs && node glossary-check.mjs",
     "check:browser": "node browser-check.mjs"
   },
   "engines": {

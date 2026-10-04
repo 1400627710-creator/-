@@ -58,6 +58,7 @@ try{
     ...(process.env.CARDSTUDIO_BROWSER_ARGS?{args:JSON.parse(process.env.CARDSTUDIO_BROWSER_ARGS)}:{})
   });
   context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true});
+  await context.route('https://cardstudio-community-hub.tells-route3b.chatgpt.site/api/repository/**',r=>r.fulfill({contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify(r.request().url().endsWith('/session')?{authenticated:false,admin:false}:{schema:'cardstudio-public-catalog-v1',revision:'test',terms:[],assets:[],counts:{terms:0,assets:0}})}));
   await context.newPage();
   await test('create-edit-save-reopen-png',async page=>{
     assert.equal(await page.locator('#glossaryModal').isVisible(),false);
@@ -92,17 +93,17 @@ try{
     // Studio export and older glossary.json both contain the same term record.
     await page.locator('#glossaryFile').setInputFiles({name:'glossary.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({version:1,terms:[term]}))});
     await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('共享词条库已同步'));
-    await page.locator('#openGlossary').click();await page.locator('#termList [data-term]').filter({hasText:'守护'}).click();
-    assert.match(await page.locator('#termDetail').innerText(),/明确保护目标/);
-    assert.match(await page.locator('#termDetail').innerText(),/使用示例/);
-    assert.equal(await page.locator('#termDetail img').count(),0);assert.equal(await page.evaluate(()=>window.bad),undefined);
-    await page.locator('#termSearch').fill('保护');assert.equal(await page.locator('#termList [data-term]').count(),1);
-    await page.locator('[data-close="glossaryModal"]').click();await openMenu(page);
+    await page.locator('#openGlossary').click();await page.locator('[data-repo-tab=mine]').click();await page.locator('#repoList [data-repo-item]').filter({hasText:'守护'}).click();
+    assert.match(await page.locator('#repoDetail').innerText(),/明确保护目标/);
+    assert.match(await page.locator('#repoDetail').innerText(),/使用示例/);
+    assert.equal(await page.locator('#repoDetail img').count(),0);assert.equal(await page.evaluate(()=>window.bad),undefined);
+    await page.locator('#repoSearch').fill('保护');assert.equal(await page.locator('#repoList [data-repo-item]').count(),1);
+    await page.locator('#repoClose').click();await openMenu(page);
     const project=JSON.parse(await download(page,'saveProject','with-glossary.cscard'));
     assert.equal(project.sharedGlossary.terms[0].designNotes,term.designNotes);assert.equal(project.glossary.terms.length,0);
-    await page.waitForTimeout(650);await page.reload({waitUntil:'networkidle'});await page.locator('#openGlossary').click();
-    await page.waitForFunction(()=>document.querySelector('#termList').textContent.includes('守护'));
-    assert.equal(await page.locator('#termDetail img').count(),0);
+    await page.waitForTimeout(650);await page.reload({waitUntil:'networkidle'});await page.locator('#openGlossary').click();await page.locator('[data-repo-tab=mine]').click();
+    await page.waitForFunction(()=>document.querySelector('#repoList').textContent.includes('守护'));
+    assert.equal(await page.locator('#repoDetail img').count(),0);
   });
   await test('offline-png',async page=>{
     const png=await download(page,'exportPng','offline.png');

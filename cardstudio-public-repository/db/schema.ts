@@ -1,0 +1,9 @@
+import {sqliteTable,text,integer,uniqueIndex,check} from 'drizzle-orm/sqlite-core';
+import {sql} from 'drizzle-orm';
+export const records=sqliteTable('records',{id:text('id').primaryKey(),kind:text('kind').notNull(),nameKey:text('name_key').notNull(),name:text('name').notNull(),payload:text('payload').notNull(),blobKey:text('blob_key'),hash:text('hash').notNull(),revision:integer('revision').notNull(),author:text('author').notNull(),updatedAt:text('updated_at').notNull()},t=>[uniqueIndex('records_kind_name').on(t.kind,t.nameKey)]);
+export const versions=sqliteTable('versions',{id:text('id').primaryKey(),recordId:text('record_id').notNull(),revision:integer('revision').notNull(),payload:text('payload').notNull(),blobKey:text('blob_key'),hash:text('hash').notNull(),updatedAt:text('updated_at').notNull()});
+export const submissions=sqliteTable('submissions',{id:text('id').primaryKey(),kind:text('kind').notNull(),name:text('name').notNull(),payload:text('payload').notNull(),blobKey:text('blob_key'),hash:text('hash').notNull(),actorId:text('actor_id').notNull(),author:text('author').notNull(),status:text('status').notNull(),createdAt:text('created_at').notNull(),decidedAt:text('decided_at')},t=>[uniqueIndex('submission_dedup').on(t.kind,t.hash,t.actorId)]);
+export const pairing=sqliteTable('pairing',{id:text('id').primaryKey(),challenge:text('challenge').notNull(),state:text('state').notNull(),actorId:text('actor_id').notNull(),expiresAt:integer('expires_at').notNull(),consumed:integer('consumed').notNull()});
+export const sessions=sqliteTable('sessions',{id:text('id').primaryKey(),actorId:text('actor_id').notNull(),expiresAt:integer('expires_at').notNull()});
+export const counters=sqliteTable('counters',{id:text('id').primaryKey(),count:integer('count').notNull()});
+export const mutationGuards=sqliteTable('mutation_guards',{id:text('id').primaryKey(),valid:integer('valid').notNull()},t=>[check('guard_must_pass',sql`${t.valid}=1`)]);

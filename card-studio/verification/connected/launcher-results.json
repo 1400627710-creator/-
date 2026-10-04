@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "checks": [
+    "旧版本端口保留",
+    "新版选择空闲端口",
+    "验证健康接口和准确版本后打开"
+  ],
+  "windowsNativeExecuted": false
+}

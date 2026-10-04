@@ -1,0 +1,33 @@
+{
+  "ok": true,
+  "results": [
+    {
+      "name": "重新部署后词条、素材和版本保留",
+      "ok": true
+    },
+    {
+      "name": "重新部署后 R2 原文件逐字节一致",
+      "ok": true
+    },
+    {
+      "name": "临时服务凭据已撤销",
+      "ok": true
+    },
+    {
+      "name": "私人版连接会话持久化",
+      "ok": true
+    },
+    {
+      "name": "验证资料撤下公共目录",
+      "ok": true
+    },
+    {
+      "name": "验证连接注销且立即失效",
+      "ok": true
+    }
+  ],
+  "finalCounts": {
+    "terms": 0,
+    "assets": 0
+  }
+}

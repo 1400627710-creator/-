@@ -1,0 +1,49 @@
+{
+  "ok": true,
+  "results": [
+    {
+      "name": "线上与交付源码一致：index.html",
+      "ok": true
+    },
+    {
+      "name": "线上与交付源码一致：app.js",
+      "ok": true
+    },
+    {
+      "name": "线上与交付源码一致：public-repository.js",
+      "ok": true
+    },
+    {
+      "name": "线上与交付源码一致：public-repository.css",
+      "ok": true
+    },
+    {
+      "name": "线上与交付源码一致：glossary-format.js",
+      "ok": true
+    },
+    {
+      "name": "最终生产代码拒绝旧测试凭据",
+      "ok": true
+    },
+    {
+      "name": "正式目录未残留验证条目",
+      "ok": true
+    },
+    {
+      "name": "交付包不含运行凭据或依赖缓存：CardStudio-Studio-3.0.0-beta7-Private.zip",
+      "ok": true
+    },
+    {
+      "name": "交付包不含运行凭据或依赖缓存：CardStudio-Community-1.4.0.zip",
+      "ok": true
+    },
+    {
+      "name": "GitHub 公开文件未包含实际管理员身份或凭据",
+      "ok": true
+    }
+  ],
+  "publicCounts": {
+    "terms": 0,
+    "assets": 0
+  }
+}
