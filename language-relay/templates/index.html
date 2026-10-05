@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="htmx-config" content='{"allowEval":false,"allowScriptTags":false,"includeIndicatorStyles":false,"selfRequestsOnly":true,"historyCacheSize":0}'>
+  <title>语言转换指令中继器 · 私人版</title>
+  <link rel="icon" type="image/svg+xml" href="/static/icon.svg">
+  <link rel="stylesheet" href="/static/vendor/tailwind.css">
+  <link rel="stylesheet" href="/static/app.css?v={{ app_version }}">
+  <script defer src="/static/vendor/htmx.min.js"></script>
+  <script defer src="/static/app.js?v={{ app_version }}"></script>
+</head>
+<body data-key-set="{{ 'true' if settings.openai_api_key_set else 'false' }}">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="会话历史">
+      <a class="brand" href="/" aria-label="回到首页"><span class="brand-mark">↗</span><span>指令中继器<small>把想法变成开发指令</small></span></a>
+      <button id="new-session" class="button primary new-session" type="button"><span aria-hidden="true">＋</span> 新建会话</button>
+      <div class="sidebar-label">会话历史 <span id="history-count"></span></div>
+      <nav id="session-list" hx-get="/ui/sessions" hx-trigger="sessionsChanged from:body" hx-swap="innerHTML" aria-label="选择会话">
+        {% include 'session_list.html' %}
+      </nav>
+      <div class="sidebar-bottom">
+        <button class="button settings-button" id="open-settings" type="button"><span aria-hidden="true">⚙</span> 连接与设置<span class="key-dot {{ 'configured' if settings.openai_api_key_set else '' }}" id="key-dot"></span></button>
+        <button class="button theme-button" id="theme-toggle" type="button">切换深色模式</button>
+        <p class="privacy-note"><span class="status-dot ready"></span> 本地存储 · 单用户私人版</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar flex items-center">
+        <button class="icon-button mobile-menu" id="menu-toggle" type="button" aria-label="显示会话历史" aria-expanded="false">☰</button>
+        <div><span class="topbar-kicker">想法 → 规格 → 开发指令</span><h1 id="session-title">新想法</h1></div>
+        <div class="session-actions"><button class="button subtle" id="rename-session" type="button" disabled>重命名</button><button class="button subtle danger" id="delete-session" type="button" disabled>删除会话</button></div>
+      </header>
+      <section class="connection-banner" id="connection-banner" {% if (settings.provider == "api" and settings.openai_api_key_set) or (settings.provider == "chatgpt" and chatgpt.connected) %}hidden{% endif %}>
+        <div><strong>先连接 OpenAI，就可以开始。</strong><span>可使用 ChatGPT 官方登录或导入 API Key。输入的想法只发送给 OpenAI。</span></div>
+        <button class="button" id="banner-settings" type="button">选择连接方式 <span aria-hidden="true">↗</span></button>
+      </section>
+
+      <div class="workspace">
+        <section class="idea-panel" aria-labelledby="idea-heading">
+          <div class="panel-heading"><span class="step-label">01 / 描述想法</span><span class="model-badge" id="model-badge">{{ settings.chatgpt_model if settings.provider == "chatgpt" else settings.model }}</span></div>
+          <p id="plan-usage" class="dialog-description" hidden>正在使用 ChatGPT 计划 · <a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener noreferrer">管理额度</a></p>
+          <h2 id="idea-heading">不必先想清楚，<br>从你想做的事开始。</h2>
+          <p class="intro">写下目标、困扰或一个模糊的念头。缺少信息时，我会先问最多 5 个问题；你也可以直接用默认假设生成。</p>
+          <div class="idea-examples" id="idea-examples" aria-label="想法示例">
+            <button type="button" class="example-chip" data-example="我想做卡牌游戏">我想做卡牌游戏 ↗</button>
+            <button type="button" class="example-chip" data-example="我想做一个私人记账工具，要简单、快">做一个私人记账工具 ↗</button>
+          </div>
+          <form id="message-form">
+            <label for="idea-input" class="input-label">你的想法或补充回答</label>
+            <textarea id="idea-input" name="content" rows="7" maxlength="20000" placeholder="例如：我想做卡牌游戏，但还没想好怎么玩……" required disabled></textarea>
+            <div class="input-meta"><span>Ctrl / ⌘ + Enter 发送</span><span id="character-count">0 / 20000</span></div>
+            <p class="draft-status" id="draft-status" role="status">发送后自动保存到会话历史。</p>
+            <button class="button primary send-button" id="send-message" type="submit" disabled>发送并整理 <span aria-hidden="true">↗</span></button>
+          </form>
+          <div class="default-choice"><p>想先拿到一份完整方案？</p><button class="button" id="generate-defaults" type="button" disabled>使用默认假设，我需要结果</button><small>未确认的范围、技术和数值都会标记“假设”。</small><small id="mode-status" role="status">当前先确认信息；缺少关键信息时只问最多 5 个问题。</small></div>
+          <div class="request-status" id="request-status" role="status" aria-live="polite" hidden><span class="spinner" aria-hidden="true"></span><span id="request-status-text">正在整理…</span></div>
+          <div class="error-box" id="error-box" role="alert" hidden><p id="error-text"></p><button class="button" id="retry-request" type="button" hidden>重试上次请求</button><button class="button" id="error-settings" type="button" hidden>打开设置</button></div>
+          <section class="conversation" id="conversation" aria-label="输入与生成历史" hidden><div class="sidebar-label">本次会话</div><div id="message-history"></div></section>
+        </section>
+
+        <section class="output-panel" aria-labelledby="output-heading">
+          <div class="output-toolbar"><div><span class="step-label">02 / 获得指令</span><h2 id="output-heading">开发指令</h2></div><span class="output-state" id="output-state">等待想法</span></div>
+          <div class="output-actions"><button class="button" id="copy-markdown" type="button" disabled>复制 Markdown</button><button class="button" id="copy-instructions" type="button" disabled>复制第 6 节</button><button class="button" id="export-markdown" type="button" disabled>导出 .md</button></div>
+          <div class="output-empty" id="output-empty"><span class="empty-icon" aria-hidden="true">↗</span><h3>让编程 AI 明白你要什么</h3><p>这里会出现可直接复制的开发指令。<br>信息不足时，先给你一组简短的问题。</p><ol class="section-preview"><li><span>01</span> 我理解的想法</li><li><span>02</span> 动机分析</li><li><span>03</span> 需要确认的问题</li><li><span>04</span> 需求规格</li><li><span>05</span> 技术方案</li><li><span>06</span> 给编程 AI 的指令</li><li><span>07</span> 自检</li></ol></div>
+          <pre class="markdown-output" id="markdown-output" tabindex="0" aria-label="原始 Markdown 输出" hidden></pre>
+          <footer class="output-footer"><span>固定 7 节 · 假设逐项标记</span><span>需求 → 模块 → 接口 → 任务 → 验收</span></footer>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="settings-dialog" class="settings-dialog" aria-labelledby="settings-heading">
+    <form id="settings-form"><div class="dialog-heading"><div><span class="step-label">本地配置</span><h2 id="settings-heading">连接与设置</h2></div><button class="icon-button" id="close-settings" type="button" aria-label="关闭设置">×</button></div>
+      <p class="dialog-description">应用在本机直接打开。调用模型可选择 API 密钥或 ChatGPT 官方登录，凭据只在本机保存。</p>
+      <label for="provider-input">模型连接方式</label><select id="provider-input"><option value="api">OpenAI API（使用密钥）</option><option value="chatgpt">使用 ChatGPT 登录（免 API Key）</option></select>
+      <section id="api-fields">
+      <label for="api-key">OpenAI API Key <span class="field-status" id="key-status"></span></label>
+      <input id="api-key" name="api-key" type="password" autocomplete="new-password" spellcheck="false" maxlength="512" placeholder="sk-…（留空保留现有密钥）">
+      <label class="checkbox-label"><input type="checkbox" id="clear-api-key"> 清除已保存的 API Key</label>
+      <div class="connection-actions"><button class="button" id="import-key-text" type="button">导入并检测</button><button class="button" id="import-key-file" type="button">选择密钥文件并检测</button></div>
+      <input id="key-file" type="file" accept=".txt,.env,.json" hidden>
+      <small>可粘贴完整密钥，或选择密钥 .txt、.env、JSON 文件。导入后自动检查；检测会发送一条简短测试，按 API 规则计费。</small>
+      <label for="model-input">模型</label><input id="model-input" name="model" type="text" required maxlength="100" value="{{ settings.model }}" spellcheck="false">
+      <small>默认 gpt-4o-mini；需要支持结构化输出的 Chat Completions 模型。</small>
+      <label for="temperature-input">温度 <output id="temperature-value">{{ settings.temperature }}</output></label><input id="temperature-input" name="temperature" type="range" min="0" max="2" step="any" value="{{ settings.temperature }}">
+      <small>较低温度适合稳定、明确的开发指令。</small>
+      </section>
+      <section id="chatgpt-fields" hidden>
+        <p id="chatgpt-account" class="dialog-description">尚未使用 ChatGPT 登录。</p>
+        <div class="connection-actions"><button class="button primary" id="chatgpt-login" type="button">使用 ChatGPT 继续</button><button class="button" id="chatgpt-logout" type="button" hidden>断开账户</button></div>
+        <div class="connection-actions"><button class="button" id="check-chatgpt-login" type="button">检查登录状态</button><button class="button" id="cancel-chatgpt-login" type="button" hidden>取消本次登录</button></div>
+        <small>在 OpenAI 官方页面登录并允许本应用使用计划，随后返回中继器。账号登录成功与模型调用授权分别检查；刷新页面会继续接收结果。</small>
+        <label for="chatgpt-model">ChatGPT 可用模型</label><select id="chatgpt-model"><option value="">登录后选择模型</option></select>
+        <button class="button" id="refresh-chatgpt-models" type="button">刷新可用模型</button>
+        <small>由官方返回账户的模型列表；此连接方式不使用 API 温度设置。</small>
+      </section>
+      <p id="connection-result" class="dialog-description" role="status" hidden></p>
+      <section class="diagnostic-section" aria-labelledby="diagnostic-heading">
+        <h3 id="diagnostic-heading">连接遇到问题？</h3>
+        <p class="dialog-description">自检会记录失败阶段和安全错误码，报告只保存在本机。不发送想法，不调用模型。</p>
+        <label class="checkbox-label"><input id="diagnostic-network" type="checkbox" checked> 同时检查官方授权网络（不消耗模型额度）</label>
+        <div class="connection-actions"><button class="button" id="run-diagnostics" type="button">一键自检并导出</button><button class="button" id="copy-diagnostics" type="button" disabled>复制诊断报告</button></div>
+        <p id="diagnostic-summary" class="dialog-description" role="status" hidden></p>
+        <details id="diagnostic-details" hidden><summary>查看安全诊断信息</summary><pre id="diagnostic-output" class="diagnostic-output" tabindex="0"></pre><a href="/api/diagnostics/export" download="relay-diagnostics.json">再次导出本机报告</a></details>
+        <small>反馈时发送导出的 JSON 文件即可；无需发送密钥、授权文件或完整回调网址。网页打不开时，可双击项目中的 diagnose.bat。</small>
+      </section>
+      <p class="form-error" id="settings-error" role="alert" hidden></p>
+      <div class="dialog-actions"><button class="button" id="cancel-settings" type="button">取消</button><button class="button" id="test-connection" type="button">保存并检测连接</button><button class="button primary" id="save-settings" type="submit">保存设置</button></div>
+    </form>
+  </dialog>
+  <dialog id="plan-welcome" class="action-dialog"><h2>正在使用你的 ChatGPT 计划</h2><p>符合条件的模型请求会使用你的 ChatGPT 计划额度。你可以在 ChatGPT 设置中管理本应用的授权与额度。</p><button class="button primary" id="plan-understood" type="button">知道了</button></dialog>
+  <dialog id="action-dialog" class="action-dialog" aria-labelledby="action-heading"><form id="action-form"><h2 id="action-heading"></h2><p id="action-description"></p><label id="rename-label" for="rename-input">会话名称</label><input id="rename-input" maxlength="80"><p class="form-error" id="action-error" role="alert" hidden></p><div class="dialog-actions"><button type="button" class="button" id="cancel-action">取消</button><button type="submit" class="button primary" id="confirm-action">确认</button></div></form></dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

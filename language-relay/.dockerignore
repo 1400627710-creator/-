@@ -1,0 +1,12 @@
+.venv
+.venv-backup-*
+.env
+.data
+.git
+__pycache__
+.pytest_cache
+.ruff_cache
+test-results
+diagnostics
+quality-reports
+*.zip
