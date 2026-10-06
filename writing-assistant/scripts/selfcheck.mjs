@@ -1,5 +1,6 @@
 // Exercises the real local MCP service with synthetic data in an isolated folder.
 import fs from 'node:fs';
+import {rm} from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import {randomUUID} from 'node:crypto';
@@ -25,7 +26,7 @@ export async function runSelfCheck({root=source,output}={}){
   await step('隔离测试工程的写入与重启恢复',async()=>{const data=await call('createProject',{name:'启动自检（合成测试）',requestId:randomUUID()});id=data.uiResult.id;await call('createChapter',{projectId:id,name:'测试章节',text:'这是启动自检用的合成测试正文。',requestId:randomUUID()});await client.close();client=undefined;await connect();const status=await client.callTool({name:'writer_status',arguments:{}});if(status.structuredContent.usesApiKey!==false||!status.structuredContent.projects.some(p=>p.id===id&&p.chapters===2))throw Object.assign(Error(),{code:'PERSISTENCE_FAILED'});});
   report.ok=true;
  }catch(e){if(!report.checks.some(c=>!c.ok))report.checks.push({name:'加载或连接运行依赖',ok:false,code:e.code||'DEPENDENCIES_OR_CONNECTION_FAILED'});}
- finally{if(client)try{await client.close();}catch{}if(temp)fs.rmSync(temp,{recursive:true,force:true,maxRetries:5,retryDelay:100});}
+ finally{if(client)try{await client.close();}catch{}if(temp)await rm(temp,{recursive:true,force:true,maxRetries:5,retryDelay:100});}
  if(output){fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n','utf8');}
  return report;
 }
