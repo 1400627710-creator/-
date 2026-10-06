@@ -1,4 +1,6 @@
-# 实际验证范围 · 0.1.0
+# 实际验证范围 · 0.1.1
+
+0.1.1 增加了可保留结果的 Windows 启动与安装入口、完整依赖载入检查、自动修复以及 `DIAGNOSE.cmd`。当前工作区的 18 项存储检查、4 项启动及安装检查、类型检查与构建均通过；启动自检实际运行 STDIO MCP、HTTP 页面和隔离工程重启恢复。原生 Windows 的 `.cmd`、PowerShell 5.1、中文空格路径、无系统 Node 路径和安装后 Node 路径由 [Windows 工作流](https://github.com/1400627710-creator/-/actions/workflows/author-writing-windows.yml) 验证，完整包只有在这些检查通过后发布。这里不把 Linux 检查当作 Windows 检查。
 
 验证日期：2026-10-07（作者时区 Asia/Shanghai）。测试使用合成短篇，不是作者小说，未声称完成作者文风评审。
 

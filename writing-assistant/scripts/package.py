@@ -4,9 +4,9 @@ import json, hashlib, zipfile, argparse
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-TOP=['package.json','package-lock.json','tsconfig.json','plugin.json','mcp.json','.gitignore','README.md','THIRD-PARTY-NOTICES.md','START.cmd','INSTALL-GPT.cmd','START.command','INSTALL-GPT.command']
+TOP=['package.json','package-lock.json','tsconfig.json','plugin.json','mcp.json','.gitignore','.gitattributes','README.md','THIRD-PARTY-NOTICES.md','START.cmd','INSTALL-GPT.cmd','DIAGNOSE.cmd','START.command','INSTALL-GPT.command']
 FOLDERS=['server','web/src','scripts','skills','docs','tests/fixtures']
-TESTS=['tests/store.test.ts','tests/setup.test.mjs','tests/browser-flow.mjs','tests/app-bridge.mjs','tests/live-session.mjs']
+TESTS=['tests/store.test.ts','tests/setup.test.mjs','tests/launcher.test.mjs','tests/windows-launch.test.mjs','tests/browser-flow.mjs','tests/app-bridge.mjs','tests/live-session.mjs']
 
 def files():
     result=[ROOT/p for p in TOP+TESTS]
@@ -26,7 +26,8 @@ def main():
         for f in files():
             body=f.read_bytes();rel=f.relative_to(ROOT).as_posix();info=zipfile.ZipInfo('author-writing/'+rel,(2026,10,7,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=(0o100755 if rel.endswith('.command') else 0o100644)<<16;z.writestr(info,body)
             listing.append({'path':'writing-assistant/'+rel,'local':str(f),'sha256':hashlib.sha256(body).hexdigest(),'bytes':len(body)})
-    metadata={'version':'0.1.0','files':listing,'archive':{'path':'writing-assistant/releases/author-writing-0.1.0.zip','local':str(output),'bytes':output.stat().st_size,'sha256':hashlib.sha256(output.read_bytes()).hexdigest()},'privateRuntimeIncluded':False}
+    version=json.loads((ROOT/'package.json').read_text())['version']
+    metadata={'version':version,'files':listing,'archive':{'path':f'writing-assistant/releases/author-writing-{version}.zip','local':str(output),'bytes':output.stat().st_size,'sha256':hashlib.sha256(output.read_bytes()).hexdigest()},'privateRuntimeIncluded':False}
     Path(a.manifest).write_text(json.dumps(metadata,ensure_ascii=False,indent=2)+'\n')
     print(json.dumps({'ok':True,'files':len(listing),'archiveBytes':metadata['archive']['bytes'],'archiveSha256':metadata['archive']['sha256'],'privateRuntimeIncluded':False}))
 if __name__=='__main__':main()

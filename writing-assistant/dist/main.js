@@ -644,7 +644,7 @@ import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from "@model
 import { z as z2 } from "zod";
 var UI_URI = "ui://author-writing/editor.html";
 function createMcp(service, htmlPath) {
-  const server = new McpServer({ name: "author-writing", version: "0.1.0" }, { instructions: "\u4F5C\u8005\u4E3B\u5BFC\u5C0F\u8BF4\u52A9\u624B\u3002\u6253\u5F00 writer_open\uFF1B\u53EA\u5904\u7406\u4F5C\u8005\u5DF2\u63D0\u4EA4\u7684\u8BF7\u6C42\u3002\u5148 writer_context\uFF0C\u6309\u5176\u4E2D\u89C4\u5219\u9605\u8BFB\u6765\u6E90\uFF0C\u6700\u540E writer_complete\u3002\u4E0D\u53EF\u66FF\u4F5C\u8005\u91C7\u7EB3\u3001\u786E\u8BA4\u8BB0\u5FC6\u6216\u5199\u6B63\u5F0F\u6B63\u6587\u3002" + WRITING_RULES.join("\n") });
+  const server = new McpServer({ name: "author-writing", version: "0.1.1" }, { instructions: "\u4F5C\u8005\u4E3B\u5BFC\u5C0F\u8BF4\u52A9\u624B\u3002\u6253\u5F00 writer_open\uFF1B\u53EA\u5904\u7406\u4F5C\u8005\u5DF2\u63D0\u4EA4\u7684\u8BF7\u6C42\u3002\u5148 writer_context\uFF0C\u6309\u5176\u4E2D\u89C4\u5219\u9605\u8BFB\u6765\u6E90\uFF0C\u6700\u540E writer_complete\u3002\u4E0D\u53EF\u66FF\u4F5C\u8005\u91C7\u7EB3\u3001\u786E\u8BA4\u8BB0\u5FC6\u6216\u5199\u6B63\u5F0F\u6B63\u6587\u3002" + WRITING_RULES.join("\n") });
   const model = (fn) => async () => {
     service.seenModel();
     try {

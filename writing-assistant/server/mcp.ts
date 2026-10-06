@@ -7,7 +7,7 @@ import { WRITING_RULES } from './store.js';
 
 export const UI_URI='ui://author-writing/editor.html';
 export function createMcp(service:Service,htmlPath:string) {
-  const server=new McpServer({name:'author-writing',version:'0.1.0'},{instructions:'作者主导小说助手。打开 writer_open；只处理作者已提交的请求。先 writer_context，按其中规则阅读来源，最后 writer_complete。不可替作者采纳、确认记忆或写正式正文。'+WRITING_RULES.join('\n')});
+  const server=new McpServer({name:'author-writing',version:'0.1.1'},{instructions:'作者主导小说助手。打开 writer_open；只处理作者已提交的请求。先 writer_context，按其中规则阅读来源，最后 writer_complete。不可替作者采纳、确认记忆或写正式正文。'+WRITING_RULES.join('\n')});
   const model=(fn:()=>unknown)=>async()=>{
     service.seenModel();
     try{const data=await fn();return{content:[{type:'text' as const,text:JSON.stringify(data)}],structuredContent:data as Record<string,unknown>};}

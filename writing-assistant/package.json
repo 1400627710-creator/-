@@ -1,6 +1,6 @@
 {
   "name": "author-writing",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "engines": {
@@ -9,10 +9,11 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/*.test.ts",
-    "start": "node dist/main.js --local",
+    "test": "node --import tsx --test tests/store.test.ts",
+    "start": "node scripts/launcher.mjs",
     "mcp": "node dist/main.js --stdio",
-    "setup": "node scripts/setup.mjs"
+    "setup": "node scripts/launcher.mjs --install",
+    "selfcheck": "node scripts/launcher.mjs --check"
   },
   "dependencies": {
     "@modelcontextprotocol/ext-apps": "1.1.2",

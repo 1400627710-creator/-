@@ -2,11 +2,15 @@
 
 原稿由作者写，GPT 帮你理解、推敲和衔接。三栏窗口包含小说与章节仓库、正文编辑区、交流及出处记忆。无需新账号或模型 API Key，使用你现有 ChatGPT 登录。
 
-**当前版本 0.1.0 已实现本机写作闭环，桌面 ChatGPT 的实际安装和主动建议尚需在你的电脑验证。** 浏览器操作、真实 STDIO MCP 协议、当前 ChatGPT 模型的润色与冲突澄清已经分别测试；模拟宿主测试不能替代真实桌面安装。
+**当前版本 0.1.1 已实现本机写作闭环，桌面 ChatGPT 的实际安装和主动建议尚需在你的电脑验证。** 浏览器操作、真实 STDIO MCP 协议、当前 ChatGPT 模型的润色与冲突澄清已经分别测试；模拟宿主测试不能替代真实桌面安装。
 
 ## 下载与打开
 
-下载仓库中的 `releases/author-writing-0.1.0.zip`，先完整解压。Windows 双击 `START.cmd`；首次会安装依赖，缺少 Node.js 时通过系统 winget 安装 LTS。Node.js 安装完成后再次打开。macOS/Linux 使用 Node.js 22 或更高版本，可运行 `START.command`。这些依赖不需要新账号。
+Windows x64 优先下载 [完整包发布页面](https://github.com/1400627710-creator/-/releases/tag/author-writing-v0.1.1) 的 `author-writing-0.1.1-windows-x64.zip`，完整解压后双击 `START.cmd`。完整包包含 Node 和运行依赖，正常启动无需另行安装或联网下载。发布只在原生 Windows 的启动、诊断和安装测试全部通过后执行。
+
+通用源码包在 `releases/author-writing-0.1.1.zip`，它不包含 Node 和依赖。Windows 启动器会检查 Node 版本，缺少合适版本时通过系统 winget 安装 LTS，并继续启动；依赖缺失时会自动修复。macOS/Linux 使用 Node.js 22 或更高版本，可运行 `START.command`。这些依赖不需要新账号。
+
+启动和安装入口在退出前保留结果，日志保存于 `%LOCALAPPDATA%\AuthorWriting\logs`。双击 `DIAGNOSE.cmd` 可运行真实服务、页面、存稿重启自检，输出 JSON 报告；测试数据与作者稿件隔离。遇到报错请提供错误码或该报告，不需要密码。详见 [启动与安装诊断](docs/startup.md)。
 
 如果直接下载源码，启动文件也会完成构建。网络失败时保留报错文本；不要发送登录凭据。源码开发命令：`npm ci`、`npm run typecheck`、`npm test`、`npm run build`、`npm start`。
 
@@ -20,7 +24,7 @@
 4. 新聊天启用此插件，说“打开小说码字窗口”。窗口中发送问题会通过宿主消息能力让当前 GPT 处理，并把回答写回。
 5. 若目录或 UI 能力不可用，使用安装脚本生成的 `桌面MCP备用配置.json`，在桌面设置 → MCP servers → Add → STDIO 填入 command、args、cwd，保存并重启。不要同时启用重复的 MCP 服务。
 
-安装脚本准备本机插件和个人目录，保留已有目录及备份。它不代表你的 ChatGPT 账户已经安装成功。网页 ChatGPT 不读取电脑的本地 STDIO 配置；桌面端的 MCP Apps UI 和 `ui/message` 支持仍须实际检查。参考：[本地 MCP](https://learn.chatgpt.com/docs/extend/mcp)、[官方插件结构及个人目录](https://developers.openai.com/plugins/build/plugins)。
+安装脚本先运行本机服务自检，再准备插件和个人目录，保留已有目录及备份。完整包会把 Node 一起复制到插件安装目录，因此安装后的连接不依赖下载文件夹中的 Node。它不代表你的 ChatGPT 账户已经安装成功。网页 ChatGPT 不读取电脑的本地 STDIO 配置；桌面端的 MCP Apps UI 和 `ui/message` 支持仍须实际检查。参考：[本地 MCP](https://learn.chatgpt.com/docs/extend/mcp)、[官方插件结构及个人目录](https://developers.openai.com/plugins/build/plugins)。
 
 ### 当前网页 GPT 文件接力
 
