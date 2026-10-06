@@ -22,6 +22,7 @@ from app.config import Config, valid_api_key_format
 from app.errors import RelayError
 from app.prompts.relay_prompt import SYSTEM_PROMPT, control_prompt
 from app.schemas import LLMReply, SettingsOut
+from diagnose import http_evidence
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ def plan_error(code):
         ),
         "subscription_sharing_route_not_supported": (
             "chatgpt_route_unsupported",
-            "此 ChatGPT 授权目前不允许本应用使用这个接口，请重新授权或选择 API Key 连接。",
+            "官方暂不允许此调用接口，请导出自检报告核对接口配置，或明确选择 API Key 连接。",
             403,
         ),
         "subscription_sharing_invalid_user": (
@@ -88,7 +89,9 @@ def plan_error(code):
     }
     if code in errors:
         name, message, status = errors[code]
-        return RelayError(name, message, status)
+        result = RelayError(name, message, status)
+        result.provider_evidence = {"provider_code": code}
+        return result
     return RelayError(
         "chatgpt_temporarily_unavailable", "ChatGPT 计划服务暂时不可用，请稍后重试。", 503, retryable=True
     )
@@ -99,18 +102,26 @@ def terminal_provider_error(error, provider="api"):
     inner = body.get("error", body)
     code = str(inner.get("code") or "") if isinstance(inner, dict) else ""
     if provider == "chatgpt":
+        evidence = http_evidence(error.status_code, error.response.headers, error.response.content)
         if code.startswith(("subscription_sharing_", "chatpass_v2_")):
             result = plan_error(code)
             if not result.retryable:
+                result.provider_evidence = evidence
                 return result
             if error.status_code >= 500:
                 return None
         if error.status_code == 401:
-            return RelayError("chatgpt_login_expired", "ChatGPT 授权未被接受，请重新登录。", 401)
+            result = RelayError("chatgpt_login_expired", "ChatGPT 授权未被接受，请重新登录。", 401)
+            result.provider_evidence = evidence
+            return result
+        if code == "insufficient_scope":
+            result = RelayError("chatgpt_scope_rejected", "模型调用缺少官方许可。请点击“授权模型调用”或导出自检报告核对权限。", 403)
+            result.provider_evidence = evidence
+            return result
         if error.status_code == 403:
-            return RelayError(
-                "chatgpt_not_eligible", "账户、工作区或地区目前不允许使用此 ChatGPT 接口。", 403
-            )
+            result = RelayError("chatgpt_auth_forbidden", "模型调用被拒绝（HTTP 403），现有错误码尚未说明具体的账户、地区或工作区原因。请一键自检并导出报告。", 403)
+            result.provider_evidence = evidence
+            return result
     if code in {"insufficient_quota", "billing_hard_limit_reached", "billing_not_active"}:
         return RelayError(
             "api_quota_exhausted",
@@ -295,6 +306,7 @@ class LLMClient:
         format_retry = False
         format_issues: tuple[str, ...] = ()
         attempts = 0
+        failure_evidence = {}
         # Give the first attempt more time, retaining time for BOTH retries.
         weights = (3, 1, 1)
         delay_base = min(0.15, self.config.llm_budget_seconds / 20)
@@ -336,6 +348,8 @@ class LLMClient:
             except APIConnectionError:
                 failure_code = "gpt_connection_error"
             except APIStatusError as error:
+                if settings.provider == "chatgpt":
+                    failure_evidence = http_evidence(error.status_code, error.response.headers, error.response.content)
                 terminal = terminal_provider_error(error, settings.provider)
                 if terminal:
                     terminal.attempts = attempts
@@ -372,10 +386,12 @@ class LLMClient:
             "gpt_failed": "GPT 暂时不可用。原输入已保存，请稍后点击重试。",
         }
         note = " 已自动重试 2 次。" if attempts == 3 else ""
-        raise RelayError(
+        result = RelayError(
             failure_code,
             explanations[failure_code] + note,
             504 if failure_code == "gpt_timeout" else 502,
             retryable=True,
             attempts=attempts,
         )
+        result.provider_evidence = failure_evidence
+        raise result

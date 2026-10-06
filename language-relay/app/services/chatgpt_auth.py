@@ -16,7 +16,7 @@ import httpx2
 import jwt
 
 from app.errors import RelayError
-from diagnose import STAGES, LoginTrace, http_evidence, network_error
+from diagnose import LOCAL_CODES, STAGES, LoginTrace, http_evidence, network_error, read_json, safe_number
 
 ISSUER = "https://auth.openai.com"
 AUTHORIZE = ISSUER + "/api/accounts/authorize"
@@ -55,6 +55,7 @@ class ChatGPTAuth:
         self.stage = "idle"
         self.trace = LoginTrace(config.data_dir / "chatgpt-login-trace.json")
         self.result_path = config.data_dir / "chatgpt-login-result.json"
+        self.connection_path = config.data_dir / "chatgpt-connection-result.json"
         try:
             result = json.loads(self.result_path.read_text(encoding="utf-8"))
             self.last_result = {key: result[key] for key in ("ok", "code", "message")}
@@ -90,24 +91,60 @@ class ChatGPTAuth:
         except (OSError, ValueError):
             raise RelayError("chatgpt_auth_unreadable", "ChatGPT 本机授权文件无法读取，请重新登录。", 500) from None
 
-    def status(self):
+    def connection_result(self, data, model=None):
+        value = read_json(self.connection_path)
+        if not isinstance(value, dict) or not data.get("id_token"):
+            return None
+        fingerprint = hashlib.sha256(data["id_token"].encode()).hexdigest()
+        if value.get("identity_fingerprint") != fingerprint or (model is not None and value.get("model") != model):
+            return None
+        if type(value.get("ok")) is not bool or value.get("code") not in LOCAL_CODES or not isinstance(value.get("message"), str):
+            return None
+        if not isinstance(value.get("model"), str) or not re.fullmatch(r"[A-Za-z0-9._-]{1,100}", value["model"]):
+            return None
+        checked = safe_number(value.get("checked_at"), 0, 4102444800)
+        if checked is None:
+            return None
+        return {key: value[key] for key in ("ok", "code", "message", "model", "checked_at")}
+
+    def record_connection(self, ok, model, error=None):
+        """Retain the last call outcome separately from verified sign-in identity."""
+        evidence = getattr(error, "provider_evidence", {}) if error else {}
+        self.trace.record("model_inference", "ok" if ok else "error", code="chatgpt_connection_verified" if ok else error.code, **evidence)
+        try:
+            data = self.read()
+            if not data.get("id_token") or not data.get("subject") or not model:
+                return
+            value = {"ok": bool(ok), "code": "chatgpt_connection_verified" if ok else error.code,
+                     "message": "模型连接检测通过，可以发送想法。" if ok else error.message,
+                     "model": model, "checked_at": time.time(),
+                     "identity_fingerprint": hashlib.sha256(data["id_token"].encode()).hexdigest()}
+            write_private_json(self.connection_path, value)
+        except RelayError:
+            self.trace.record("save_credentials", "error", code="auth_write_failed")
+
+    def status(self, model=None):
         try:
             data = self.read()
             signed_in = bool(data.get("id_token") and data.get("subject") and data.get("access_token"))
             plan_enabled = bool(data.get("access_token") and "chatgpt.tokens.use.direct" in data.get("scopes", []))
             expires = float(data.get("expires_at", 0))
             connected = plan_enabled and (expires > time.time() or bool(data.get("refresh_token")))
-            completing = self.stage in {"token_exchange", "verify_identity", "loading_models"}
+            completing = self.stage in {"callback", "client_registration", "token_exchange", "verify_identity", "save_credentials", "scope_check", "loading_models"}
             pending = self.pending_active() or completing
             result = self.last_result
+            connection = self.connection_result(data, model)
             if pending:
                 phase = self.stage
                 messages = {"waiting_callback": "正在等待官方授权返回。请在官方页面完成登录与授权，随后返回中继器。", "token_exchange": "已收到官方回调，正在完成本机授权。", "verify_identity": "已收到授权，正在验证账户身份。", "loading_models": "已完成授权，正在加载账户可用模型。"}
                 message = messages.get(phase, "正在完成登录，请稍候。")
             elif signed_in and not plan_enabled:
-                phase, message = "plan_required", "账号已登录，但尚未授权本应用调用模型。请重新登录并允许使用 ChatGPT 计划。"
+                phase, message = "plan_required", "账号已登录，但尚未授权本应用调用模型。请点击“授权模型调用”并允许使用 ChatGPT 计划。"
             elif connected:
-                phase, message = "connected", "已登录并授权，可以选择账户可用模型。"
+                if connection:
+                    phase, message = "connection_verified" if connection["ok"] else "connection_failed", connection["message"]
+                else:
+                    phase, message = "connected", "账号已登录且计划已授权；请选择模型，再点击“保存并检测连接”。"
             elif plan_enabled:
                 phase, message = "expired", "ChatGPT 授权已过期，请重新登录。"
             elif result and result["code"] == "chatgpt_login_pending":
@@ -118,18 +155,20 @@ class ChatGPTAuth:
                 phase, message = "failed", result["message"]
             else:
                 phase, message = "signed_out", "尚未使用 ChatGPT 登录。"
-            return {"connected": connected, "signed_in": signed_in, "plan_enabled": plan_enabled, "pending": pending, "phase": phase, "message": message, "account": data.get("account", "") if signed_in or connected else "", "models": data.get("models", []) if connected else [], "result": result}
+            return {"connected": connected, "signed_in": signed_in, "plan_enabled": plan_enabled, "pending": pending, "phase": phase, "message": message, "account": data.get("account", "") if signed_in or connected else "", "models": data.get("models", []) if connected else [], "result": result, "connection_check": connection if signed_in else None}
         except RelayError as error:
             return {"connected": False, "signed_in": False, "plan_enabled": False, "pending": False, "phase": "failed", "message": error.message, "account": "", "models": [], "result": {"ok": False, "code": error.code, "message": error.message}}
         except (ValueError, TypeError):
             return {"connected": False, "signed_in": False, "plan_enabled": False, "pending": False, "phase": "failed", "message": "本机授权记录格式不正确，请重新登录。", "account": "", "models": [], "result": None}
 
-    def start(self, origin: str):
+    def start(self, origin: str, *, authorize_plan=False):
         parsed = urlsplit(origin)
         if parsed.scheme != "http" or parsed.hostname not in {"127.0.0.1", "localhost"}:
             raise RelayError("login_local_only", "请通过本机 http://127.0.0.1 地址登录 ChatGPT。", 400)
         callback = f"http://127.0.0.1:{parsed.port or 80}/auth/callback"
         if self.pending_active() and self.pending["callback"] == callback:
+            if authorize_plan and not self.pending.get("authorize_plan"):
+                raise RelayError("chatgpt_login_in_progress", "请先完成或取消本次登录，再点击授权模型调用。", 409)
             return {"authorization_url": self.pending["authorization_url"], "reused": True}
         try:
             data = self.read()
@@ -146,11 +185,14 @@ class ChatGPTAuth:
                 raise
         state, nonce, verifier = (secrets.token_urlsafe(32) for _ in range(3))
         client_id = data.get("client_id") or "dynamic_agent_client"
-        self.pending = {"state": state, "nonce": nonce, "verifier": verifier, "callback": callback, "client_id": client_id, "subject": data.get("subject"), "expires": time.monotonic() + 600, "host_id": data["host_id"]}
+        self.pending = {"state": state, "nonce": nonce, "verifier": verifier, "callback": callback, "client_id": client_id, "subject": data.get("subject"), "expires": time.monotonic() + 600, "host_id": data["host_id"], "authorize_plan": bool(authorize_plan)}
         self.stage = "waiting_callback"
         params = {"client_id": client_id, "ext_agent_host_id": data["host_id"], "response_type": "code", "redirect_uri": callback, "scope": SCOPES, "resource": RESOURCE, "state": state, "nonce": nonce, "code_challenge_method": "S256", "code_challenge": base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()}
         if client_id == "dynamic_agent_client":
             params["agent_name_hint"] = "语言转换指令中继器"
+        if authorize_plan:
+            # Explicit user action only. Ordinary sign-in never forces consent.
+            params["prompt"] = "consent"
         # No ID token is placed in a browser URL; account selection stays official.
         url = AUTHORIZE + "?" + urlencode(params)
         self.pending["authorization_url"] = url
@@ -253,9 +295,11 @@ class ChatGPTAuth:
             state = params.get("state", "")
             if not isinstance(state, str) or not state.isascii() or not pending or time.monotonic() > pending["expires"] or not secrets.compare_digest(state, pending["state"]):
                 raise RelayError("chatgpt_state_invalid", "登录请求已过期或不匹配，请回到中继器重新登录。", 400)
+            # Publish the processing phase before consuming state or doing disk I/O.
+            # Threaded status checks must not mistake this window for a restart.
+            self.stage = "callback"
             self.pending = None  # Valid state is one-time, including declined consent.
             self.trace.record("callback", "ok", state_valid=True, authorization_code_present=bool(params.get("code")), client_id_present=bool(params.get("client_id")))
-            self.stage = "callback"
             try:
                 return await self._finish_valid(params, pending)
             except asyncio.CancelledError:
@@ -305,7 +349,7 @@ class ChatGPTAuth:
         self.stage = "scope_check"
         if "chatgpt.tokens.use.direct" not in fields["scopes"]:
             self.trace.record("scope_check", "error", code="chatgpt_plan_not_enabled", plan_scope_present=False)
-            raise RelayError("chatgpt_plan_not_enabled", "已登录，但没有授权使用 ChatGPT 计划。请再次登录并允许计划使用。", 403)
+            raise RelayError("chatgpt_plan_not_enabled", "已登录，但没有授权使用 ChatGPT 计划。请点击“授权模型调用”，在官方页面允许计划使用。", 403)
         self.trace.record("scope_check", "ok", plan_scope_present=True)
         self.stage = "loading_models"
         catalog_error = None

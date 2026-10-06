@@ -1,4 +1,5 @@
 import asyncio
+import re
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -6,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.routes import DB, mutation, router
@@ -19,8 +21,9 @@ from app.services.diagnostics_service import DiagnosticsService
 from app.services.llm_client import LLMClient
 from app.services.relay_service import RelayService
 from app.services.settings_service import SettingsService
+from diagnose import record_operation
 
-APP_VERSION = "1.2.0"
+APP_VERSION = "1.2.1"
 
 
 def create_app(config: Config | None = None, *, transport=None, auth_http_factory=None, connection_transport=None) -> FastAPI:
@@ -38,6 +41,7 @@ def create_app(config: Config | None = None, *, transport=None, auth_http_factor
             app.state.connection = ConnectionService(app.state.settings, app.state.chatgpt_auth, connection_transport)
             app.state.relay = RelayService(app.state.settings, LLMClient(config, transport), app.state.chatgpt_auth)
             app.state.mutation_lock = asyncio.Lock()
+            record_operation(config.data_dir, "server_start", "server_start", "ok")
             yield
         finally:
             database.close()
@@ -53,6 +57,23 @@ def create_app(config: Config | None = None, *, transport=None, auth_http_factor
     templates = Jinja2Templates(directory=PROJECT_ROOT / "templates")
     app.mount("/static", StaticFiles(directory=PROJECT_ROOT / "static"), name="static")
     app.include_router(router)
+
+    def track_error(request, error):
+        path = request.url.path
+        if path.startswith("/api/diagnostics") or path.startswith("/api/auth/") or path == "/auth/callback" or error.code == "busy":
+            return
+        operation, stage = "application", "application_request"
+        if path in {"/api/settings/test-connection", "/api/settings/import-key"}:
+            operation, stage = "connection", "model_inference"
+        elif path.startswith("/api/settings"):
+            operation, stage = "settings", "connection_settings"
+        elif re.fullmatch(r"/api/sessions/\d+/(messages|generate|retry)", path):
+            operation, stage = "generation", "model_inference"
+        elif re.fullmatch(r"/api/sessions/\d+/export", path):
+            operation, stage = "export", "markdown_export"
+        elif path.startswith("/api/sessions") or path == "/":
+            operation, stage = "history", "history_storage"
+        record_operation(config.data_dir, operation, stage, "error", error.code, getattr(error, "http_evidence", None))
 
     @app.middleware("http")
     async def local_security(request: Request, call_next):
@@ -74,7 +95,17 @@ def create_app(config: Config | None = None, *, transport=None, auth_http_factor
                     {"detail": {"code": "request_too_large", "message": "输入内容过长。"}},
                     status_code=413,
                 )
-        response = await call_next(request)
+        try:
+            response = await call_next(request)
+        except Exception as error:
+            code = "history_storage_failed" if isinstance(error, SQLAlchemyError) else "application_internal_error"
+            failure = RelayError(code, "本机服务处理失败。请一键自检并导出报告，原有数据请保留。", 500)
+            track_error(request, failure)
+            response = JSONResponse({"detail": failure.detail()}, status_code=500)
+        if request.method == "PUT" and request.url.path == "/api/settings" and response.status_code < 400:
+            record_operation(config.data_dir, "settings", "connection_settings", "ok")
+        if request.method == "GET" and re.fullmatch(r"/api/sessions/\d+/export", request.url.path) and response.status_code == 200:
+            record_operation(config.data_dir, "export", "markdown_export", "ok")
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; script-src 'self'; style-src 'self'; "
             "img-src 'self' data:; font-src 'self'; connect-src 'self'; "
@@ -89,10 +120,12 @@ def create_app(config: Config | None = None, *, transport=None, auth_http_factor
 
     @app.exception_handler(RelayError)
     async def relay_error(_request: Request, error: RelayError):
+        track_error(_request, error)
         return JSONResponse({"detail": error.detail()}, status_code=error.status_code)
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(_request: Request, error: RequestValidationError):
+        track_error(_request, RelayError("invalid_input", "输入格式不正确。", 422))
         # FastAPI's default includes input values; never echo an API key.
         fields = [{"field": ".".join(str(p) for p in e["loc"]), "message": e["msg"]} for e in error.errors()]
         return JSONResponse(
@@ -110,6 +143,12 @@ def create_app(config: Config | None = None, *, transport=None, auth_http_factor
     def health():
         return {"status": "ok"}
 
+    @app.get("/api/runtime")
+    def runtime(request: Request):
+        return {"application": "language-relay", "version": APP_VERSION,
+                "instance": getattr(app.state, "launcher_instance", None),
+                "port": request.url.port or 80}
+
     @app.get("/")
     def index(request: Request, db: DB):
         settings = app.state.settings.get(db)
@@ -120,7 +159,7 @@ def create_app(config: Config | None = None, *, transport=None, auth_http_factor
                 "sessions": session_service.list_sessions(db),
                 "settings": settings,
                 "app_version": APP_VERSION,
-                "chatgpt": app.state.chatgpt_auth.status(),
+                "chatgpt": app.state.chatgpt_auth.status(settings.chatgpt_model),
             },
         )
 

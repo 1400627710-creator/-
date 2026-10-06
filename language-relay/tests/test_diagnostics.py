@@ -103,6 +103,10 @@ def test_403_classification_requires_exact_known_provider_code(config, signing_k
         assert client.get("/api/auth/chatgpt/status").json()["result"]["code"] == app_code
         report = client.post("/api/diagnostics/run", json={"check_network": False}).json()
         assert report["findings"][0]["code"] == finding
+        assert report["feedback"]["error_code"] == app_code
+        assert report["feedback"]["diagnostic_code"] == finding
+        assert report["feedback"]["evidence"]["provider_code"] == report["login_trace"]["first_failure"]["provider_code"]
+        assert report["feedback"]["evidence"]["http_status"] == 403
         assert_private(report)
 
 

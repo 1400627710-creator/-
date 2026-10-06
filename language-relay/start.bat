@@ -1,8 +1,11 @@
 @echo off
 chcp 65001 >nul
+title 语言转换指令中继器 - 启动
 setlocal EnableExtensions DisableDelayedExpansion
 cd /d "%~dp0"
 if errorlevel 1 goto no_folder
+echo 正在启动中继器。首次启动会自动安装依赖，完成后自动打开浏览器。
+echo 打开本地页面不需要 API Key；进入页面后再选择模型连接方式。
 py -3 -c "import sys; raise SystemExit(sys.version_info < (3, 11))" >nul 2>&1
 if not errorlevel 1 goto py3
 py -3.11 -c "import sys; raise SystemExit(sys.version_info < (3, 11))" >nul 2>&1

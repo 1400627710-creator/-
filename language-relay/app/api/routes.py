@@ -72,9 +72,9 @@ async def test_connection(request: Request, db: DB):
 
 
 @router.post("/auth/chatgpt/start")
-async def chatgpt_start(request: Request, db: DB):
+async def chatgpt_start(request: Request, db: DB, authorize_plan: bool = Query(False)):
     async with mutation(request):
-        result = request.app.state.chatgpt_auth.start(str(request.base_url))
+        result = request.app.state.chatgpt_auth.start(str(request.base_url), authorize_plan=authorize_plan)
         request.app.state.settings.update(db, SettingsUpdate(provider="chatgpt"))
         return result
 
@@ -86,8 +86,9 @@ async def chatgpt_cancel(request: Request):
 
 
 @router.get("/auth/chatgpt/status")
-def chatgpt_status(request: Request):
-    return request.app.state.chatgpt_auth.status()
+def chatgpt_status(request: Request, db: DB):
+    settings = request.app.state.settings.get(db)
+    return request.app.state.chatgpt_auth.status(settings.chatgpt_model)
 
 
 @router.post("/auth/chatgpt/models")

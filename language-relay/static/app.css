@@ -17,3 +17,4 @@ select { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-
 .connection-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
 #connection-result { white-space: pre-wrap; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
 #plan-welcome { padding: 24px; }
+.connection-steps { margin: 0 0 16px; padding: 12px 12px 12px 30px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; line-height: 1.8; }

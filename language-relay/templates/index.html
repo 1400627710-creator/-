@@ -90,9 +90,18 @@
       </section>
       <section id="chatgpt-fields" hidden>
         <p id="chatgpt-account" class="dialog-description">尚未使用 ChatGPT 登录。</p>
+        <ol class="connection-steps" aria-label="ChatGPT 连接进度">
+          <li id="login-step-identity">账号登录：等待登录</li>
+          <li id="login-step-plan">模型授权：等待授权</li>
+          <li id="login-step-model">模型连接：待检测</li>
+        </ol>
         <div class="connection-actions"><button class="button primary" id="chatgpt-login" type="button">使用 ChatGPT 继续</button><button class="button" id="chatgpt-logout" type="button" hidden>断开账户</button></div>
+        <div class="connection-actions"><button class="button primary" id="reauthorize-chatgpt" type="button" hidden>授权模型调用</button><button class="button" id="use-api-key" type="button" hidden>改用 API Key</button></div>
         <div class="connection-actions"><button class="button" id="check-chatgpt-login" type="button">检查登录状态</button><button class="button" id="cancel-chatgpt-login" type="button" hidden>取消本次登录</button></div>
-        <small>在 OpenAI 官方页面登录并允许本应用使用计划，随后返回中继器。账号登录成功与模型调用授权分别检查；刷新页面会继续接收结果。</small>
+        <p id="login-error-code" class="dialog-description" role="status" hidden></p>
+        <button class="button" id="copy-login-error" type="button">复制登录报错</button>
+        <small>一键返回错误码、中文失败环节和脱敏报告，可直接粘贴反馈；不调用模型。无法复制时自动下载 JSON。</small>
+        <small>先在 OpenAI 官方页面登录，再授权模型调用，最后选择模型并检测连接。缺少授权时点击“授权模型调用”；普通刷新不会增加权限。官方拒绝资格时，请导出自检报告。</small>
         <label for="chatgpt-model">ChatGPT 可用模型</label><select id="chatgpt-model"><option value="">登录后选择模型</option></select>
         <button class="button" id="refresh-chatgpt-models" type="button">刷新可用模型</button>
         <small>由官方返回账户的模型列表；此连接方式不使用 API 温度设置。</small>
@@ -105,13 +114,13 @@
         <div class="connection-actions"><button class="button" id="run-diagnostics" type="button">一键自检并导出</button><button class="button" id="copy-diagnostics" type="button" disabled>复制诊断报告</button></div>
         <p id="diagnostic-summary" class="dialog-description" role="status" hidden></p>
         <details id="diagnostic-details" hidden><summary>查看安全诊断信息</summary><pre id="diagnostic-output" class="diagnostic-output" tabindex="0"></pre><a href="/api/diagnostics/export" download="relay-diagnostics.json">再次导出本机报告</a></details>
-        <small>反馈时发送导出的 JSON 文件即可；无需发送密钥、授权文件或完整回调网址。网页打不开时，可双击项目中的 diagnose.bat。</small>
+        <small>反馈时发送导出的 JSON 文件即可；无需发送密钥、授权文件或完整回调网址。网页打不开时，可双击下载包中的“一键自检.bat”。</small>
       </section>
       <p class="form-error" id="settings-error" role="alert" hidden></p>
       <div class="dialog-actions"><button class="button" id="cancel-settings" type="button">取消</button><button class="button" id="test-connection" type="button">保存并检测连接</button><button class="button primary" id="save-settings" type="submit">保存设置</button></div>
     </form>
   </dialog>
-  <dialog id="plan-welcome" class="action-dialog"><h2>正在使用你的 ChatGPT 计划</h2><p>符合条件的模型请求会使用你的 ChatGPT 计划额度。你可以在 ChatGPT 设置中管理本应用的授权与额度。</p><button class="button primary" id="plan-understood" type="button">知道了</button></dialog>
+  <dialog id="plan-welcome" class="action-dialog"><h2>已授权使用 ChatGPT 计划</h2><p>账号登录和计划授权已完成。请选择模型并检测连接；检测与生成会使用你的计划额度。你可以在 ChatGPT 设置中管理本应用的授权与额度。</p><button class="button primary" id="plan-understood" type="button">知道了</button></dialog>
   <dialog id="action-dialog" class="action-dialog" aria-labelledby="action-heading"><form id="action-form"><h2 id="action-heading"></h2><p id="action-description"></p><label id="rename-label" for="rename-input">会话名称</label><input id="rename-input" maxlength="80"><p class="form-error" id="action-error" role="alert" hidden></p><div class="dialog-actions"><button type="button" class="button" id="cancel-action">取消</button><button type="submit" class="button primary" id="confirm-action">确认</button></div></form></dialog>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 </body>

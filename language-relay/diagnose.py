@@ -24,7 +24,7 @@ from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
-DIAGNOSTIC_VERSION = "1.1.2"
+DIAGNOSTIC_VERSION = "1.2.1"
 DISCOVERY_URL = "https://auth.openai.com/.well-known/openid-configuration"
 JWKS_URL = "https://auth.openai.com/.well-known/jwks.json"
 PLAN_SCOPE = "chatgpt.tokens.use.direct"
@@ -54,6 +54,22 @@ LOCAL_CODES = frozenset({
     "chatgpt_auth_response_invalid", "chatgpt_auth_gateway", "chatgpt_auth_redirect",
     "chatgpt_callback_invalid", "chatgpt_model_catalog_pending", "auth_endpoint_invalid",
     "auth_write_failed", "chatgpt_scope_check_passed",
+    "chatgpt_connection_verified", "chatgpt_login_in_progress", "chatgpt_model_missing",
+    "chatgpt_usage_limit", "chatgpt_capability_unsupported", "chatgpt_route_unsupported",
+    "chatgpt_temporarily_unavailable", "connection_timeout", "connection_network_error",
+    "connection_temporarily_unavailable", "connection_response_invalid", "model_config_invalid",
+    "gpt_timeout", "gpt_failed", "gpt_connection_error", "gpt_rate_limited",
+    "gpt_format_error", "gpt_client_error", "gpt_request_rejected", "model_refused",
+    "relay_internal_error", "context_too_long",
+    "api_key_missing", "api_key_invalid", "api_quota_exhausted", "api_permission_denied",
+    "settings_unreadable", "settings_write_failed", "invalid_input", "idea_missing",
+    "nothing_to_retry", "session_not_found", "message_not_found", "nothing_to_export",
+    "startup_install_failed", "startup_write_failed", "server_start_failed",
+    "startup_interrupted", "application_internal_error", "history_storage_failed",
+    "busy", "request_too_large", "origin_blocked", "client_header_required",
+    "key_import_invalid", "empty_session", "more_info_needed", "login_local_only",
+    "diagnostic_busy", "diagnostic_missing", "diagnostic_write_failed",
+    "diagnostic_response_invalid", "diagnostic_unreachable",
 })
 STAGES = {
     "authorization_start": "打开官方授权页", "callback": "接收并检查本机回调",
@@ -64,9 +80,18 @@ STAGES = {
     "token_refresh": "刷新授权", "local_authorization": "检查本机调用授权",
     "revocation": "撤销授权", "auth_discovery": "检查官方授权网络",
     "auth_jwks": "检查官方签名网络", "model_permission": "检查模型列表权限",
+    "model_inference": "调用所选模型",
+    "application_files": "检查完整项目文件", "python_environment": "准备 Python 环境",
+    "dependency_install": "安装 Python 依赖", "dependency_validation": "校验 Python 依赖",
+    "server_start": "启动本机网页服务", "connection_settings": "读取或保存连接设置",
+    "input_validation": "检查输入参数", "output_validation": "校验生成格式与规划",
+    "result_processing": "处理生成结果", "history_storage": "读取或保存历史",
+    "markdown_export": "导出 Markdown", "generation": "生成中继指令",
+    "application_request": "处理本机网页请求",
+    "diagnostic_report": "生成或保存自检报告",
     "unknown": "未记录阶段",
 }
-PHASES = frozenset({"waiting_callback", "token_exchange", "verify_identity", "loading_models", "plan_required", "connected", "expired", "failed", "signed_out"})
+PHASES = frozenset({"waiting_callback", "callback", "client_registration", "token_exchange", "verify_identity", "save_credentials", "scope_check", "loading_models", "plan_required", "connected", "connection_verified", "connection_failed", "expired", "failed", "signed_out"})
 SHAPES = frozenset({"json_error_object", "json_error_string", "json_detail", "json_object", "json_array", "html", "text", "empty", "invalid_json"})
 NETWORK_CODES = frozenset({"dns_failure", "tls_failure", "network_timeout", "network_connection", "network_interrupted"})
 
@@ -100,6 +125,110 @@ def atomic_json(path, value):
     finally:
         if temporary and temporary.exists():
             temporary.unlink()
+
+
+OPERATIONS = frozenset({"installation", "server_start", "settings", "connection", "generation", "history", "export", "application", "diagnostics"})
+
+
+def clean_operations(value):
+    """At most one latest result per known operation; never keep URLs or text."""
+    results = {}
+    for item in (value if isinstance(value, list) else [])[-32:]:
+        if not isinstance(item, dict) or not isinstance(item.get("operation"), str) or item["operation"] not in OPERATIONS:
+            continue
+        event = clean_event(item)
+        at = item.get("at")
+        if not event or event["outcome"] not in {"ok", "error"}:
+            continue
+        event["operation"] = item["operation"]
+        if isinstance(at, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00", at):
+            event["at"] = at
+        results[item["operation"]] = event
+    return list(results.values())
+
+
+def failure_stage(code, fallback):
+    if code == "gpt_format_error":
+        return "output_validation"
+    if code == "relay_internal_error":
+        return "result_processing"
+    if code in {"api_key_missing", "api_key_invalid", "settings_unreadable", "settings_write_failed", "model_config_invalid", "chatgpt_model_missing"}:
+        return "connection_settings"
+    if code in {"invalid_input", "idea_missing", "context_too_long", "key_import_invalid"}:
+        return "input_validation"
+    if code == "history_storage_failed":
+        return "history_storage"
+    return fallback if fallback in STAGES else "unknown"
+
+
+def record_operation(data_dir, operation, stage, outcome, code=None, evidence=None):
+    if operation not in OPERATIONS:
+        return
+    path = data_dir / "operation-results.json"
+    event = {**mapping(evidence), "operation": operation, "stage": failure_stage(code, stage),
+             "outcome": outcome, "code": code, "at": utc_now()}
+    results = clean_operations(read_json(path))
+    results = [item for item in results if item["operation"] != operation]
+    results.extend(clean_operations([event]))
+    try:
+        atomic_json(path, results)
+    except (OSError, ValueError):
+        pass  # Diagnostics must never replace the original failure.
+
+
+def operation_findings(results):
+    findings = []
+    for event in results:
+        if event["outcome"] != "error":
+            continue
+        stage = event["stage"]
+        findings.append({"code": event.get("code", "operation_failed"), "stage": stage,
+                         "level": "error", "certainty": "observed",
+                         "message": f"最近一次{STAGES[stage]}失败；安全错误码：{event.get('code', '未采集')}。",
+                         "next_step": "已定位失败环节；具体根因可能仍待确认。把本报告反馈给开发者。修复后重新执行同一步，成功结果会替换此记录。"})
+    return findings
+
+
+def feedback_for(findings, operations, auth, local, trace):
+    failed = [item for item in operations if item["outcome"] == "error"]
+    event = failed[-1] if failed else None
+    problem = next((item for item in findings if item["level"] == "error"), None)
+    if event and not str(event.get("code", "")).startswith("chatgpt_"):
+        problem = next((item for item in findings if item["stage"] == event["stage"] and item["code"] == event.get("code")), problem)
+    if not problem:
+        problem = next((item for item in findings if item["level"] == "warning"), None)
+    stage = problem["stage"] if problem else "unknown"
+    evidence = {}
+    first = mapping(trace.get("first_failure"))
+    if first.get("stage") == stage:
+        evidence.update(first)
+    for item in trace.get("events", []):
+        if item["stage"] == stage and item["outcome"] == "error":
+            evidence.update(item)
+    if event and event["stage"] == stage:
+        evidence.update(event)
+    app_code = evidence.get("code")
+    if not app_code and stage in {"callback", "client_registration", "token_exchange", "discovery", "jwks", "verify_identity", "scope_check", "save_credentials", "models", "token_refresh", "local_authorization", "revocation"}:
+        if auth.get("result_ok") is False and auth.get("result_code") != "unrecognized":
+            app_code = auth.get("result_code")
+    completed = []
+    if local.get("server_reachable"):
+        completed.append("本机网页服务可访问")
+    if auth.get("signed_in"):
+        completed.append("账号身份已验证")
+    if auth.get("plan_enabled"):
+        completed.append("已有模型计划授权")
+    if auth.get("connection_ok") is True:
+        completed.append("最近一次所选模型调用通过")
+    completed.extend(STAGES[e["stage"]] for e in operations if e["outcome"] == "ok")
+    return {"problem_stage": stage, "problem_location": STAGES[stage],
+            "error_code": app_code or (problem["code"] if problem else None),
+            "diagnostic_code": problem["code"] if problem else None,
+            "confirmed": problem["message"] if problem else "当前自检没有发现已记录的失败；这不代表真实模型调用或内容质量已通过。",
+            "next_step": problem["next_step"] if problem else "若再次出错，立即重新导出报告；本次自检没有调用模型。",
+            "completed_steps": list(dict.fromkeys(completed)),
+            "evidence": {key: evidence[key] for key in ("http_status", "provider_code", "request_id") if key in evidence},
+            "limitations": "报告定位已观察到的失败环节，不把一般 HTTP 拒绝猜成账户或地区资格问题；未记录的上游原因仍待确认。"}
 
 
 def safe_number(value, minimum, maximum):
@@ -280,7 +409,8 @@ def auth_snapshot(data, status):
     result = status.get("result") or {}
     result = result if isinstance(result, dict) else {}
     expires = safe_number(data.get("expires_at"), 0, 4102444800)
-    return {**{key: status.get(key) is True for key in ("signed_in", "plan_enabled", "connected", "pending")}, "phase": enum_value(status.get("phase"), PHASES, "signed_out"), "result_code": enum_value(result.get("code"), LOCAL_CODES, "unrecognized"), "result_ok": result.get("ok") is True, "access_token_present": bool(data.get("access_token")), "refresh_token_present": bool(data.get("refresh_token")), "id_token_present": bool(data.get("id_token")), "issued_client_id_present": bool(data.get("client_id")), "host_registration_present": bool(data.get("host_id")), "token_expired": expires <= time.time() if expires is not None else None, "granted_scopes": [scope for scope in SCOPES if scope in scopes]}
+    connection = mapping(status.get("connection_check"))
+    return {**{key: status.get(key) is True for key in ("signed_in", "plan_enabled", "connected", "pending")}, "phase": enum_value(status.get("phase"), PHASES, "signed_out"), "result_code": enum_value(result.get("code"), LOCAL_CODES, "unrecognized"), "result_ok": result.get("ok") is True, "access_token_present": bool(data.get("access_token")), "refresh_token_present": bool(data.get("refresh_token")), "id_token_present": bool(data.get("id_token")), "issued_client_id_present": bool(data.get("client_id")), "host_registration_present": bool(data.get("host_id")), "token_expired": expires <= time.time() if expires is not None else None, "granted_scopes": [scope for scope in SCOPES if scope in scopes], "connection_checked": type(connection.get("ok")) is bool, "connection_ok": connection.get("ok") if type(connection.get("ok")) is bool else None, "connection_code": enum_value(connection.get("code"), LOCAL_CODES, "unrecognized")}
 
 
 def findings_for(auth, trace, local, probes, environment):
@@ -296,7 +426,9 @@ def findings_for(auth, trace, local, probes, environment):
     if local.get("server_reachable") is False:
         add("server_not_detected", "未检测到唯一的中继器服务；当前报告来自独立诊断进程。", "保持启动窗口打开；有多个应用时用 --port 指定该窗口显示的端口。诊断进程的依赖版本可能不同于应用虚拟环境。", level="warning")
     first = trace.get("first_failure")
-    if first and not auth.get("connected"):
+    if auth.get("connection_ok") is False:
+        first = next((e for e in reversed(trace.get("events", [])) if e["stage"] == "model_inference" and e["outcome"] == "error"), first)
+    if first and (not auth.get("connected") or auth.get("connection_ok") is False):
         stage, provider = first["stage"], first.get("provider_code")
         label = STAGES[stage]
         suffix = f"（HTTP {first['http_status']}）" if first.get("http_status") else ""
@@ -313,7 +445,7 @@ def findings_for(auth, trace, local, probes, environment):
         else:
             add("authorization_stage_failed", f"{label}失败{suffix}，请结合事件中的错误码定位。", "将本报告反馈给开发者；若是过期回调，重新发起一次登录即可，勿反复使用旧回调。", stage)
     elif auth.get("result_code") == "chatgpt_not_eligible" and not auth.get("connected"):
-        add("legacy_403_details_missing", "旧版曾收到 HTTP 403，但把它统一显示为账户、地区或工作区限制；没有保存具体阶段和上游错误码。", "升级到 1.1.2 后重新完成一次登录，再一键自检。旧记录无法还原被丢弃的上游细节。")
+        add("legacy_403_details_missing", "旧版曾收到 HTTP 403，但把它统一显示为账户、地区或工作区限制；没有保存具体阶段和上游错误码。", "升级到 1.2.1 后重新完成一次登录，再一键自检。旧记录无法还原被丢弃的上游细节。")
     elif auth.get("signed_in") and not auth.get("plan_enabled"):
         add("identity_without_plan", "本机保存了账号登录，但没有获准使用 ChatGPT 计划。", "需要官方授予计划调用权限后才能刷新模型或生成指令。", "scope_check")
     elif auth.get("pending"):
@@ -334,24 +466,30 @@ def findings_for(auth, trace, local, probes, environment):
             add("model_catalog_empty", "模型列表接口可达，但未返回可选择模型。", "核对账户模型权限；本次自检不会自行指定其他模型或计费方式。", "model_permission", "warning")
     if auth.get("connected"):
         add("local_grant_available", "本机保存了身份和计划授权。本次自检未调用模型，不能证明生成一定成功。", "可在设置中选择可用模型；实际生成若失败，保留新的错误并再次导出报告。", "local_authorization", "info")
+    if auth.get("connection_checked") and auth.get("connection_ok") is True:
+        add("last_model_call_passed", "本机记录的最近一次所选模型调用通过。", "此记录来自此前的检测或生成；本次自检没有新增模型请求。", "model_inference", "info")
     return findings
 
 
-def make_report(*, app_version, environment, local, auth, trace, probes=(), network_requested=False, server_port=None, source="app"):
+def make_report(*, app_version, environment, local, auth, trace, probes=(), network_requested=False, server_port=None, source="app", operations=()):
     # Rebuild a strict report even when reading a response from an older local app.
     environment, local, auth = mapping(environment), mapping(local), mapping(auth)
     packages = mapping(environment.get("packages"))
     env = {"python_version": safe_version(environment.get("python_version")), "python_supported": environment.get("python_supported") is True, "os": enum_value(environment.get("os"), {"Windows", "Linux", "Darwin"}, "other"), "bits": environment.get("bits") if type(environment.get("bits")) is int and environment["bits"] in {32, 64} else None, "windows_build": safe_number(environment.get("windows_build"), 0, 999999), "packages": {name: "not_installed" if packages.get(name) == "not_installed" else safe_version(packages.get(name)) for name in PACKAGES}, "environment_proxy_set": environment.get("environment_proxy_set") is True, "windows_browser_proxy_enabled": environment.get("windows_browser_proxy_enabled") if type(environment.get("windows_browser_proxy_enabled")) is bool else None, "backend_uses_environment_proxy": False}
     local_fields = ("data_directory_exists", "data_directory_writable", "auth_file_exists", "login_result_exists", "trace_exists", "database_exists", "key_file_exists", "auth_record_unreadable", "server_reachable", "legacy_app", "virtualenv_exists")
     clean_local = {key: local[key] for key in local_fields if type(local.get(key)) is bool}
-    auth_fields = ("signed_in", "plan_enabled", "connected", "pending", "result_ok", "access_token_present", "refresh_token_present", "id_token_present", "issued_client_id_present", "host_registration_present", "token_expired", "api_key_configured")
+    auth_fields = ("signed_in", "plan_enabled", "connected", "pending", "result_ok", "access_token_present", "refresh_token_present", "id_token_present", "issued_client_id_present", "host_registration_present", "token_expired", "api_key_configured", "connection_checked", "connection_ok")
     clean_auth = {key: auth[key] if type(auth.get(key)) is bool else None for key in auth_fields}
     granted = auth.get("granted_scopes") if isinstance(auth.get("granted_scopes"), list) else []
     clean_auth.update(phase=enum_value(auth.get("phase"), PHASES, "signed_out"), result_code=enum_value(auth.get("result_code"), LOCAL_CODES, "unrecognized"), granted_scopes=[scope for scope in SCOPES if scope in granted], selected_provider=enum_value(auth.get("selected_provider"), {"api", "chatgpt"}))
+    clean_auth["connection_code"] = enum_value(auth.get("connection_code"), LOCAL_CODES, "unrecognized")
     clean_probes = [event for item in (probes if isinstance(probes, (list, tuple)) else [])[:5] if (event := clean_event(item))]
     clean_history = clean_trace(trace)
     findings = findings_for(clean_auth, clean_history, clean_local, clean_probes, env)
-    return {"schema_version": 1, "application": "language-relay", "diagnostic_version": DIAGNOSTIC_VERSION, "app_version": safe_version(app_version), "report_id": uuid.uuid4().hex, "created_at": utc_now(), "source": source if source in {"app", "standalone", "standalone_legacy"} else "standalone", "server_port": int(server_port) if safe_number(server_port, 1, 65535) is not None else None, "environment": env, "local": clean_local, "authorization": clean_auth, "login_trace": clean_history, "network": {"requested": bool(network_requested), "model_inference_performed": False, "probes": clean_probes}, "findings": findings, "summary": "\n".join(item["message"] + " " + item["next_step"] for item in findings), "privacy": {"allowlisted_fields_only": True, "credentials_exported": False, "account_identifiers_exported": False, "callback_parameters_exported": False, "ideas_or_history_exported": False, "raw_logs_or_provider_bodies_exported": False, "automatic_upload": False}}
+    operations = clean_operations(operations)
+    findings.extend(operation_findings(operations))
+    feedback = feedback_for(findings, operations, clean_auth, clean_local, clean_history)
+    return {"schema_version": 1, "application": "language-relay", "diagnostic_version": DIAGNOSTIC_VERSION, "app_version": safe_version(app_version), "report_id": uuid.uuid4().hex, "created_at": utc_now(), "source": source if source in {"app", "standalone", "standalone_legacy"} else "standalone", "server_port": int(server_port) if safe_number(server_port, 1, 65535) is not None else None, "environment": env, "local": clean_local, "authorization": clean_auth, "login_trace": clean_history, "network": {"requested": bool(network_requested), "model_inference_performed": False, "probes": clean_probes}, "findings": findings, "operations": operations, "feedback": feedback, "summary": "定位：" + feedback["problem_location"] + "。错误码：" + str(feedback["error_code"] or "未发现已记录错误") + "。\n" + "\n".join(item["message"] + " " + item["next_step"] for item in findings), "privacy": {"allowlisted_fields_only": True, "credentials_exported": False, "account_identifiers_exported": False, "callback_parameters_exported": False, "ideas_or_history_exported": False, "raw_logs_or_provider_bodies_exported": False, "automatic_upload": False}}
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -403,14 +541,19 @@ def discover_server(port=None):
 
 def standalone_report(project, *, port=None, offline=False):
     server_port, server_status = discover_server(port)
+    report_failure = []
+    legacy = False
     if server_port:
         try:
             status, _, body = get_bytes(f"http://127.0.0.1:{server_port}/api/diagnostics/run", body={"check_network": not offline}, timeout=13)
             result = json.loads(body)
             if status == 200 and result.get("application") == "language-relay" and result.get("schema_version") == 1:
-                return make_report(app_version=result.get("app_version"), environment=result.get("environment", {}), local=result.get("local", {}), auth=result.get("authorization", {}), trace=result.get("login_trace", {}), probes=result.get("network", {}).get("probes", []), network_requested=not offline, server_port=server_port, source="standalone")
+                return make_report(app_version=result.get("app_version"), environment=result.get("environment", {}), local=result.get("local", {}), auth=result.get("authorization", {}), trace=result.get("login_trace", {}), probes=result.get("network", {}).get("probes", []), network_requested=not offline, server_port=server_port, source="standalone", operations=[*clean_operations(read_json(project / ".data" / "operation-results.json")), *result.get("operations", [])])
+            legacy = status in (404, 405)
+            code = enum_value(mapping(mapping(result).get("detail")).get("code"), LOCAL_CODES, "diagnostic_response_invalid")
+            report_failure = [{"operation": "diagnostics", "stage": "diagnostic_report", "outcome": "error", "code": code, "http_status": status}]
         except (OSError, urllib.error.URLError, ValueError, AttributeError, TypeError):
-            pass
+            report_failure = [{"operation": "diagnostics", "stage": "diagnostic_report", "outcome": "error", "code": "diagnostic_unreachable"}]
     data_dir = project / ".data"
     # Honor a configured data directory without recording its path or other .env values.
     configured = os.environ.get("RELAY_DATA_DIR")
@@ -434,7 +577,7 @@ def standalone_report(project, *, port=None, offline=False):
         expiry = safe_number(data.get("expires_at"), 0, 4102444800) or 0
         server_status = {"signed_in": bool(data.get("access_token") and data.get("id_token") and data.get("subject")), "plan_enabled": enabled, "connected": enabled and (expiry > time.time() or bool(data.get("refresh_token"))), "pending": False, "phase": "signed_out", "result": result}
     local = local_snapshot(data_dir)
-    local.update(server_reachable=bool(server_port), legacy_app=bool(server_port), virtualenv_exists=(project / ".venv").is_dir(), auth_record_unreadable=(data_dir / "chatgpt-auth.json").exists() and not isinstance(read_json(data_dir / "chatgpt-auth.json"), dict))
+    local.update(server_reachable=bool(server_port), legacy_app=legacy, virtualenv_exists=(project / ".venv").is_dir(), auth_record_unreadable=(data_dir / "chatgpt-auth.json").exists() and not isinstance(read_json(data_dir / "chatgpt-auth.json"), dict))
     app_version = "unknown"
     try:
         text = (project / "app" / "main.py").read_text(encoding="utf-8")
@@ -446,7 +589,7 @@ def standalone_report(project, *, port=None, offline=False):
     if not offline:
         with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
             probes = list(pool.map(public_probe, [("auth_discovery", DISCOVERY_URL), ("auth_jwks", JWKS_URL)]))
-    return make_report(app_version=app_version, environment=environment_snapshot(), local=local, auth=auth_snapshot(data, server_status), trace=trace, probes=probes, network_requested=not offline, server_port=server_port, source="standalone_legacy" if server_port else "standalone")
+    return make_report(app_version=app_version, environment=environment_snapshot(), local=local, auth=auth_snapshot(data, server_status), trace=trace, probes=probes, network_requested=not offline, server_port=server_port, source="standalone_legacy" if legacy else "standalone", operations=[*clean_operations(read_json(project / ".data" / "operation-results.json")), *clean_operations(read_json(data_dir / "operation-results.json")), *report_failure])
 
 
 def main():

@@ -21,7 +21,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 import httpx2  # noqa: E402
 import uvicorn  # noqa: E402
 from cryptography.hazmat.primitives.asymmetric import rsa  # noqa: E402
-from openai import AuthenticationError  # noqa: E402
+from openai import AuthenticationError, PermissionDeniedError  # noqa: E402
 from playwright.sync_api import expect, sync_playwright  # noqa: E402
 
 from app.config import Config  # noqa: E402
@@ -36,6 +36,7 @@ class BrowserTransport:
         self.calls = 0
         self.internal_failure_seen = False
         self.planning_failures_remaining = 2
+        self.plan_probe_error = None
 
     async def request(self, **kwargs):
         self.calls += 1
@@ -62,6 +63,10 @@ class BrowserTransport:
         return json.dumps(full_reply() if forced or answered else questions_reply(), ensure_ascii=False)
 
     async def probe(self, **kwargs):
+        if kwargs["settings"].provider == "chatgpt" and self.plan_probe_error:
+            body = {"error": {"code": self.plan_probe_error, "message": "private provider details"}}
+            response = httpx2.Response(403, request=httpx2.Request("POST", "https://api.openai.com/v1/responses"), json=body, headers={"x-request-id": "req_0123456789abcdef"})
+            raise PermissionDeniedError("private provider details", response=response, body=body)
         if kwargs["api_key"] == "sk-invalid-browser":
             response = httpx2.Response(
                 401, request=httpx2.Request("POST", "https://api.openai.com/v1/chat/completions")
@@ -437,6 +442,8 @@ def check_browser(base_url: str, output: Path, transport: BrowserTransport, oaut
 
         def official_login(route):
             params = parse_qs(urlsplit(route.request.url).query)
+            if params.get("prompt") == ["consent"]:
+                login_flow["reconsent_observed"] = True
             oauth_server.nonce = params["nonce"][0]
             login_flow["states"].append(params["state"][0])
             callback_params = {
@@ -531,6 +538,62 @@ def check_browser(base_url: str, output: Path, transport: BrowserTransport, oaut
         expect(page.locator("#connection-result")).to_contain_text("没有授权使用 ChatGPT 计划")
         page.screenshot(path=str(output / "login-authorization-required.png"), full_page=True)
         checks.append("账号已登录但模型未授权时明确区分，刷新与检查按钮保留原因")
+        expect(page.locator("#reauthorize-chatgpt")).to_be_visible()
+        oauth_server.scopes = SCOPES
+        login_flow["mode"] = "authorized"
+        with page.expect_popup() as consent_popup_info:
+            page.click("#reauthorize-chatgpt")
+        consent_popup = consent_popup_info.value
+        expect(page.locator("#login-step-plan")).to_contain_text("已授权", timeout=10000)
+        expect(page.locator("#login-step-model")).to_contain_text("待检测")
+        expect(page.locator("#reauthorize-chatgpt")).not_to_be_visible()
+        consent_popup.close()
+        assert login_flow.get("reconsent_observed") is True
+        checks.append("专用授权按钮从已登录但未授权恢复，模型连接继续单独检测")
+        for provider_code, expected_message in [("private_unknown_code", "尚未说明"), ("subscription_sharing_user_not_eligible", "目前不能")]:
+            transport.plan_probe_error = provider_code
+            page.click("#test-connection")
+            expect(page.locator("#connection-result")).to_contain_text(expected_message)
+            expect(page.locator("#login-step-identity")).to_contain_text("已登录")
+            expect(page.locator("#login-step-model")).to_contain_text("失败")
+            page.reload(wait_until="networkidle")
+            page.click("#open-settings")
+            expect(page.locator("#connection-result")).to_contain_text(expected_message)
+            status = context.request.get(base_url + "/api/auth/chatgpt/status").json()
+            assert status["signed_in"] and status["plan_enabled"] and not status["connection_check"]["ok"]
+            expect(page.locator("#use-api-key")).to_be_visible()
+            assert "private provider details" not in page.content()
+        page.screenshot(path=str(output / "model-permission-failure.png"), full_page=True)
+        checks.append("模型拒绝单独显示，未知 403 不误判资格，明确资格拒绝刷新后仍保留身份和原因")
+        expect(page.locator("#login-error-code")).to_contain_text("chatgpt_not_eligible")
+        calls_before_feedback = len(oauth_server.calls)
+        page.click("#copy-login-error")
+        expect(page.locator("#connection-result")).to_contain_text("已复制报错反馈")
+        copied_failure = json.loads(page.evaluate("navigator.clipboard.readText()"))
+        assert copied_failure["feedback"]["problem_stage"] == "model_inference"
+        assert copied_failure["feedback"]["error_code"] == "chatgpt_not_eligible"
+        assert not copied_failure["network"]["requested"]
+        assert len(oauth_server.calls) == calls_before_feedback
+        assert_private(copied_failure)
+        checks.append("登录区域一键复制真实错误码、中文阶段与安全报告，无额外网络或模型调用")
+        page.evaluate("() => { window.savedClipboardWrite = navigator.clipboard.writeText; navigator.clipboard.writeText = () => Promise.reject(new Error('clipboard blocked')); }")
+        with page.expect_download() as feedback_download:
+            page.click("#copy-login-error")
+        fallback_file = output / "diagnostic-clipboard-fallback.json"
+        feedback_download.value.save_as(str(fallback_file))
+        assert json.loads(fallback_file.read_text())["feedback"]["error_code"] == "chatgpt_not_eligible"
+        expect(page.locator("#connection-result")).to_contain_text("不允许自动复制")
+        page.evaluate("navigator.clipboard.writeText = window.savedClipboardWrite; delete window.savedClipboardWrite")
+        checks.append("浏览器拒绝复制时自动下载同一脱敏JSON，可直接发送反馈")
+        page.click("#use-api-key")
+        expect(page.locator("#provider-input")).to_have_value("api")
+        assert context.request.get(base_url + "/api/settings").json()["provider"] == "chatgpt"
+        page.select_option("#provider-input", "chatgpt")
+        transport.plan_probe_error = None
+        page.click("#test-connection")
+        expect(page.locator("#connection-result")).to_contain_text("连接检测通过")
+        expect(page.locator("#login-step-model")).to_contain_text("通过")
+        checks.append("成功重测更新第三步；用户主动选择密钥时才展示密钥设置，检测失败不会自动更换计费")
         page.click("#chatgpt-logout")
         expect(page.locator("#connection-result")).to_contain_text("已断开 ChatGPT")
         page.select_option("#provider-input", "chatgpt")
@@ -585,6 +648,14 @@ def check_browser(base_url: str, output: Path, transport: BrowserTransport, oaut
         expect(page.locator("#connection-result")).to_contain_text("上次授权未完成")
         expect(page.locator("#connection-result")).to_contain_text("客户端注册或配置")
         checks.append("授权交换 403 后刷新模型保留首因，明确说明刷新不能完成授权")
+        page.click("#copy-login-error")
+        expect(page.locator("#connection-result")).to_contain_text("已复制报错反馈")
+        login_failure = json.loads(page.evaluate("navigator.clipboard.readText()"))
+        assert login_failure["feedback"]["problem_stage"] == "token_exchange"
+        assert login_failure["feedback"]["error_code"] == login_failure["authorization"]["result_code"] == "chatgpt_client_rejected"
+        assert login_failure["feedback"]["evidence"]["provider_code"] == "invalid_client"
+        assert_private(login_failure)
+        checks.append("登录回调交换失败后一键返回原错误码、精确失败阶段与官方请求证据")
         with page.expect_download() as failed_diagnostic_download:
             page.click("#run-diagnostics")
         failed_diagnostic_file = output / "diagnostic-token-denied.json"

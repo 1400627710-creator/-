@@ -7,11 +7,13 @@ import time
 
 import httpx2
 
+from app.config import PROJECT_ROOT
 from app.errors import RelayError
 from app.services.chatgpt_auth import DISCOVERY, ISSUER, JWKS, RESOURCE
 from diagnose import (
     atomic_json,
     auth_snapshot,
+    clean_operations,
     environment_snapshot,
     http_evidence,
     local_snapshot,
@@ -83,9 +85,10 @@ class DiagnosticsService:
             except RelayError:
                 data = {}
                 local["auth_record_unreadable"] = True
-            snapshot = auth_snapshot(data, self.auth.status())
+            snapshot = auth_snapshot(data, self.auth.status(settings.chatgpt_model))
             snapshot.update(selected_provider=settings.provider, api_key_configured=settings.openai_api_key_set)
-            report = make_report(app_version=self.version, environment=environment_snapshot(), local=local, auth=snapshot, trace=self.auth.trace.snapshot(), probes=probes, network_requested=check_network, server_port=port)
+            operations = [*clean_operations(read_json(PROJECT_ROOT / ".data" / "operation-results.json")), *clean_operations(read_json(self.config.data_dir / "operation-results.json"))]
+            report = make_report(app_version=self.version, environment=environment_snapshot(), local=local, auth=snapshot, trace=self.auth.trace.snapshot(), probes=probes, network_requested=check_network, server_port=port, operations=operations)
             try:
                 atomic_json(self.path, report)
             except OSError:
@@ -98,7 +101,7 @@ class DiagnosticsService:
             raise RelayError("diagnostic_missing", "尚无自检报告，请先点击一键自检并导出。", 404)
         # Never blindly serve a disk file, even one the app originally created.
         network = mapping(data.get("network"))
-        report = make_report(app_version=data.get("app_version"), environment=data.get("environment", {}), local=data.get("local", {}), auth=data.get("authorization", {}), trace=data.get("login_trace", {}), probes=network.get("probes", []), network_requested=network.get("requested") is True, server_port=data.get("server_port"))
+        report = make_report(app_version=data.get("app_version"), environment=data.get("environment", {}), local=data.get("local", {}), auth=data.get("authorization", {}), trace=data.get("login_trace", {}), probes=network.get("probes", []), network_requested=network.get("requested") is True, server_port=data.get("server_port"), operations=data.get("operations", []))
         if isinstance(data.get("report_id"), str) and re.fullmatch(r"[0-9a-f]{32}", data["report_id"]):
             report["report_id"] = data["report_id"]
         if isinstance(data.get("created_at"), str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00", data["created_at"]):

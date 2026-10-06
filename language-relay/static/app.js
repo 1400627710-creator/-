@@ -392,13 +392,23 @@
     $("chatgpt-account").textContent = chatgptStatus.connected ? `已授权：${account}` : chatgptStatus.signed_in ? `已登录：${account}（${chatgptStatus.plan_enabled ? "授权已过期" : "模型尚未授权"}）` : chatgptStatus.message || "尚未使用 ChatGPT 登录。";
     $("chatgpt-logout").hidden = !(chatgptStatus.signed_in || chatgptStatus.connected);
     $("cancel-chatgpt-login").hidden = !chatgptStatus.pending;
-    $("chatgpt-login").textContent = chatgptStatus.pending ? "重新打开官方授权页" : "使用 ChatGPT 继续";
+    $("chatgpt-login").textContent = chatgptStatus.pending ? "重新打开官方授权页" : chatgptStatus.signed_in ? "重新登录" : "使用 ChatGPT 继续";
+    const check = chatgptStatus.connection_check?.model === $("chatgpt-model").value ? chatgptStatus.connection_check : null;
+    $("login-step-identity").textContent = `账号登录：${chatgptStatus.signed_in ? "已登录" : chatgptStatus.pending ? "正在登录" : "等待登录"}`;
+    $("login-step-plan").textContent = `模型授权：${chatgptStatus.plan_enabled ? "已授权" : chatgptStatus.signed_in ? "尚未授权，请点击下方授权按钮" : "等待授权"}`;
+    $("login-step-model").textContent = `模型连接：${check ? check.ok ? "最近一次检测或调用通过" : "检测或调用失败，原因见下方" : "待检测；登录和模型列表不代表调用成功"}`;
+    $("reauthorize-chatgpt").hidden = chatgptStatus.pending || !chatgptStatus.signed_in || (chatgptStatus.plan_enabled && !["chatgpt_plan_not_enabled", "chatgpt_scope_rejected"].includes(check?.code));
+    $("use-api-key").hidden = chatgptStatus.pending || !(check?.ok === false || chatgptStatus.result?.ok === false);
+    const failure = check?.ok === false ? check : chatgptStatus.result?.ok === false ? chatgptStatus.result : null;
+    $("login-error-code").textContent = failure ? `报错代码：${failure.code || "未记录具体代码"}。点击“复制登录报错”获取失败环节和完整反馈。` : "";
+    $("login-error-code").hidden = !failure;
   }
 
   function showLoginResult() {
     if ($("provider-input").value !== "chatgpt") return;
     const result = chatgptStatus.result;
-    $("connection-result").textContent = chatgptStatus.pending ? chatgptStatus.message : result?.message || chatgptStatus.message || "尚未收到登录结果，请完成官方授权后返回。";
+    const check = chatgptStatus.connection_check;
+    $("connection-result").textContent = chatgptStatus.pending ? chatgptStatus.message : check?.ok === false ? check.message : result?.message || chatgptStatus.message || "尚未收到登录结果，请完成官方授权后返回。";
     $("connection-result").hidden = false;
   }
 
@@ -450,13 +460,18 @@
   async function connectionAction(action) {
     if (connectionBusy || state.busy) return;
     connectionBusy = true;
-    const ids = ["save-settings", "test-connection", "import-key-text", "import-key-file", "chatgpt-login", "chatgpt-logout", "refresh-chatgpt-models", "check-chatgpt-login", "cancel-chatgpt-login", "run-diagnostics"];
+    const ids = ["save-settings", "test-connection", "import-key-text", "import-key-file", "chatgpt-login", "reauthorize-chatgpt", "use-api-key", "chatgpt-logout", "refresh-chatgpt-models", "check-chatgpt-login", "cancel-chatgpt-login", "run-diagnostics", "copy-login-error"];
     ids.forEach((id) => { $(id).disabled = true; });
     $("settings-error").hidden = true;
     $("connection-result").textContent = "正在检查，请稍候…";
     $("connection-result").hidden = false;
     try { await action(); }
-    catch (error) { $("connection-result").textContent = error.message; }
+    catch (error) {
+      if ($("provider-input").value === "chatgpt") {
+        try { await refreshLoginState(); } catch (_) { /* Keep the original failure visible. */ }
+      }
+      $("connection-result").textContent = error.message;
+    }
     finally { connectionBusy = false; ids.forEach((id) => { $(id).disabled = false; }); }
   }
 
@@ -470,22 +485,33 @@
   }
 
   $("provider-input").addEventListener("change", () => { updateProviderFields(); $("connection-result").hidden = true; showLoginResult(); });
-  $("run-diagnostics").addEventListener("click", () => { void connectionAction(async () => {
-    const result = await api("/api/diagnostics/run", { method: "POST", body: JSON.stringify({ check_network: $("diagnostic-network").checked }) });
+  async function collectDiagnostics(checkNetwork, copyOnly = false) {
+    const result = await api("/api/diagnostics/run", { method: "POST", body: JSON.stringify({ check_network: checkNetwork }) });
     diagnosticReport = JSON.stringify(result, null, 2) + "\n";
     $("diagnostic-summary").textContent = result.summary;
     $("diagnostic-summary").hidden = false;
     $("diagnostic-output").textContent = diagnosticReport;
     $("diagnostic-details").hidden = false;
     $("copy-diagnostics").disabled = false;
+    if (copyOnly) {
+      try {
+        if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+        await navigator.clipboard.writeText(diagnosticReport);
+        $("connection-result").textContent = `已复制报错反馈：${result.feedback?.problem_location || "见报告"}；错误码：${result.feedback?.error_code || "尚未记录失败"}。直接粘贴给开发者即可。`;
+        toast("已复制登录报错和脱敏报告。");
+        return;
+      } catch (_) { /* Download the same report when clipboard permission is unavailable. */ }
+    }
     const url = URL.createObjectURL(new Blob([diagnosticReport], { type: "application/json;charset=utf-8" }));
     const anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = `relay-diagnostics-${result.report_id.slice(0, 8)}.json`;
     document.body.appendChild(anchor); anchor.click(); anchor.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
-    $("connection-result").textContent = "自检完成，诊断报告已导出。请把 JSON 文件反馈给开发者。";
-  }); });
+    $("connection-result").textContent = copyOnly ? "浏览器不允许自动复制，报错报告已下载。发送 JSON 文件，或点击下方复制诊断报告。" : "自检完成，诊断报告已导出。请把 JSON 文件反馈给开发者。";
+  }
+  $("run-diagnostics").addEventListener("click", () => { void connectionAction(() => collectDiagnostics($("diagnostic-network").checked)); });
+  $("copy-login-error").addEventListener("click", () => { void connectionAction(() => collectDiagnostics(false, true)); });
   $("copy-diagnostics").addEventListener("click", () => { if (diagnosticReport) void copy(diagnosticReport, "已复制脱敏诊断报告。"); });
   $("import-key-text").addEventListener("click", () => { void connectionAction(() => importKey($("api-key").value)); });
   $("import-key-file").addEventListener("click", () => $("key-file").click());
@@ -507,6 +533,7 @@
     applySettings(await api("/api/settings", { method: "PUT", body: JSON.stringify(patch) }));
     $("api-key").value = "";
     const result = await api("/api/settings/test-connection", { method: "POST" });
+    if (patch.provider === "chatgpt") await refreshLoginState();
     $("connection-result").textContent = result.message;
   }); });
   $("refresh-chatgpt-models").addEventListener("click", () => { void connectionAction(async () => {
@@ -528,13 +555,13 @@
     chatgptStatus = await api("/api/auth/chatgpt/cancel", { method: "POST" });
     renderLoginAccount(); showLoginResult(); scheduleLoginPoll();
   }); });
-  $("chatgpt-login").addEventListener("click", () => {
+  function beginChatGPTLogin(authorizePlan = false) {
     if (connectionBusy || state.busy) return;
     const popup = window.open("about:blank", "_blank");
     if (popup) popup.opener = null;
     void connectionAction(async () => {
       try {
-        const result = await api("/api/auth/chatgpt/start", { method: "POST" });
+        const result = await api(`/api/auth/chatgpt/start${authorizePlan ? "?authorize_plan=true" : ""}`, { method: "POST" });
         if (popup) popup.location.href = result.authorization_url;
         else { window.location.href = result.authorization_url; return; }
         $("connection-result").textContent = "请在官方页面完成登录与授权，完成后自动接续。";
@@ -542,6 +569,15 @@
         showPlanWelcome();
       } catch (error) { if (popup) popup.close(); throw error; }
     });
+  }
+  $("chatgpt-login").addEventListener("click", () => beginChatGPTLogin(false));
+  $("reauthorize-chatgpt").addEventListener("click", () => beginChatGPTLogin(true));
+  $("chatgpt-model").addEventListener("change", renderLoginAccount);
+  $("use-api-key").addEventListener("click", () => {
+    $("provider-input").value = "api";
+    updateProviderFields();
+    $("connection-result").textContent = "已选择 API Key 连接。粘贴密钥并点击“导入并检测”；API 与 ChatGPT 订阅分别计费。";
+    $("api-key").focus();
   });
   $("plan-understood").addEventListener("click", () => { stored("relay-chatgpt-welcome", "1"); $("plan-welcome").close(); });
   if (new URLSearchParams(window.location.search).has("chatgpt_login")) {

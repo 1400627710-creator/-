@@ -12,6 +12,7 @@ from app.services import session_service
 from app.services.llm_client import LLMClient, ReplyFormatError
 from app.services.planning_service import ordered_tasks, traceability_rows, validate_planning
 from app.services.settings_service import SettingsService
+from diagnose import record_operation
 
 logger = logging.getLogger(__name__)
 CLAUSE_DELIMITERS = "。;；!！?？\r\n"
@@ -413,6 +414,7 @@ class RelayService:
             "user_messages": user_inputs,
             "last_output": previous_outputs[-1] if previous_outputs else None,
         }
+        settings = None
         try:
             settings: SettingsOut = self.settings.get(db)
             deadline = time.monotonic() + self.llm.config.llm_budget_seconds
@@ -433,20 +435,30 @@ class RelayService:
                     deadline=deadline,
                 )
             markdown = render_markdown(reply, user_inputs)
+            if settings.provider == "chatgpt":
+                self.auth.record_connection(True, settings.chatgpt_model)
         except TimeoutError:
             message = "模型连接或生成超时。原输入已保存，请稍后点击重试。"
+            failure = RelayError("gpt_timeout", message, 504, retryable=True)
+            record_operation(self.llm.config.data_dir, "generation", "model_inference", "error", failure.code)
+            if settings and settings.provider == "chatgpt" and self.auth:
+                self.auth.record_connection(False, settings.chatgpt_model, failure)
             self.save_error(db, session, message)
-            raise RelayError("gpt_timeout", message, 504, retryable=True) from None
+            raise failure from None
         except asyncio.CancelledError:
             self.save_error(db, session, "本次生成已中断，原输入已保存，可以重试。")
             raise
         except RelayError as error:
+            record_operation(self.llm.config.data_dir, "generation", "model_inference", "error", error.code, getattr(error, "http_evidence", None))
+            if settings and settings.provider == "chatgpt" and self.auth:
+                self.auth.record_connection(False, settings.chatgpt_model, error)
             self.save_error(db, session, error.message)
             raise
         except Exception as error:
             # Provider bodies can contain secrets; log only the exception type.
             logger.error("relay result processing failed: %s", type(error).__name__)
             message = "生成结果处理失败，原输入已保存，请点击重试。"
+            record_operation(self.llm.config.data_dir, "generation", "result_processing", "error", "relay_internal_error")
             self.save_error(db, session, message)
             raise RelayError("relay_internal_error", message, 500, retryable=True) from None
 
@@ -476,6 +488,7 @@ class RelayService:
         session.last_error = None
         session.updated_at = utcnow()
         db.commit()
+        record_operation(self.llm.config.data_dir, "generation", "generation", "ok")
         return MessageResult(
             message=MessageOut.model_validate(assistant),
             user_message=MessageOut.model_validate(user_message),

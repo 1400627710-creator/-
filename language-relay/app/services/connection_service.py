@@ -7,6 +7,7 @@ from openai import APIConnectionError, APIStatusError, APITimeoutError
 from app.config import valid_api_key_format
 from app.errors import RelayError
 from app.services.llm_client import OpenAITransport, terminal_provider_error
+from diagnose import record_operation
 
 
 class ConnectionService:
@@ -16,6 +17,19 @@ class ConnectionService:
 
     async def check(self, db):
         settings = self.settings.get(db)
+        try:
+            result = await self.check_selected(settings)
+        except RelayError as error:
+            record_operation(self.settings.config.data_dir, "connection", "model_inference", "error", error.code, getattr(error, "http_evidence", None))
+            if settings.provider == "chatgpt":
+                self.auth.record_connection(False, settings.chatgpt_model, error)
+            raise
+        if settings.provider == "chatgpt":
+            self.auth.record_connection(True, settings.chatgpt_model)
+        record_operation(self.settings.config.data_dir, "connection", "model_inference", "ok")
+        return result
+
+    async def check_selected(self, settings):
         start = time.monotonic()
         try:
             async with asyncio.timeout(10):
