@@ -9,15 +9,18 @@ const app=path.resolve(process.argv[2]||process.cwd()),temp=fs.mkdtempSync(path.
 const copy=path.join(temp,'小说 码字窗口'),profile=path.join(temp,'安装 用户目录'),local=path.join(temp,'本机数据');
 fs.cpSync(app,copy,{recursive:true});
 const env={...process.env,LOCALAPPDATA:local,WRITER_NONINTERACTIVE:'1',WRITER_SKIP_NODE_INSTALL:'1',WRITER_INSTALL_PROFILE:profile,WRITER_NO_OPEN:'1'};
-const run=(file,args=[],options={})=>spawnSync(process.env.ComSpec||'cmd.exe',['/d','/s','/c','""'+path.join(copy,file)+'" '+args.join(' ')+'"'],{cwd:copy,env,encoding:'utf8',timeout:90000,...options});
+const cmd=path.join(process.env.SystemRoot||'C:\\Windows','System32','cmd.exe');
+assert.ok(fs.existsSync(cmd),'Windows cmd.exe missing');
+const run=(file,args=[],options={})=>{const r=spawnSync(cmd,['/d','/s','/c','""'+path.join(copy,file)+'" '+args.join(' ')+'"'],{cwd:copy,env,encoding:'utf8',timeout:90000,windowsVerbatimArguments:true,...options});if(r.error)throw r.error;return r;};
 const passed=[];
 async function checkLocalStart(){
  const command='""'+path.join(copy,'START.cmd')+'""';
- const child=spawn(process.env.ComSpec||'cmd.exe',['/d','/s','/c',command],{cwd:copy,env,stdio:['pipe','pipe','pipe']});
+ const child=spawn(cmd,['/d','/s','/c',command],{cwd:copy,env,stdio:['pipe','pipe','pipe'],windowsVerbatimArguments:true});
+ let processError;child.on('error',e=>{processError=e;});
  let output='';for(const stream of [child.stdout,child.stderr])stream.on('data',chunk=>output+=chunk.toString('utf8'));
  try{
   const deadline=Date.now()+20000;let url;
-  while(Date.now()<deadline&&!url){assert.equal(child.exitCode,null,'启动器提前退出：'+output);url=output.match(/http:\/\/127\.0\.0\.1:\d+\//)?.[0];if(!url)await new Promise(resolve=>setTimeout(resolve,100));}
+  while(Date.now()<deadline&&!url){if(processError)throw processError;assert.equal(child.exitCode,null,'启动器提前退出：'+output);url=output.match(/http:\/\/127\.0\.0\.1:\d+\//)?.[0];if(!url)await new Promise(resolve=>setTimeout(resolve,100));}
   assert.ok(url,'未输出可用的窗口地址：'+output);
   const response=await fetch(url,{signal:AbortSignal.timeout(5000)});assert.equal(response.status,200);assert.ok((await response.text()).includes('__WRITER_LOCAL__'));
   assert.equal(child.exitCode,null);passed.push('正常 START.cmd 持续运行，真实本机窗口页面可访问');
