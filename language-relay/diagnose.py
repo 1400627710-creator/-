@@ -24,7 +24,10 @@ from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
-DIAGNOSTIC_VERSION = "1.2.1"
+DIAGNOSTIC_VERSION = "1.2.2"
+REGION_PROVIDER_CODE = "unsupported_country_region_territory"
+REGION_MESSAGE = "官方拒绝了本次请求：国家、地区或领土不受支持。浏览器账号登录不代表本应用已经取得授权；刷新模型或重新导入密钥不会改变这项拒绝。"
+REGION_NEXT_STEP = "核对 OpenAI 官方支持地区说明；如果你在受支持地区仍遇到此错误，向官方支持提供发生时间、失败阶段和安全错误码。报告不能确定官方判定的地区或依据；应用无法授予被拒绝的权限。"
 DISCOVERY_URL = "https://auth.openai.com/.well-known/openid-configuration"
 JWKS_URL = "https://auth.openai.com/.well-known/jwks.json"
 PLAN_SCOPE = "chatgpt.tokens.use.direct"
@@ -50,6 +53,7 @@ LOCAL_CODES = frozenset({
     "chatgpt_account_mismatch", "chatgpt_token_invalid", "chatgpt_plan_not_enabled",
     "chatgpt_login_required", "chatgpt_login_expired", "chatgpt_auth_unreadable",
     "chatgpt_not_eligible", "chatgpt_auth_forbidden", "chatgpt_client_rejected",
+    "chatgpt_region_unsupported", "api_region_unsupported",
     "chatgpt_scope_rejected", "chatgpt_auth_unavailable", "chatgpt_auth_connection",
     "chatgpt_auth_response_invalid", "chatgpt_auth_gateway", "chatgpt_auth_redirect",
     "chatgpt_callback_invalid", "chatgpt_model_catalog_pending", "auth_endpoint_invalid",
@@ -130,6 +134,15 @@ def atomic_json(path, value):
 OPERATIONS = frozenset({"installation", "server_start", "settings", "connection", "generation", "history", "export", "application", "diagnostics"})
 
 
+def timestamp(value):
+    if not isinstance(value, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00", value):
+        return None
+    try:
+        return datetime.fromisoformat(value).timestamp()
+    except (ValueError, OverflowError, OSError):
+        return None
+
+
 def clean_operations(value):
     """At most one latest result per known operation; never keep URLs or text."""
     results = {}
@@ -141,10 +154,17 @@ def clean_operations(value):
         if not event or event["outcome"] not in {"ok", "error"}:
             continue
         event["operation"] = item["operation"]
-        if isinstance(at, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00", at):
+        if timestamp(at) is not None:
             event["at"] = at
+        provider = enum_value(item.get("provider"), {"api", "chatgpt"})
+        if provider:
+            event["provider"] = provider
+        previous = results.get(item["operation"], {})
+        previous_at, current_at = timestamp(previous.get("at")), timestamp(event.get("at"))
+        if previous_at is not None and current_at is not None and current_at < previous_at:
+            continue
         results[item["operation"]] = event
-    return list(results.values())
+    return sorted(results.values(), key=lambda event: timestamp(event.get("at")) or 0)
 
 
 def failure_stage(code, fallback):
@@ -161,12 +181,12 @@ def failure_stage(code, fallback):
     return fallback if fallback in STAGES else "unknown"
 
 
-def record_operation(data_dir, operation, stage, outcome, code=None, evidence=None):
+def record_operation(data_dir, operation, stage, outcome, code=None, evidence=None, *, provider=None):
     if operation not in OPERATIONS:
         return
     path = data_dir / "operation-results.json"
     event = {**mapping(evidence), "operation": operation, "stage": failure_stage(code, stage),
-             "outcome": outcome, "code": code, "at": utc_now()}
+             "outcome": outcome, "code": code, "at": utc_now(), "provider": provider}
     results = clean_operations(read_json(path))
     results = [item for item in results if item["operation"] != operation]
     results.extend(clean_operations([event]))
@@ -176,25 +196,79 @@ def record_operation(data_dir, operation, stage, outcome, code=None, evidence=No
         pass  # Diagnostics must never replace the original failure.
 
 
-def operation_findings(results):
+def authorization_failure(auth, trace):
+    if auth.get("pending"):
+        return None
+    first = trace.get("first_failure")
+    if auth.get("connection_ok") is False:
+        return next((e for e in reversed(trace.get("events", [])) if e["stage"] == "model_inference" and e["outcome"] == "error"), first)
+    failed_login = auth.get("result_ok") is False and auth.get("result_code") not in {"unrecognized", "chatgpt_login_pending", "chatgpt_login_cancelled", "chatgpt_signed_out"}
+    return first if not auth.get("connected") or failed_login else None
+
+
+def authorization_failure_time(auth, trace):
+    if timestamp(auth.get("result_at")) is not None and auth.get("connection_ok") is not False:
+        return timestamp(auth["result_at"])
+    first = authorization_failure(auth, trace)
+    started = timestamp(trace.get("started_at"))
+    if first and started is not None and "elapsed_ms" in first:
+        return started + first["elapsed_ms"] / 1000
+    return None
+
+
+def operation_context(event, auth, trace):
+    """Old modes and failures preceding the current login remain reference data."""
+    code = event.get("code", "")
+    provider = event.get("provider")
+    if not provider:
+        provider = "api" if code.startswith("api_") else "chatgpt" if code.startswith("chatgpt_") else None
+    selected = auth.get("selected_provider")
+    if provider and selected and provider != selected:
+        return "other_provider"
+    if selected == "chatgpt" and event["operation"] in {"connection", "generation"}:
+        failure = authorization_failure(auth, trace)
+        if failure and event["stage"] == failure["stage"] and event.get("code") and event["code"] == failure.get("code"):
+            return "current"
+        cutoff = timestamp(trace.get("started_at")) if auth.get("pending") else authorization_failure_time(auth, trace)
+        at = timestamp(event.get("at"))
+        if cutoff is not None and at is not None and at < cutoff:
+            return "earlier_authorization"
+        if failure and failure["stage"] != "local_authorization" and code in {"chatgpt_login_required", "chatgpt_login_expired", "chatgpt_plan_not_enabled"}:
+            return "blocked_by_authorization"
+    return "current"
+
+
+def operation_findings(results, auth, trace):
     findings = []
     for event in results:
         if event["outcome"] != "error":
             continue
         stage = event["stage"]
+        context = operation_context(event, auth, trace)
+        historical = context != "current"
+        prefix = {"other_provider": "历史错误（其他连接方式，仅供参考）", "earlier_authorization": "历史错误（本次授权失败之前，仅供参考）", "blocked_by_authorization": "后续操作被前面的授权失败阻塞"}.get(context, "最近一次操作失败")
+        region = event.get("provider_code") == REGION_PROVIDER_CODE
         findings.append({"code": event.get("code", "operation_failed"), "stage": stage,
-                         "level": "error", "certainty": "observed",
-                         "message": f"最近一次{STAGES[stage]}失败；安全错误码：{event.get('code', '未采集')}。",
-                         "next_step": "已定位失败环节；具体根因可能仍待确认。把本报告反馈给开发者。修复后重新执行同一步，成功结果会替换此记录。"})
+                         "operation": event["operation"], "context": context,
+                         "level": "info" if historical else "error", "certainty": "observed",
+                         "message": f"{prefix}：{STAGES[stage]}；安全错误码：{event.get('code', '未采集')}。" + (REGION_MESSAGE if region else ""),
+                         "next_step": "先处理当前反馈指出的问题；此记录保留在操作明细中。" if historical else REGION_NEXT_STEP if region else "已定位失败环节；具体根因可能仍待确认。把本报告反馈给开发者。修复后重新执行同一步，成功结果会替换此记录。"})
     return findings
 
 
 def feedback_for(findings, operations, auth, local, trace):
-    failed = [item for item in operations if item["outcome"] == "error"]
-    event = failed[-1] if failed else None
+    failed = [item for item in operations if item["outcome"] == "error" and operation_context(item, auth, trace) == "current"]
+    event = max(failed, key=lambda e: timestamp(e.get("at")) or 0) if failed else None
     problem = next((item for item in findings if item["level"] == "error"), None)
-    if event and not str(event.get("code", "")).startswith("chatgpt_"):
-        problem = next((item for item in findings if item["stage"] == event["stage"] and item["code"] == event.get("code")), problem)
+    chosen_event = None
+    if event:
+        auth_failure = authorization_failure(auth, trace)
+        auth_at, operation_at = authorization_failure_time(auth, trace), timestamp(event.get("at"))
+        auth_is_primary = problem and auth_failure and problem["stage"] == auth_failure["stage"] and auth.get("selected_provider") != "api"
+        if not auth_is_primary or (operation_at is not None and auth_at is not None and operation_at > auth_at):
+            operation_problem = next((item for item in findings if item.get("operation") == event["operation"] and item["code"] == event.get("code")), None)
+            if operation_problem:
+                problem, chosen_event = operation_problem, event
     if not problem:
         problem = next((item for item in findings if item["level"] == "warning"), None)
     stage = problem["stage"] if problem else "unknown"
@@ -205,12 +279,15 @@ def feedback_for(findings, operations, auth, local, trace):
     for item in trace.get("events", []):
         if item["stage"] == stage and item["outcome"] == "error":
             evidence.update(item)
-    if event and event["stage"] == stage:
-        evidence.update(event)
+    if chosen_event:
+        evidence = dict(chosen_event)
     app_code = evidence.get("code")
     if not app_code and stage in {"callback", "client_registration", "token_exchange", "discovery", "jwks", "verify_identity", "scope_check", "save_credentials", "models", "token_refresh", "local_authorization", "revocation"}:
         if auth.get("result_ok") is False and auth.get("result_code") != "unrecognized":
             app_code = auth.get("result_code")
+    recorded_code = None
+    if not chosen_event and problem and problem["code"] == "region_not_supported" and auth.get("result_code") == "chatgpt_region_unsupported" and app_code == "chatgpt_auth_forbidden":
+        recorded_code, app_code = app_code, auth["result_code"]
     completed = []
     if local.get("server_reachable"):
         completed.append("本机网页服务可访问")
@@ -221,7 +298,7 @@ def feedback_for(findings, operations, auth, local, trace):
     if auth.get("connection_ok") is True:
         completed.append("最近一次所选模型调用通过")
     completed.extend(STAGES[e["stage"]] for e in operations if e["outcome"] == "ok")
-    return {"problem_stage": stage, "problem_location": STAGES[stage],
+    return {**({"recorded_error_code": recorded_code} if recorded_code else {}), "problem_stage": stage, "problem_location": STAGES[stage],
             "error_code": app_code or (problem["code"] if problem else None),
             "diagnostic_code": problem["code"] if problem else None,
             "confirmed": problem["message"] if problem else "当前自检没有发现已记录的失败；这不代表真实模型调用或内容质量已通过。",
@@ -410,7 +487,10 @@ def auth_snapshot(data, status):
     result = result if isinstance(result, dict) else {}
     expires = safe_number(data.get("expires_at"), 0, 4102444800)
     connection = mapping(status.get("connection_check"))
-    return {**{key: status.get(key) is True for key in ("signed_in", "plan_enabled", "connected", "pending")}, "phase": enum_value(status.get("phase"), PHASES, "signed_out"), "result_code": enum_value(result.get("code"), LOCAL_CODES, "unrecognized"), "result_ok": result.get("ok") is True, "access_token_present": bool(data.get("access_token")), "refresh_token_present": bool(data.get("refresh_token")), "id_token_present": bool(data.get("id_token")), "issued_client_id_present": bool(data.get("client_id")), "host_registration_present": bool(data.get("host_id")), "token_expired": expires <= time.time() if expires is not None else None, "granted_scopes": [scope for scope in SCOPES if scope in scopes], "connection_checked": type(connection.get("ok")) is bool, "connection_ok": connection.get("ok") if type(connection.get("ok")) is bool else None, "connection_code": enum_value(connection.get("code"), LOCAL_CODES, "unrecognized")}
+    snapshot = {**{key: status.get(key) is True for key in ("signed_in", "plan_enabled", "connected", "pending")}, "phase": enum_value(status.get("phase"), PHASES, "signed_out"), "result_code": enum_value(result.get("code"), LOCAL_CODES, "unrecognized"), "result_ok": result.get("ok") is True, "access_token_present": bool(data.get("access_token")), "refresh_token_present": bool(data.get("refresh_token")), "id_token_present": bool(data.get("id_token")), "issued_client_id_present": bool(data.get("client_id")), "host_registration_present": bool(data.get("host_id")), "token_expired": expires <= time.time() if expires is not None else None, "granted_scopes": [scope for scope in SCOPES if scope in scopes], "connection_checked": type(connection.get("ok")) is bool, "connection_ok": connection.get("ok") if type(connection.get("ok")) is bool else None, "connection_code": enum_value(connection.get("code"), LOCAL_CODES, "unrecognized")}
+    if timestamp(result.get("at")) is not None:
+        snapshot["result_at"] = result["at"]
+    return snapshot
 
 
 def findings_for(auth, trace, local, probes, environment):
@@ -425,14 +505,14 @@ def findings_for(auth, trace, local, probes, environment):
         add("auth_record_unreadable", "本机授权记录无法读取或格式不正确。", "先保留数据目录，使用连接与设置重新登录修复授权记录；不需要删除会话历史。", "save_credentials")
     if local.get("server_reachable") is False:
         add("server_not_detected", "未检测到唯一的中继器服务；当前报告来自独立诊断进程。", "保持启动窗口打开；有多个应用时用 --port 指定该窗口显示的端口。诊断进程的依赖版本可能不同于应用虚拟环境。", level="warning")
-    first = trace.get("first_failure")
-    if auth.get("connection_ok") is False:
-        first = next((e for e in reversed(trace.get("events", [])) if e["stage"] == "model_inference" and e["outcome"] == "error"), first)
-    if first and (not auth.get("connected") or auth.get("connection_ok") is False):
+    first = authorization_failure(auth, trace)
+    if first:
         stage, provider = first["stage"], first.get("provider_code")
         label = STAGES[stage]
         suffix = f"（HTTP {first['http_status']}）" if first.get("http_status") else ""
-        if provider == "subscription_sharing_user_not_eligible":
+        if provider == REGION_PROVIDER_CODE:
+            add("region_not_supported", f"{label}被官方拒绝{suffix}；官方错误码：{REGION_PROVIDER_CODE}。" + REGION_MESSAGE, REGION_NEXT_STEP, stage)
+        elif provider == "subscription_sharing_user_not_eligible":
             add("plan_not_eligible", f"{label}被官方拒绝{suffix}，错误码明确表示所选用户、工作区或政策不满足计划使用条件。", "在官方设置中核对所选账号与工作区的应用权限；保留请求 ID 用于官方支持。重复刷新不能授予权限。", stage)
         elif provider in {"invalid_client", "unauthorized_client"}:
             add("client_registration_rejected", f"{label}失败{suffix}：上游拒绝客户端注册或配置。", "把此报告反馈给开发者，检查签发客户端、资源和回调的一致性；不要仅按地区限制处理。", stage)
@@ -452,8 +532,13 @@ def findings_for(auth, trace, local, probes, environment):
         add("callback_not_completed", "官方回调尚未完成，当前正在等待授权流程。", "完成官方页面后返回；如果一直等待，核对是否返回同一启动窗口的本机地址。", "callback", "warning")
     elif not auth.get("connected") and auth.get("selected_provider") != "api":
         add("local_grant_unavailable", "本机没有可用的 ChatGPT 计划授权。", "结合首次失败原因完成官方授权；刷新模型不能代替授权。", "local_authorization", "warning")
+    if first and first.get("provider_code") == REGION_PROVIDER_CODE and environment.get("windows_browser_proxy_enabled") is True:
+        add("browser_backend_network_configuration_differs", "Windows 浏览器代理已开启；应用后端按设计直接连接官方接口。这是已观察到的配置差异。", "假设：浏览器与后端的请求出口可能不同。本报告未探测出口 IP 或地区，不能证明配置差异造成了此次 403；在受支持地区仍被拒绝时，可请网络管理员或官方支持核查。", first["stage"], "info")
     if auth.get("selected_provider") == "api":
-        add("api_key_present" if auth.get("api_key_configured") else "api_key_missing", "当前选择 API 密钥连接；" + ("已保存密钥。" if auth.get("api_key_configured") else "尚未配置密钥。"), "自检不调用模型，也不验证密钥的计费或生成权限。需要时可另行使用保存并检测连接。", level="info" if auth.get("api_key_configured") else "error")
+        for finding in findings:
+            if finding["stage"] in {"callback", "client_registration", "token_exchange", "discovery", "jwks", "verify_identity", "scope_check", "models", "token_refresh", "local_authorization", "model_inference"}:
+                finding.update(level="info", context="other_provider", message="历史 ChatGPT 连接记录（当前选择 API，仅供参考）：" + finding["message"])
+        add("api_key_present" if auth.get("api_key_configured") else "api_key_missing", "当前选择 API 密钥连接；" + ("已保存密钥。" if auth.get("api_key_configured") else "尚未配置密钥。"), "自检不调用模型，也不验证密钥的计费或生成权限。需要时可另行使用保存并检测连接。", "connection_settings", level="info" if auth.get("api_key_configured") else "error")
     for probe in probes:
         if probe["outcome"] == "error":
             stage = probe["stage"]
@@ -483,11 +568,13 @@ def make_report(*, app_version, environment, local, auth, trace, probes=(), netw
     granted = auth.get("granted_scopes") if isinstance(auth.get("granted_scopes"), list) else []
     clean_auth.update(phase=enum_value(auth.get("phase"), PHASES, "signed_out"), result_code=enum_value(auth.get("result_code"), LOCAL_CODES, "unrecognized"), granted_scopes=[scope for scope in SCOPES if scope in granted], selected_provider=enum_value(auth.get("selected_provider"), {"api", "chatgpt"}))
     clean_auth["connection_code"] = enum_value(auth.get("connection_code"), LOCAL_CODES, "unrecognized")
+    if timestamp(auth.get("result_at")) is not None:
+        clean_auth["result_at"] = auth["result_at"]
     clean_probes = [event for item in (probes if isinstance(probes, (list, tuple)) else [])[:5] if (event := clean_event(item))]
     clean_history = clean_trace(trace)
     findings = findings_for(clean_auth, clean_history, clean_local, clean_probes, env)
     operations = clean_operations(operations)
-    findings.extend(operation_findings(operations))
+    findings.extend(operation_findings(operations, clean_auth, clean_history))
     feedback = feedback_for(findings, operations, clean_auth, clean_local, clean_history)
     return {"schema_version": 1, "application": "language-relay", "diagnostic_version": DIAGNOSTIC_VERSION, "app_version": safe_version(app_version), "report_id": uuid.uuid4().hex, "created_at": utc_now(), "source": source if source in {"app", "standalone", "standalone_legacy"} else "standalone", "server_port": int(server_port) if safe_number(server_port, 1, 65535) is not None else None, "environment": env, "local": clean_local, "authorization": clean_auth, "login_trace": clean_history, "network": {"requested": bool(network_requested), "model_inference_performed": False, "probes": clean_probes}, "findings": findings, "operations": operations, "feedback": feedback, "summary": "定位：" + feedback["problem_location"] + "。错误码：" + str(feedback["error_code"] or "未发现已记录错误") + "。\n" + "\n".join(item["message"] + " " + item["next_step"] for item in findings), "privacy": {"allowlisted_fields_only": True, "credentials_exported": False, "account_identifiers_exported": False, "callback_parameters_exported": False, "ideas_or_history_exported": False, "raw_logs_or_provider_bodies_exported": False, "automatic_upload": False}}
 

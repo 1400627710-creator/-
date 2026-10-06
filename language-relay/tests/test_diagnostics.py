@@ -61,6 +61,48 @@ def assert_private(report, *extra):
     assert not report["privacy"]["automatic_upload"]
 
 
+def test_returning_callback_without_client_id_reports_region_denial_and_explicit_landing(config, signing_key):
+    write_private_json(config.data_dir / "chatgpt-auth.json", {"client_id": "oaiapp_test", "host_id": "local-test-host"})
+    server = DeniedServer(signing_key, provider_code="unsupported_country_region_territory")
+    app = create_app(config, auth_http_factory=server.factory)
+    with TestClient(app, base_url="http://127.0.0.1:8123", headers={"X-Relay-Client": "local"}) as client:
+        started = client.post("/api/auth/chatgpt/start").json()
+        params = parse_qs(urlsplit(started["authorization_url"]).query)
+        result = client.get("/auth/callback", params={"state": params["state"][0], "code": "one-time-secret-code"})
+        assert result.status_code == 200 and result.url.path == "/"
+        assert "本次登录未完成" in result.text and "unsupported_country_region_territory" in result.text
+        assert "失败环节：交换授权码" in result.text and 'id="copy-login-return"' in result.text
+        assert "one-time-secret-code" not in result.text and params["state"][0] not in result.text
+        status = client.get("/api/auth/chatgpt/status").json()
+        assert status["result"]["code"] == "chatgpt_region_unsupported" and not status["signed_in"]
+        assert status["failure"]["stage"] == "token_exchange" and status["failure"]["http_status"] == 403
+        assert status["failure"]["provider_code"] == "unsupported_country_region_territory"
+        callback = next(e for e in app.state.chatgpt_auth.trace.data["events"] if e["stage"] == "callback")
+        assert callback["state_valid"] and not callback["client_id_present"]
+        assert not app.state.chatgpt_auth.read().get("access_token")
+        report = client.post("/api/diagnostics/run", json={"check_network": False}).json()
+        assert report["feedback"]["problem_stage"] == "token_exchange"
+        assert_private(report)
+
+
+def test_upgrade_reclassifies_persisted_region_evidence_without_network_or_changing_credentials(config):
+    from diagnose import atomic_json
+    credentials = {"client_id": "oaiapp_test", "host_id": "local-test-host"}
+    write_private_json(config.data_dir / "chatgpt-auth.json", credentials)
+    write_private_json(config.data_dir / "chatgpt-login-result.json", {"ok": False, "code": "chatgpt_auth_forbidden", "message": "原因未明"})
+    atomic_json(config.data_dir / "chatgpt-login-trace.json", {"events": [{"stage": "token_exchange", "outcome": "error", "code": "chatgpt_auth_forbidden"}], "first_failure": {"stage": "token_exchange", "outcome": "error", "http_status": 403, "provider_code": "unsupported_country_region_territory"}})
+    auth = ChatGPTAuth(config, lambda: pytest.fail("Upgrade must not start any upstream request"))
+    status = auth.status()
+    assert status["result"]["code"] == "chatgpt_region_unsupported"
+    assert "国家、地区" in status["message"] and not status["signed_in"] and not status["connected"]
+    assert auth.read() == credentials
+    with TestClient(create_app(config), headers={"X-Relay-Client": "local"}) as client:
+        client.put("/api/settings", json={"provider": "chatgpt"})
+        report = client.post("/api/diagnostics/run", json={"check_network": False}).json()
+        assert report["feedback"]["error_code"] == "chatgpt_region_unsupported"
+        assert report["feedback"]["recorded_error_code"] == "chatgpt_auth_forbidden"
+
+
 @pytest.mark.parametrize("endpoint,stage", [(TOKEN, "token_exchange"), (DISCOVERY, "discovery"), (JWKS, "jwks")])
 def test_403_stage_root_cause_survives_refresh_report_and_restart(config, signing_key, endpoint, stage):
     server = DeniedServer(signing_key, endpoint, provider_code="invalid_client")
@@ -91,6 +133,7 @@ def test_403_stage_root_cause_survives_refresh_report_and_restart(config, signin
 
 
 @pytest.mark.parametrize("provider,app_code,finding", [
+    ("unsupported_country_region_territory", "chatgpt_region_unsupported", "region_not_supported"),
     ("subscription_sharing_user_not_eligible", "chatgpt_not_eligible", "plan_not_eligible"),
     ("chatpass_v2_scope_not_authorized", "chatgpt_scope_rejected", "plan_scope_missing"),
     ("unrecognized_private_code_" + SECRET, "chatgpt_auth_forbidden", "authorization_forbidden_unknown"),

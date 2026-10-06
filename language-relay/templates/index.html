@@ -38,6 +38,15 @@
         <button class="button" id="banner-settings" type="button">选择连接方式 <span aria-hidden="true">↗</span></button>
       </section>
 
+      <section class="connection-banner" id="login-return" role="status" {% if not login_return %}hidden{% endif %}>
+        <div><strong id="login-return-title">{% if chatgpt.pending %}正在完成本机授权{% elif chatgpt.result and not chatgpt.result.ok %}本次登录未完成{% elif chatgpt.connected %}账号登录和计划授权已完成{% elif chatgpt.signed_in %}账号已登录，模型尚未授权{% else %}本机尚未取得登录授权{% endif %}</strong>
+          <span id="login-return-message">{{ chatgpt.message }}</span>
+          <span id="login-return-evidence">{% if chatgpt.failure %}失败环节：{{ chatgpt.failure.location }}。{% endif %}{% if chatgpt.result and not chatgpt.result.ok %}报错代码：{{ chatgpt.result.code }}。{% endif %}{% if chatgpt.failure and chatgpt.failure.provider_code %}官方错误码：{{ chatgpt.failure.provider_code }}。{% endif %}</span>
+          <small>此页表示官方回调已返回；是否取得授权，以这里的本机结果为准。</small>
+        </div>
+        <button class="button" id="copy-login-return" type="button">复制登录报错</button>
+      </section>
+
       <div class="workspace">
         <section class="idea-panel" aria-labelledby="idea-heading">
           <div class="panel-heading"><span class="step-label">01 / 描述想法</span><span class="model-badge" id="model-badge">{{ settings.chatgpt_model if settings.provider == "chatgpt" else settings.model }}</span></div>
@@ -102,6 +111,7 @@
         <button class="button" id="copy-login-error" type="button">复制登录报错</button>
         <small>一键返回错误码、中文失败环节和脱敏报告，可直接粘贴反馈；不调用模型。无法复制时自动下载 JSON。</small>
         <small>先在 OpenAI 官方页面登录，再授权模型调用，最后选择模型并检测连接。缺少授权时点击“授权模型调用”；普通刷新不会增加权限。官方拒绝资格时，请导出自检报告。</small>
+        <small>若官方返回国家或地区不受支持，请核对 <a href="https://developers.openai.com/api/docs/supported-countries" target="_blank" rel="noopener noreferrer">官方支持地区</a>，或通过 OpenAI 官方帮助中心联系支持。API Key 也不能改变地区拒绝。</small>
         <label for="chatgpt-model">ChatGPT 可用模型</label><select id="chatgpt-model"><option value="">登录后选择模型</option></select>
         <button class="button" id="refresh-chatgpt-models" type="button">刷新可用模型</button>
         <small>由官方返回账户的模型列表；此连接方式不使用 API 温度设置。</small>

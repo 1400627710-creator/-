@@ -11,6 +11,7 @@
   let connectionBusy = false;
   let chatgptStatus = { connected: false, models: [] };
   let diagnosticReport = "";
+  const loginReturned = new URLSearchParams(window.location.search).get("chatgpt_login") === "finished";
 
   function stored(key, value) {
     try {
@@ -394,14 +395,22 @@
     $("cancel-chatgpt-login").hidden = !chatgptStatus.pending;
     $("chatgpt-login").textContent = chatgptStatus.pending ? "重新打开官方授权页" : chatgptStatus.signed_in ? "重新登录" : "使用 ChatGPT 继续";
     const check = chatgptStatus.connection_check?.model === $("chatgpt-model").value ? chatgptStatus.connection_check : null;
-    $("login-step-identity").textContent = `账号登录：${chatgptStatus.signed_in ? "已登录" : chatgptStatus.pending ? "正在登录" : "等待登录"}`;
+    const loginFailed = !chatgptStatus.pending && chatgptStatus.result?.ok === false && !["chatgpt_login_cancelled", "chatgpt_signed_out"].includes(chatgptStatus.result.code);
+    $("login-step-identity").textContent = `账号登录：${chatgptStatus.signed_in ? "已登录" : chatgptStatus.pending ? "正在登录" : loginFailed ? "本机授权未完成，原因见下方" : "等待登录"}`;
     $("login-step-plan").textContent = `模型授权：${chatgptStatus.plan_enabled ? "已授权" : chatgptStatus.signed_in ? "尚未授权，请点击下方授权按钮" : "等待授权"}`;
     $("login-step-model").textContent = `模型连接：${check ? check.ok ? "最近一次检测或调用通过" : "检测或调用失败，原因见下方" : "待检测；登录和模型列表不代表调用成功"}`;
     $("reauthorize-chatgpt").hidden = chatgptStatus.pending || !chatgptStatus.signed_in || (chatgptStatus.plan_enabled && !["chatgpt_plan_not_enabled", "chatgpt_scope_rejected"].includes(check?.code));
     $("use-api-key").hidden = chatgptStatus.pending || !(check?.ok === false || chatgptStatus.result?.ok === false);
-    const failure = check?.ok === false ? check : chatgptStatus.result?.ok === false ? chatgptStatus.result : null;
-    $("login-error-code").textContent = failure ? `报错代码：${failure.code || "未记录具体代码"}。点击“复制登录报错”获取失败环节和完整反馈。` : "";
+    const failure = chatgptStatus.pending ? null : check?.ok === false ? check : loginFailed ? chatgptStatus.result : null;
+    const evidence = chatgptStatus.failure;
+    const detail = `${evidence?.location ? `失败环节：${evidence.location}。` : ""}${evidence?.provider_code ? `官方错误码：${evidence.provider_code}。` : ""}${evidence?.http_status ? `HTTP ${evidence.http_status}。` : ""}`;
+    $("login-error-code").textContent = failure ? `${detail}报错代码：${failure.code || "未记录具体代码"}。点击“复制登录报错”获取完整反馈。` : "";
     $("login-error-code").hidden = !failure;
+    if (loginReturned) {
+      $("login-return-title").textContent = chatgptStatus.pending ? "正在完成本机授权" : loginFailed ? "本次登录未完成" : chatgptStatus.connected ? "账号登录和计划授权已完成" : chatgptStatus.signed_in ? "账号已登录，模型尚未授权" : "本机尚未取得登录授权";
+      $("login-return-message").textContent = loginFailed ? chatgptStatus.result.message : chatgptStatus.message || "请检查登录结果。";
+      $("login-return-evidence").textContent = failure ? `${detail}报错代码：${failure.code}。` : "请选择模型并检测连接；账号登录不等于模型调用已通过。";
+    }
   }
 
   function showLoginResult() {
@@ -460,7 +469,7 @@
   async function connectionAction(action) {
     if (connectionBusy || state.busy) return;
     connectionBusy = true;
-    const ids = ["save-settings", "test-connection", "import-key-text", "import-key-file", "chatgpt-login", "reauthorize-chatgpt", "use-api-key", "chatgpt-logout", "refresh-chatgpt-models", "check-chatgpt-login", "cancel-chatgpt-login", "run-diagnostics", "copy-login-error"];
+    const ids = ["save-settings", "test-connection", "import-key-text", "import-key-file", "chatgpt-login", "reauthorize-chatgpt", "use-api-key", "chatgpt-logout", "refresh-chatgpt-models", "check-chatgpt-login", "cancel-chatgpt-login", "run-diagnostics", "copy-login-error", "copy-login-return"];
     ids.forEach((id) => { $(id).disabled = true; });
     $("settings-error").hidden = true;
     $("connection-result").textContent = "正在检查，请稍候…";
@@ -512,6 +521,7 @@
   }
   $("run-diagnostics").addEventListener("click", () => { void connectionAction(() => collectDiagnostics($("diagnostic-network").checked)); });
   $("copy-login-error").addEventListener("click", () => { void connectionAction(() => collectDiagnostics(false, true)); });
+  $("copy-login-return").addEventListener("click", () => { void connectionAction(() => collectDiagnostics(false, true)); });
   $("copy-diagnostics").addEventListener("click", () => { if (diagnosticReport) void copy(diagnosticReport, "已复制脱敏诊断报告。"); });
   $("import-key-text").addEventListener("click", () => { void connectionAction(() => importKey($("api-key").value)); });
   $("import-key-file").addEventListener("click", () => $("key-file").click());
@@ -580,14 +590,6 @@
     $("api-key").focus();
   });
   $("plan-understood").addEventListener("click", () => { stored("relay-chatgpt-welcome", "1"); $("plan-welcome").close(); });
-  if (new URLSearchParams(window.location.search).has("chatgpt_login")) {
-    window.history.replaceState({}, "", "/");
-    void openSettings().then(() => {
-      showLoginResult();
-      showPlanWelcome();
-    });
-  }
-
   function openAction(action) {
     if (!state.session || state.busy) return;
     state.action = action;
@@ -691,7 +693,13 @@
 
   document.documentElement.dataset.theme = stored("relay-theme") || "light";
   $("theme-toggle").textContent = document.documentElement.dataset.theme === "dark" ? "切换浅色模式" : "切换深色模式";
-  void refreshLoginState().catch(() => {});
+  if (loginReturned) {
+    window.history.replaceState({}, "", "/");
+    void openSettings().then(() => {
+      $("provider-input").value = "chatgpt";
+      updateProviderFields(); renderLoginAccount(); showLoginResult(); showPlanWelcome();
+    }).catch((error) => toast(error.message));
+  } else void refreshLoginState().catch(() => {});
   window.addEventListener("focus", () => {
     if (!connectionBusy && (chatgptStatus.pending || state.provider === "chatgpt")) void refreshLoginState().catch(() => {});
   });

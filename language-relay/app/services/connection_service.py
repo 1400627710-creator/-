@@ -20,13 +20,14 @@ class ConnectionService:
         try:
             result = await self.check_selected(settings)
         except RelayError as error:
-            record_operation(self.settings.config.data_dir, "connection", "model_inference", "error", error.code, getattr(error, "http_evidence", None))
+            error.selected_provider = settings.provider
+            record_operation(self.settings.config.data_dir, "connection", "model_inference", "error", error.code, getattr(error, "provider_evidence", None), provider=settings.provider)
             if settings.provider == "chatgpt":
                 self.auth.record_connection(False, settings.chatgpt_model, error)
             raise
         if settings.provider == "chatgpt":
             self.auth.record_connection(True, settings.chatgpt_model)
-        record_operation(self.settings.config.data_dir, "connection", "model_inference", "ok")
+        record_operation(self.settings.config.data_dir, "connection", "model_inference", "ok", provider=settings.provider)
         return result
 
     async def check_selected(self, settings):

@@ -678,6 +678,51 @@ def check_browser(base_url: str, output: Path, transport: BrowserTransport, oaut
         )
         checks.append("授权失败与最近自检报告刷新后保留")
 
+        # Reproduce the old API error followed by the currently selected login.
+        headers = {"X-Relay-Client": "local"}
+        context.request.put(base_url + "/api/settings", data={"provider": "api", "openai_api_key": ""}, headers=headers)
+        failed_sid = context.request.post(base_url + "/api/sessions", data={"title": "诊断优先级回归"}, headers=headers).json()["id"]
+        old_failure = context.request.post(base_url + f"/api/sessions/{failed_sid}/messages", data={"content": "我想做卡牌游戏"}, headers=headers)
+        assert old_failure.json()["detail"]["code"] == "api_key_missing"
+        oauth_server.endpoint = TOKEN
+        oauth_server.provider_code = "unsupported_country_region_territory"
+        with page.expect_popup() as region_popup_info:
+            page.click("#chatgpt-login")
+        region_popup = region_popup_info.value
+        region_popup.on("pageerror", lambda error: errors.append(str(error)))
+        region_popup.wait_for_url(base_url + "/", timeout=10000)
+        expect(region_popup.locator("#settings-dialog")).to_be_visible()
+        expect(region_popup.locator("#chatgpt-fields")).to_be_visible()
+        expect(region_popup.locator("#login-error-code")).to_contain_text("unsupported_country_region_territory")
+        expect(region_popup.locator("#login-error-code")).to_contain_text("交换授权码")
+        expect(region_popup.locator("#login-step-identity")).to_contain_text("本机授权未完成")
+        checks.append("新回调标签页自动显示登录失败位置、官方地区码和真实未授权状态")
+        expect(page.locator("#login-error-code")).to_contain_text("chatgpt_region_unsupported", timeout=10000)
+        checks.append("原页面自动接续显示同一次地区拒绝，两个标签页状态一致")
+        region_popup.click("#cancel-settings")
+        expect(region_popup.locator("#login-return-title")).to_contain_text("本次登录未完成")
+        expect(region_popup.locator("#login-return-evidence")).to_contain_text("unsupported_country_region_territory")
+        assert "code=" not in region_popup.url and "state=" not in region_popup.url
+        checks.append("关闭设置后回调结果仍清楚可见，地址栏清除授权参数")
+        calls_before = len(oauth_server.calls)
+        model_calls_before = transport.calls
+        region_popup.click("#copy-login-return")
+        expect(region_popup.locator("#toast")).to_contain_text("已复制登录报错")
+        regional = json.loads(region_popup.evaluate("navigator.clipboard.readText()"))
+        assert regional["feedback"]["problem_stage"] == "token_exchange"
+        assert regional["feedback"]["error_code"] == "chatgpt_region_unsupported"
+        assert regional["feedback"]["evidence"]["provider_code"] == "unsupported_country_region_territory"
+        old = next(f for f in regional["findings"] if f["code"] == "api_key_missing")
+        assert old["level"] == "info" and old["context"] == "other_provider"
+        assert len(oauth_server.calls) == calls_before and transport.calls == model_calls_before
+        assert_private(regional)
+        checks.append("回调页一键复制精确地区故障，旧缺 Key 记录仅供参考，自检不调用模型")
+        region_popup.reload(wait_until="networkidle")
+        region_popup.click("#open-settings")
+        expect(region_popup.locator("#login-error-code")).to_contain_text("unsupported_country_region_territory")
+        checks.append("地区拒绝和官方错误码刷新后保留")
+        region_popup.close()
+
         oauth_server.endpoint = None
         oauth_server.scopes = SCOPES
         login_flow["mode"] = "connected"
@@ -685,6 +730,9 @@ def check_browser(base_url: str, output: Path, transport: BrowserTransport, oaut
             page.click("#chatgpt-login")
         recovered_popup = recovered_popup_info.value
         expect(page.locator("#chatgpt-account")).to_contain_text("已授权", timeout=10000)
+        expect(recovered_popup.locator("#login-return-title")).to_contain_text("账号登录和计划授权已完成", timeout=10000)
+        expect(recovered_popup.locator("#login-step-model")).to_contain_text("待检测")
+        checks.append("成功回调明确区分账号与计划授权完成、模型调用仍待检测")
         recovered_popup.close()
         page.check("#diagnostic-network")
         model_calls_before = transport.calls

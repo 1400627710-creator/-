@@ -22,7 +22,7 @@ from app.config import Config, valid_api_key_format
 from app.errors import RelayError
 from app.prompts.relay_prompt import SYSTEM_PROMPT, control_prompt
 from app.schemas import LLMReply, SettingsOut
-from diagnose import http_evidence
+from diagnose import REGION_MESSAGE, REGION_PROVIDER_CODE, http_evidence
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +51,7 @@ def provider_retry_delay(value: str | None) -> float:
 
 def plan_error(code):
     errors = {
+        REGION_PROVIDER_CODE: ("chatgpt_region_unsupported", REGION_MESSAGE, 403),
         "subscription_sharing_usage_limit_exceeded": (
             "chatgpt_usage_limit",
             "ChatGPT 计划或本应用额度已达到上限，请在 ChatGPT 设置中查看额度。",
@@ -101,8 +102,16 @@ def terminal_provider_error(error, provider="api"):
     body = error.body if isinstance(error.body, dict) else {}
     inner = body.get("error", body)
     code = str(inner.get("code") or "") if isinstance(inner, dict) else ""
+    evidence = http_evidence(error.status_code, error.response.headers, error.response.content)
+
+    def safe_error(name, message, status):
+        result = RelayError(name, message, status)
+        result.provider_evidence = evidence
+        return result
+
+    if code == REGION_PROVIDER_CODE:
+        return safe_error("chatgpt_region_unsupported" if provider == "chatgpt" else "api_region_unsupported", REGION_MESSAGE, 403)
     if provider == "chatgpt":
-        evidence = http_evidence(error.status_code, error.response.headers, error.response.content)
         if code.startswith(("subscription_sharing_", "chatpass_v2_")):
             result = plan_error(code)
             if not result.retryable:
@@ -123,25 +132,25 @@ def terminal_provider_error(error, provider="api"):
             result.provider_evidence = evidence
             return result
     if code in {"insufficient_quota", "billing_hard_limit_reached", "billing_not_active"}:
-        return RelayError(
+        return safe_error(
             "api_quota_exhausted",
             "OpenAI API 额度不足或计费未启用。请在 API 平台检查余额；API 与 ChatGPT 订阅的计费分别管理。",
             402,
         )
     if isinstance(error, AuthenticationError):
-        return RelayError("api_key_invalid", "API Key 无效，请在设置中重新导入完整密钥。", 401)
+        return safe_error("api_key_invalid", "API Key 无效，请在设置中重新导入完整密钥。", 401)
     if isinstance(error, PermissionDeniedError):
-        return RelayError(
+        return safe_error(
             "api_permission_denied", "密钥项目权限、账户或地区限制阻止了调用，请检查 API 平台权限。", 403
         )
     if isinstance(error, BadRequestError) or error.status_code == 404:
-        return RelayError(
+        return safe_error(
             "model_config_invalid",
             "模型或温度配置不受支持。请检查模型权限与结构化输出支持；API 默认模型为 gpt-4o-mini。",
             400,
         )
     if error.status_code not in (408, 409, 429) and error.status_code < 500:
-        return RelayError("gpt_request_rejected", "OpenAI 拒绝了请求，请检查账户与模型权限。", 502)
+        return safe_error("gpt_request_rejected", "OpenAI 拒绝了请求，请检查账户与模型权限。", 502)
     return None
 
 

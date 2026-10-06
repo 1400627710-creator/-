@@ -103,6 +103,7 @@ async def test_callback_is_processing_before_trace_file_io(config, key, monkeypa
 
 
 @pytest.mark.parametrize("body,code,finding", [
+    ({"error": {"code": "unsupported_country_region_territory"}}, "chatgpt_region_unsupported", "region_not_supported"),
     ({"error": {"code": "subscription_sharing_user_not_eligible"}}, "chatgpt_not_eligible", "plan_not_eligible"),
     ({"detail": "private-response-must-not-appear"}, "chatgpt_auth_forbidden", "authorization_forbidden_unknown"),
     ({"error": {"code": "private-response-must-not-appear"}}, "chatgpt_auth_forbidden", "authorization_forbidden_unknown"),
@@ -128,6 +129,9 @@ def test_model_denial_keeps_identity_and_exports_actual_failure(config, key, bod
         evidence = report["login_trace"]["first_failure"]
         assert evidence["stage"] == "model_inference" and evidence["http_status"] == 403
         assert evidence["request_id"] == "req_0123456789abcdef"
+        operation = next(e for e in report["operations"] if e["operation"] == "connection")
+        assert operation["provider"] == "chatgpt" and operation["http_status"] == 403
+        assert operation["request_id"] == evidence["request_id"]
         assert_private(report)
         assert "private-response-must-not-appear" not in json.dumps([status, report])
         assert "identity_fingerprint" not in json.dumps([status, report])

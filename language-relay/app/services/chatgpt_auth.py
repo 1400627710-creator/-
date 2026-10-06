@@ -16,7 +16,20 @@ import httpx2
 import jwt
 
 from app.errors import RelayError
-from diagnose import LOCAL_CODES, STAGES, LoginTrace, http_evidence, network_error, read_json, safe_number
+from diagnose import (
+    LOCAL_CODES,
+    REGION_MESSAGE,
+    REGION_PROVIDER_CODE,
+    STAGES,
+    LoginTrace,
+    authorization_failure,
+    http_evidence,
+    network_error,
+    read_json,
+    safe_number,
+    timestamp,
+    utc_now,
+)
 
 ISSUER = "https://auth.openai.com"
 AUTHORIZE = ISSUER + "/api/accounts/authorize"
@@ -61,11 +74,16 @@ class ChatGPTAuth:
             self.last_result = {key: result[key] for key in ("ok", "code", "message")}
             if not isinstance(self.last_result["ok"], bool) or not all(isinstance(self.last_result[key], str) for key in ("code", "message")):
                 raise ValueError
+            if timestamp(result.get("at")) is not None:
+                self.last_result["at"] = result["at"]
+            first = self.trace.data.get("first_failure") or {}
+            if self.last_result["code"] == "chatgpt_auth_forbidden" and first.get("provider_code") == REGION_PROVIDER_CODE:
+                self.last_result.update(code="chatgpt_region_unsupported", message=STAGES[first["stage"]] + "失败。" + REGION_MESSAGE)
         except (OSError, ValueError, KeyError, TypeError):
             self.last_result = None
 
     def record_result(self, ok, message, code="chatgpt_connected"):
-        self.last_result = {"ok": ok, "code": code, "message": message}
+        self.last_result = {"ok": ok, "code": code, "message": message, "at": utc_now()}
         try:
             write_private_json(self.result_path, self.last_result)
         except RelayError:
@@ -155,7 +173,16 @@ class ChatGPTAuth:
                 phase, message = "failed", result["message"]
             else:
                 phase, message = "signed_out", "尚未使用 ChatGPT 登录。"
-            return {"connected": connected, "signed_in": signed_in, "plan_enabled": plan_enabled, "pending": pending, "phase": phase, "message": message, "account": data.get("account", "") if signed_in or connected else "", "models": data.get("models", []) if connected else [], "result": result, "connection_check": connection if signed_in else None}
+            failure = authorization_failure({"connected": connected, "pending": pending, "connection_ok": connection["ok"] if connection else None, "result_ok": result.get("ok") if result else None, "result_code": result.get("code") if result else "unrecognized"}, self.trace.data)
+            details = None
+            if failure:
+                evidence = dict(failure)
+                for event in self.trace.data["events"]:
+                    if event["stage"] == failure["stage"] and event["outcome"] == "error":
+                        evidence.update(event)
+                details = {key: evidence[key] for key in ("stage", "http_status", "provider_code", "request_id") if key in evidence}
+                details["location"] = STAGES[failure["stage"]]
+            return {"connected": connected, "signed_in": signed_in, "plan_enabled": plan_enabled, "pending": pending, "phase": phase, "message": message, "account": data.get("account", "") if signed_in or connected else "", "models": data.get("models", []) if connected else [], "result": result, "connection_check": connection if signed_in else None, "failure": details}
         except RelayError as error:
             return {"connected": False, "signed_in": False, "plan_enabled": False, "pending": False, "phase": "failed", "message": error.message, "account": "", "models": [], "result": {"ok": False, "code": error.code, "message": error.message}}
         except (ValueError, TypeError):
@@ -211,6 +238,7 @@ class ChatGPTAuth:
             raise RelayError("auth_endpoint_invalid", "官方授权地址不匹配，已停止连接。", 502)
         stage = "token_refresh" if url == TOKEN and kwargs.get("data", {}).get("grant_type") == "refresh_token" else "token_exchange" if url == TOKEN else "discovery" if url == DISCOVERY else "jwks" if url == JWKS else "models" if url == RESOURCE + "/models" else "revocation"
         started = time.monotonic()
+        evidence = {}
         try:
             async with self.factory() as client:
                 response = await client.request(method, url, timeout=8, **kwargs)
@@ -226,6 +254,8 @@ class ChatGPTAuth:
                     raise RelayError("chatgpt_auth_redirect", f"{STAGES[stage]}遇到异常跳转，已停止连接；请一键自检并导出报告。", 502)
                 if not json_shape:
                     raise RelayError("chatgpt_auth_gateway", f"{STAGES[stage]}收到非预期响应（HTTP {response.status_code}），不能据此判断账户资格；请一键自检并导出报告。", 502)
+                if code == REGION_PROVIDER_CODE:
+                    raise RelayError("chatgpt_region_unsupported", f"{STAGES[stage]}失败（HTTP {response.status_code}）。" + REGION_MESSAGE, 403)
                 if code in {"invalid_client", "unauthorized_client"}:
                     raise RelayError("chatgpt_client_rejected", f"{STAGES[stage]}失败：官方未接受本应用的客户端注册或配置（HTTP {response.status_code}）。请导出自检报告。", 403 if response.status_code == 403 else 400)
                 if code in {"insufficient_scope", "chatpass_v2_scope_not_authorized", "chatpass_v2_invalid_authorization_context"}:
@@ -241,7 +271,8 @@ class ChatGPTAuth:
             if not isinstance(body, dict):
                 raise RelayError("chatgpt_auth_response_invalid", f"{STAGES[stage]}返回格式不正确，请一键自检并导出报告。", 502)
             return body
-        except RelayError:
+        except RelayError as error:
+            error.provider_evidence = evidence
             raise
         except httpx2.HTTPError as error:
             self.trace.record(stage, "error", code=network_error(error), duration_ms=round((time.monotonic() - started) * 1000))

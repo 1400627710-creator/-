@@ -440,7 +440,8 @@ class RelayService:
         except TimeoutError:
             message = "模型连接或生成超时。原输入已保存，请稍后点击重试。"
             failure = RelayError("gpt_timeout", message, 504, retryable=True)
-            record_operation(self.llm.config.data_dir, "generation", "model_inference", "error", failure.code)
+            failure.selected_provider = settings.provider if settings else None
+            record_operation(self.llm.config.data_dir, "generation", "model_inference", "error", failure.code, provider=failure.selected_provider)
             if settings and settings.provider == "chatgpt" and self.auth:
                 self.auth.record_connection(False, settings.chatgpt_model, failure)
             self.save_error(db, session, message)
@@ -449,7 +450,8 @@ class RelayService:
             self.save_error(db, session, "本次生成已中断，原输入已保存，可以重试。")
             raise
         except RelayError as error:
-            record_operation(self.llm.config.data_dir, "generation", "model_inference", "error", error.code, getattr(error, "http_evidence", None))
+            error.selected_provider = settings.provider if settings else None
+            record_operation(self.llm.config.data_dir, "generation", "model_inference", "error", error.code, getattr(error, "provider_evidence", None), provider=error.selected_provider)
             if settings and settings.provider == "chatgpt" and self.auth:
                 self.auth.record_connection(False, settings.chatgpt_model, error)
             self.save_error(db, session, error.message)
@@ -458,7 +460,7 @@ class RelayService:
             # Provider bodies can contain secrets; log only the exception type.
             logger.error("relay result processing failed: %s", type(error).__name__)
             message = "生成结果处理失败，原输入已保存，请点击重试。"
-            record_operation(self.llm.config.data_dir, "generation", "result_processing", "error", "relay_internal_error")
+            record_operation(self.llm.config.data_dir, "generation", "result_processing", "error", "relay_internal_error", provider=settings.provider if settings else None)
             self.save_error(db, session, message)
             raise RelayError("relay_internal_error", message, 500, retryable=True) from None
 
@@ -488,7 +490,7 @@ class RelayService:
         session.last_error = None
         session.updated_at = utcnow()
         db.commit()
-        record_operation(self.llm.config.data_dir, "generation", "generation", "ok")
+        record_operation(self.llm.config.data_dir, "generation", "generation", "ok", provider=settings.provider)
         return MessageResult(
             message=MessageOut.model_validate(assistant),
             user_message=MessageOut.model_validate(user_message),
