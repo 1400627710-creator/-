@@ -8,14 +8,19 @@ if(process.platform!=='win32')throw Error('Run this check on native Windows.');
 const app=path.resolve(process.argv[2]||process.cwd()),temp=fs.mkdtempSync(path.join(os.tmpdir(),'作者 空格 启动测试-'));
 const copy=path.join(temp,'小说 码字窗口'),profile=path.join(temp,'安装 用户目录'),local=path.join(temp,'本机数据');
 fs.cpSync(app,copy,{recursive:true});
+fs.mkdirSync(local,{recursive:true});
+assert.equal(fs.statSync(copy).isDirectory(),true,'Copied app directory missing');
+const cwd=fs.realpathSync(copy);
 const env={...process.env,LOCALAPPDATA:local,WRITER_NONINTERACTIVE:'1',WRITER_SKIP_NODE_INSTALL:'1',WRITER_INSTALL_PROFILE:profile,WRITER_NO_OPEN:'1'};
 const cmd=path.join(process.env.SystemRoot||'C:\\Windows','System32','cmd.exe');
 assert.ok(fs.existsSync(cmd),'Windows cmd.exe missing');
-const run=(file,args=[],options={})=>{const r=spawnSync(cmd,['/d','/s','/c','""'+path.join(copy,file)+'" '+args.join(' ')+'"'],{cwd:copy,env,encoding:'utf8',timeout:90000,windowsVerbatimArguments:true,...options});if(r.error)throw r.error;return r;};
+const baseline=spawnSync(cmd,['/d','/c','ver'],{cwd,encoding:'utf8',windowsVerbatimArguments:true});
+if(baseline.error)throw baseline.error;
+assert.equal(baseline.status,0,'Native cmd.exe baseline failed: '+baseline.stderr);
+const run=(file,args=[],options={})=>{const r=spawnSync(cmd,['/d','/c',file,...args],{cwd,env,encoding:'utf8',timeout:90000,windowsVerbatimArguments:true,...options});if(r.error)throw r.error;return r;};
 const passed=[];
 async function checkLocalStart(){
- const command='""'+path.join(copy,'START.cmd')+'""';
- const child=spawn(cmd,['/d','/s','/c',command],{cwd:copy,env,stdio:['pipe','pipe','pipe'],windowsVerbatimArguments:true});
+ const child=spawn(cmd,['/d','/c','START.cmd'],{cwd,env,stdio:['pipe','pipe','pipe'],windowsVerbatimArguments:true});
  let processError;child.on('error',e=>{processError=e;});
  let output='';for(const stream of [child.stdout,child.stderr])stream.on('data',chunk=>output+=chunk.toString('utf8'));
  try{
