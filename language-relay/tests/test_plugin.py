@@ -127,7 +127,8 @@ def test_manifest_and_marketplace():
     server = json.loads((PLUGIN / 'mcp.json').read_text())['mcpServers']['language-relay']
     assert server['type'] == 'stdio' and '${PLUGIN_DATA}/language-relay' in server['args']
     market = json.loads((ROOT / '.agents/plugins/marketplace.json').read_text())
-    assert (ROOT / market['plugins'][0]['source']['path']).resolve() == PLUGIN.resolve()
+    entry = next(p for p in market['plugins'] if p['name'] == 'language-relay')
+    assert (ROOT / entry['source']['path']).resolve() == PLUGIN.resolve()
 
 
 @pytest.mark.asyncio

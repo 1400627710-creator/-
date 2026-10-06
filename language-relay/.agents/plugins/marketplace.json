@@ -5,6 +5,18 @@
   },
   "plugins": [
     {
+      "name": "language-relay-web",
+      "source": {
+        "source": "local",
+        "path": "./plugins/language-relay-web"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
       "name": "language-relay",
       "source": {
         "source": "local",

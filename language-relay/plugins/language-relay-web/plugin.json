@@ -1,0 +1,30 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "language-relay-web",
+  "version": "1.0.1",
+  "description": "供 ChatGPT 网页对话使用的中继器技能插件，当前对话模型分析，无需额外模型Key或本地MCP服务。",
+  "author": {
+    "name": "1400627710-creator"
+  },
+  "repository": "https://github.com/1400627710-creator/-",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "语言转换指令中继器（网页版）",
+        "shortDescription": "理解需求、设计架构、规划模块、定义接口并评估风险",
+        "longDescription": "网页 Chat/Work 使用当前对话模型编译七节开发指令；Work具备Python时可执行本地校验、存储与导出。没有工具时明确说明未执行程序校验。插件不声明MCP服务，不进行中继器OAuth登录。",
+        "developerName": "1400627710-creator",
+        "category": "Productivity",
+        "capabilities": [
+          "Read",
+          "Write"
+        ],
+        "defaultPrompt": [
+          "使用中继器整理我的开发想法。",
+          "使用默认假设，我需要完整开发指令。",
+          "给中继器做一键自检。"
+        ]
+      }
+    }
+  }
+}

@@ -1,5 +1,7 @@
 # 语言转换指令中继器 · 技能与 MCP 插件 1.0.0
 
+**网页版修正1.0.1：** 见 [README_WEB_PLUGIN.md](README_WEB_PLUGIN.md)。原MCP包仅桌面客户端使用；新版网页包不声明MCP。源码或技能保存不等于插件账号安装。
+
 ## 1. 变更摘要
 
 中继器可由当前 ChatGPT 对话模型分析需求，离线工具负责结构校验、固定格式渲染、SQLite 历史与 Markdown 导出。运行本插件不需要额外模型 API Key，也不进行中继器 OAuth 登录。
