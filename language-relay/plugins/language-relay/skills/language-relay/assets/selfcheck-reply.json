@@ -1,0 +1,560 @@
+{
+  "need_more_info": false,
+  "questions": [],
+  "report": {
+    "understanding": [
+      {
+        "text": "我想做卡牌游戏",
+        "basis": "user",
+        "evidence": "我想做卡牌游戏"
+      }
+    ],
+    "analysis": {
+      "actors": [
+        {
+          "text": "首版面向一名私人玩家，在本机浏览器与固定策略电脑对手对战。",
+          "basis": "assumption",
+          "evidence": null
+        }
+      ],
+      "workflow": [
+        {
+          "text": "开始新局→展示手牌和能量→选择合法卡牌→结束回合→对手行动→胜负提示→重新开始。",
+          "basis": "assumption",
+          "evidence": null
+        }
+      ],
+      "constraints": [
+        {
+          "text": "首版离线、单人、无账号与付费；对战状态仅在当前页面内保存。",
+          "basis": "assumption",
+          "evidence": null
+        }
+      ],
+      "out_of_scope": [
+        {
+          "text": "暂不实现多人对战、商业支付、卡牌编辑器和云端存档。",
+          "basis": "assumption",
+          "evidence": null
+        }
+      ],
+      "open_issues": [
+        {
+          "text": "题材、卡图和数值没有得到用户确认，先用文字卡牌完成可玩的闭环，再收集试玩反馈。",
+          "basis": "assumption",
+          "evidence": null
+        }
+      ]
+    },
+    "motivation": [
+      {
+        "text": "先得到能从开始玩到胜负的最小原型，方便用户判断玩法并继续补充需求。",
+        "basis": "assumption",
+        "evidence": null
+      }
+    ],
+    "requirements": {
+      "must_do": [
+        {
+          "text": "提供新局、抽牌、按能量出牌、结束回合、固定对手行动、胜负判定和重新开始的完整单人流程。",
+          "basis": "assumption",
+          "evidence": null
+        }
+      ],
+      "optional": [
+        {
+          "text": "后续可加入本地存档，首版完成与验收不依赖该功能。",
+          "basis": "assumption",
+          "evidence": null
+        }
+      ],
+      "quantified": [
+        {
+          "text": "在 Windows 64位本机 Chromium、清空缓存、由本机 HTTP 提供页面时，首次内容绘制 3次均≤1秒；用户一次出牌反馈≤100毫秒。",
+          "basis": "assumption",
+          "evidence": null
+        }
+      ]
+    },
+    "technical_plan": [
+      {
+        "text": "使用 TypeScript、Vite、原生 DOM 与本地 CSS；采用纯前端单体，把不可变游戏规则与页面渲染拆开。",
+        "basis": "assumption",
+        "evidence": null
+      }
+    ],
+    "instructions": {
+      "role": [
+        {
+          "text": "你是前端游戏工程师，根据以下规格实现可在本机启动的单人卡牌原型并记录验收结果。",
+          "basis": "assumption",
+          "evidence": null
+        }
+      ],
+      "goal": [
+        {
+          "text": "交付可运行、可完成一局并可重新开始的原型，遇到非法操作须保留原状态并显示中文提示。",
+          "basis": "assumption",
+          "evidence": null
+        }
+      ],
+      "context": [
+        {
+          "text": "用户已说明想做卡牌游戏；平台、数值、对手策略和资源方案均是待确认的默认假设。",
+          "basis": "assumption",
+          "evidence": null
+        }
+      ],
+      "tech_stack": [
+        {
+          "text": "采用 TypeScript 与 Vite，规则测试使用 Vitest；页面不依赖远程字体、图片或第三方服务。",
+          "basis": "assumption",
+          "evidence": null
+        }
+      ],
+      "output_format": [
+        {
+          "text": "输出完整项目文件、依赖声明、安装启动命令、测试命令、验收表和仍待验证的风险；不得把未执行的测试写成已通过。",
+          "basis": "assumption",
+          "evidence": null
+        }
+      ]
+    },
+    "planning": {
+      "decisions": [
+        {
+          "choice": {
+            "text": "以纯前端单体实现，规则 reducer 只接收状态与动作，DOM 层负责渲染与中文提示。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "alternative": {
+            "text": "若用户确认跨设备存档或联网对战，可扩展为服务端权威状态架构。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "reason": {
+            "text": "首版仅验证单人玩法，本地启动和纯函数测试能覆盖当前必须流程。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "tradeoff": {
+            "text": "刷新页面丢失当前对局，不能用此架构保证联网公平性；存档与多人需求需要另行设计。",
+            "basis": "assumption",
+            "evidence": null
+          }
+        }
+      ],
+      "data_flow": [
+        {
+          "text": "点击卡牌→构造 Action→规则校验→返回新 GameState→替换页面状态→渲染；错误只更新提示，不提交新状态。",
+          "basis": "assumption",
+          "evidence": null
+        }
+      ],
+      "data_model": [
+        {
+          "text": "GameState 包含 playerHp、opponentHp、energy、turn、deck、hand、discard、status；初始双方生命20、能量3、牌库16张，初始手牌5张，每回合抽1张。卡牌实例 ID 全局唯一且只属于一个区域。",
+          "basis": "assumption",
+          "evidence": null
+        },
+        {
+          "text": "首版用攻击卡与防御卡两类文字卡；卡牌费用1、攻击伤害3、防御减少下一次对手伤害3；对手在玩家结束回合后造成3伤害。生命≤0触发胜负并禁用后续动作。",
+          "basis": "assumption",
+          "evidence": null
+        }
+      ],
+      "modules": [
+        {
+          "id": "M1",
+          "name": {
+            "text": "对局规则",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "responsibility": {
+            "text": "管理牌区、能量、回合、防御和胜负，提供可独立测试的不可变状态转换。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "files": [
+            {
+              "path": {
+                "text": "src/rules.ts",
+                "basis": "assumption",
+                "evidence": null
+              },
+              "purpose": {
+                "text": "定义 GameState、Action、卡牌和纯函数状态转换。",
+                "basis": "assumption",
+                "evidence": null
+              }
+            },
+            {
+              "path": {
+                "text": "tests/rules.test.ts",
+                "basis": "assumption",
+                "evidence": null
+              },
+              "purpose": {
+                "text": "测试合法出牌、非法动作、胜负、牌区不变量与新局恢复。",
+                "basis": "assumption",
+                "evidence": null
+              }
+            }
+          ],
+          "requirement_ids": [
+            "R1"
+          ],
+          "depends_on": []
+        },
+        {
+          "id": "M2",
+          "name": {
+            "text": "页面与操作",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "responsibility": {
+            "text": "初始化新局、绑定按钮、渲染手牌与状态、显示错误和胜负，不在 DOM 中计算规则。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "files": [
+            {
+              "path": {
+                "text": "src/main.ts",
+                "basis": "assumption",
+                "evidence": null
+              },
+              "purpose": {
+                "text": "管理当前状态，调用规则模块并渲染用户界面。",
+                "basis": "assumption",
+                "evidence": null
+              }
+            },
+            {
+              "path": {
+                "text": "src/style.css",
+                "basis": "assumption",
+                "evidence": null
+              },
+              "purpose": {
+                "text": "定义本地响应布局与可点击卡牌样式。",
+                "basis": "assumption",
+                "evidence": null
+              }
+            },
+            {
+              "path": {
+                "text": "index.html",
+                "basis": "assumption",
+                "evidence": null
+              },
+              "purpose": {
+                "text": "提供页面入口和必需操作容器。",
+                "basis": "assumption",
+                "evidence": null
+              }
+            }
+          ],
+          "requirement_ids": [
+            "R1",
+            "Q1"
+          ],
+          "depends_on": [
+            "M1"
+          ]
+        }
+      ],
+      "interfaces": [
+        {
+          "id": "I1",
+          "kind": "function",
+          "module_id": "M1",
+          "requirement_ids": [
+            "R1"
+          ],
+          "operation": {
+            "text": "rules.reduce(state: GameState, action: Action): GameState",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "input": {
+            "text": "state 必填且符合牌区与数值不变量；action 是 newGame、playCard(cardId) 或 endTurn，cardId 必须在当前手牌。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "output": {
+            "text": "返回新状态，合法出牌扣除能量并移动牌到弃牌区；结束回合执行对手行动和抽牌；胜负状态不再接受普通动作。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "errors": [
+            {
+              "text": "INVALID_CARD、NOT_ENOUGH_ENERGY、GAME_FINISHED、INVALID_STATE；失败不修改原对象和任何牌区。",
+              "basis": "assumption",
+              "evidence": null
+            }
+          ],
+          "security": {
+            "text": "无需账号或网络认证；仍校验输入类型、有限数值与牌 ID，卡牌描述不得执行脚本。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "idempotency": {
+            "text": "出牌有副作用，同一 cardId 已离开手牌后重发返回 INVALID_CARD；newGame 每次恢复相同初始规格。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "examples": [
+            {
+              "text": "手牌含攻击卡 c1、能量3时出 c1，返回能量2、对手生命17，c1 移入弃牌区。",
+              "basis": "assumption",
+              "evidence": null
+            },
+            {
+              "text": "出不存在的 c999 时返回 INVALID_CARD，原状态与牌库完全不变。",
+              "basis": "assumption",
+              "evidence": null
+            }
+          ]
+        },
+        {
+          "id": "I2",
+          "kind": "function",
+          "module_id": "M2",
+          "requirement_ids": [
+            "R1",
+            "Q1"
+          ],
+          "operation": {
+            "text": "view.render(state: GameState): void",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "input": {
+            "text": "state 为已通过规则校验的 GameState；所有生命、能量和回合数必须为有限数值。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "output": {
+            "text": "以纯文本更新手牌、生命、能量、回合和胜负区域；状态结束时只保留重新开始按钮可用。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "errors": [
+            {
+              "text": "INVALID_VIEW_STATE：显示可恢复错误并保留上次正常视图。",
+              "basis": "assumption",
+              "evidence": null
+            }
+          ],
+          "security": {
+            "text": "使用 textContent 渲染卡牌名称和错误提示，不读取凭据、不发网络请求、不拼接可执行 HTML。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "idempotency": {
+            "text": "重复渲染同一状态得到相同页面，不重复添加事件监听，也不推进对局。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "examples": [
+            {
+              "text": "传入 playing 状态后可见手牌、能量与结束回合按钮，费用超出能量的牌禁用。",
+              "basis": "assumption",
+              "evidence": null
+            },
+            {
+              "text": "传入 opponentHp=NaN 时显示 INVALID_VIEW_STATE，不覆盖上次合法视图。",
+              "basis": "assumption",
+              "evidence": null
+            }
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "id": "T1",
+          "title": {
+            "text": "实现规则和可重复的对局状态转换。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "module_ids": [
+            "M1"
+          ],
+          "requirement_ids": [
+            "R1"
+          ],
+          "depends_on": [],
+          "deliverable": {
+            "text": "交付规则类型、初始化、出牌、回合、胜负与规则测试文件。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "verification": {
+            "text": "运行 Vitest，覆盖能量不足、重复卡牌、牌区唯一性、胜负禁用与新局恢复。",
+            "basis": "assumption",
+            "evidence": null
+          }
+        },
+        {
+          "id": "T2",
+          "title": {
+            "text": "接入页面并验证完整体验与性能。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "module_ids": [
+            "M2"
+          ],
+          "requirement_ids": [
+            "R1",
+            "Q1"
+          ],
+          "depends_on": [
+            "T1"
+          ],
+          "deliverable": {
+            "text": "交付本地页面与样式、Vite 配置和启动命令；可从新局操作到胜负再重新开始。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "verification": {
+            "text": "在本机浏览器完成1局并重新开始，核对初始状态；按 Q1 条件测量3次首屏和单次出牌反馈时间。",
+            "basis": "assumption",
+            "evidence": null
+          }
+        }
+      ],
+      "acceptance": [
+        {
+          "id": "C1",
+          "requirement_ids": [
+            "R1"
+          ],
+          "scenario": {
+            "text": "给定初始牌组，玩家能合法出牌与结束回合直到显示胜负；点击重新开始后双方生命20、能量3和初始手牌5张恢复。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "verification": {
+            "text": "实际操作1局并重开，同时用规则测试断言重开前后与初始化状态一致。",
+            "basis": "assumption",
+            "evidence": null
+          }
+        },
+        {
+          "id": "C2",
+          "requirement_ids": [
+            "R1"
+          ],
+          "scenario": {
+            "text": "连续提交同一张 c1，两次提交中只有第一次能扣能量或伤害；第二次给出 INVALID_CARD 且状态不变。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "verification": {
+            "text": "保留第一次结果，提交重复 cardId 并比较状态、牌区和生命值；结束后普通动作给出 GAME_FINISHED。",
+            "basis": "assumption",
+            "evidence": null
+          }
+        },
+        {
+          "id": "C3",
+          "requirement_ids": [
+            "Q1"
+          ],
+          "scenario": {
+            "text": "按 Q1 的 Windows 本机浏览器条件测量，3次首次内容绘制均≤1秒，出牌页面反馈≤100毫秒。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "verification": {
+            "text": "记录浏览器 Performance 的 FCP 与出牌前后时间，保存测量环境及3次原始结果。",
+            "basis": "assumption",
+            "evidence": null
+          }
+        }
+      ],
+      "risks": [
+        {
+          "id": "K1",
+          "category": "data",
+          "level": "medium",
+          "module_ids": [
+            "M1"
+          ],
+          "requirement_ids": [
+            "R1"
+          ],
+          "description": {
+            "text": "连续点击可能导致卡牌被重复结算或牌区重复。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "trigger": {
+            "text": "玩家快速连点同一张牌，或胜负后仍有旧事件触发。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "mitigation": {
+            "text": "规则校验卡牌所属区域和结束状态，失败不提交状态；UI 以最新状态处理动作。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "verification": {
+            "text": "对同一卡牌连发动作及结束状态动作，核对只结算1次并保持牌区不变量。",
+            "basis": "assumption",
+            "evidence": null
+          }
+        },
+        {
+          "id": "K2",
+          "category": "performance",
+          "level": "low",
+          "module_ids": [
+            "M2"
+          ],
+          "requirement_ids": [
+            "Q1"
+          ],
+          "description": {
+            "text": "追加卡图或复杂动画可能使量化目标无法达到。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "trigger": {
+            "text": "引入大资源或一次重建全部 DOM。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "mitigation": {
+            "text": "首版仅使用本地文字和轻量 CSS，复用事件绑定；添加资源后按 Q1 重新测量。",
+            "basis": "assumption",
+            "evidence": null
+          },
+          "verification": {
+            "text": "按 Q1 测量首屏与操作反馈，并核对网络面板没有外部资源请求。",
+            "basis": "assumption",
+            "evidence": null
+          }
+        }
+      ]
+    },
+    "self_check": [
+      {
+        "text": "方案已列出必须与可选范围，并将 R1/Q1 关联到模块、接口、任务与验收；实现与测试尚待编程 AI 执行。",
+        "basis": "assumption",
+        "evidence": null
+      },
+      {
+        "text": "浏览器平台、规则数值、技术栈和性能阈值均为默认假设；用户可在后续对话修改这些条件。",
+        "basis": "assumption",
+        "evidence": null
+      }
+    ]
+  }
+}

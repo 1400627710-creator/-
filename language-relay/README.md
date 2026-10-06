@@ -1,5 +1,7 @@
 # 语言转换指令中继器 · 私人版 1.3.0
 
+**新增技能与 MCP 插件：** [README_PLUGIN.md](README_PLUGIN.md)。可由当前 ChatGPT 模型直接整理需求，额外模型 Key 不需要；正式插件安装状态单独验证。
+
 一个本机运行、单用户使用的中文 Web 应用。你输入模糊想法，由 OpenAI GPT 或已连接的 ChatGPT 对话模型把它整理成可交给编程 AI 的开发指令。应用本身不生成项目源码。
 
 **Windows 完整包：** [下载 language-relay-windows-1.3.0.zip](https://github.com/1400627710-creator/-/raw/refs/heads/language-relay-1.3.0/language-relay/downloads/language-relay-windows-1.3.0.zip)。全部解压后，进入 `language-relay`，双击 **`启动中继器.bat`**。你的 Python 3.14.8 可用，无须安装 3.11。先阅读包内 `开始使用.txt`。本地页面打开不需要 API Key 或账号登录。

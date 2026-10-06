@@ -1,0 +1,30 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "language-relay",
+  "version": "1.0.0",
+  "description": "把模糊想法转换成编程 AI 开发指令，严格七节、最多五个问题、默认假设和一键自检。",
+  "author": {
+    "name": "1400627710-creator"
+  },
+  "repository": "https://github.com/1400627710-creator/-",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "语言转换指令中继器",
+        "shortDescription": "理解需求、设计架构、规划模块、定义接口并评估风险",
+        "longDescription": "当前 ChatGPT 模型负责理解，工具校验并保存，额外模型 API Key 不需要。",
+        "developerName": "1400627710-creator",
+        "category": "Productivity",
+        "capabilities": [
+          "Read",
+          "Write"
+        ],
+        "defaultPrompt": [
+          "使用中继器整理我的开发想法。",
+          "使用默认假设，我需要完整开发指令。",
+          "给中继器做一键自检。"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "language-relay-personal",
+  "interface": {
+    "displayName": "语言转换指令中继器"
+  },
+  "plugins": [
+    {
+      "name": "language-relay",
+      "source": {
+        "source": "local",
+        "path": "./plugins/language-relay"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

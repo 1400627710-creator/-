@@ -1,0 +1,23 @@
+{
+  "plugin_version": "1.0.0",
+  "source_app_version": "1.3.0",
+  "offline_only": true,
+  "requirements": {
+    "pydantic": "2.13.5"
+  },
+  "optional_mcp_requirements": {
+    "mcp": "2.3.0"
+  },
+  "files": {
+    "scripts/relay_core/__init__.py": "c26ab84b9c20a270bb43521e2d6c6fddbbee48aac636c45f4a48dd091e0ce3bc",
+    "scripts/relay_core/compiler.py": "207dcc0e59b22dbffcc9eb91a755504ac72bf5dc8dbfda39214e84324840524f",
+    "scripts/relay_core/errors.py": "96ea8c6da8925c958d1c6ab477770b915cc2532a9e6687f0b1bc5c54b739025c",
+    "scripts/relay_core/mcp_server.py": "0232740e282870bf966fed7a664d066e006f1804e87d159121fc6c259d43d4f6",
+    "scripts/relay_core/planning.py": "49c165e0ad3feaeb0af63063719aa66a9ba4aa7b9d1c4bdb2b5054d2170a3ef7",
+    "scripts/relay_core/prompt.py": "7670a0551728066c66d3085657916e749f5b253564206a9dad18b26f130d2f33",
+    "scripts/relay_core/schema.py": "172ad13ee2170530ab5759d59d9b015f22f1186af8c6c18c410a7d85a12d87f6",
+    "scripts/relay_core/store.py": "3a42878228b06ea3460b5339d22cb464ab989dbd830dd591fc392c7398fab472",
+    "scripts/relay_core/schema.sql": "f3c23484e019724ffe83021b1dfbe0f5faf827e9e68cf4d71276ab280dce5b3e",
+    "assets/selfcheck-reply.json": "9ef281cde8e7095fac714ed3eb8b5a962837983269ef67181130d0af539cc326"
+  }
+}
