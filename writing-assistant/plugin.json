@@ -1,0 +1,20 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "author-writing",
+  "version": "0.1.0",
+  "description": "作者主导的本机小说码字助手，依据原稿与可纠正记忆协作，使用当前 GPT，无需额外 Key。",
+  "repository": "https://github.com/1400627710-creator/-/tree/main/writing-assistant",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "小说码字助手",
+        "shortDescription": "本机写作，先理解原文，再交流、润色和代笔。",
+        "longDescription": "三栏码字窗口；原稿、章节、出处记忆与修订保存在本机。当前 GPT 处理作者提交的请求，候选经作者采纳才改正文；支持纠错确认、撤销重做和批量导出。",
+        "category": "Productivity",
+        "capabilities": ["Read", "Write"],
+        "defaultPrompt": ["打开小说码字窗口。", "处理我在码字窗口提交的下一条请求，先读原文与依据。"],
+        "brandColor": "#436B59"
+      }
+    }
+  }
+}

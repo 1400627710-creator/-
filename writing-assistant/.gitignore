@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.data/
+local-data/
+test-results/
+*.log
+*.sqlite*
+.env*
+connect.json
+桌面MCP备用配置.json

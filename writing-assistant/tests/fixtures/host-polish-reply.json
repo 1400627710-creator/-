@@ -1,0 +1,30 @@
+{
+  "reply": {
+    "kind": "candidate",
+    "message": "只删去与“坐下来”重复的“坐在那里”。选区截到了句子两端，我保留“到椅背”和下一句的“阿禾”，不扩大改动范围。",
+    "replacement": "到椅背，坐下来。阿禾",
+    "reasons": [
+      "删除重复的静态动作，不添加动作、心理、比喻或剧情。",
+      "保留选区两端文字，采纳后前后文仍能连上。"
+    ],
+    "questions": [],
+    "evidenceIds": [],
+    "memories": [
+      {
+        "key": "程砚/信的去向/当前认知",
+        "type": "knowledge",
+        "value": "本段程砚不知道阿禾已把信交给账房。",
+        "certainty": "explicit",
+        "evidence": [
+          {
+            "chapterId": "78d7b395-1333-4d7b-a8cd-67a489d2b371",
+            "rev": 2,
+            "start": 66,
+            "end": 80,
+            "quote": "他不知道阿禾已把信交给账房。"
+          }
+        ]
+      }
+    ]
+  }
+}
