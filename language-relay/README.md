@@ -1,60 +1,23 @@
-# 语言转换指令中继器 · 私人版 1.2.2
+# 语言转换指令中继器 · 私人版 1.3.0
 
-一个本机运行、单用户使用的中文 Web 应用。你输入模糊想法，应用通过 OpenAI GPT 把它整理成可交给编程 AI 的开发指令。应用本身不生成项目源码。
+一个本机运行、单用户使用的中文 Web 应用。你输入模糊想法，由 OpenAI GPT 或已连接的 ChatGPT 对话模型把它整理成可交给编程 AI 的开发指令。应用本身不生成项目源码。
 
-**Windows 完整包：** [下载 language-relay-windows-1.2.2.zip](https://github.com/1400627710-creator/-/raw/refs/heads/language-relay-1.2.2/language-relay/downloads/language-relay-windows-1.2.2.zip)。全部解压后，进入 `language-relay`，双击 **`启动中继器.bat`**。你的 Python 3.14.8 可用，无须安装 3.11。先阅读包内 `开始使用.txt`。本地页面打开不需要 API Key 或账号登录。
+**Windows 完整包：** [下载 language-relay-windows-1.3.0.zip](https://github.com/1400627710-creator/-/raw/refs/heads/language-relay-1.3.0/language-relay/downloads/language-relay-windows-1.3.0.zip)。全部解压后，进入 `language-relay`，双击 **`启动中继器.bat`**。你的 Python 3.14.8 可用，无须安装 3.11。先阅读包内 `开始使用.txt`。本地页面打开不需要 API Key 或账号登录。
 
 ## 1. 变更摘要
 
-本次 1.2.2 修复已知地区错误仍显示原因未知、旧缺 Key 记录盖过当前登录失败、新回调标签页反馈不清楚的问题，保留启动器和五项规划能力：
+1.3.0 新增可由 ChatGPT 或其他 MCP 宿主直接调用的工具模式，保留 API 与官方计划授权方式：
 
-- 官方明确返回 `unsupported_country_region_territory` 时，授权和模型调用均单独显示地区拒绝；一般 403 仍不猜测地区或账户资格。
-- 主反馈按当前连接方式和已记录时间选择故障；其他方式和更早记录仅作参考。后续未授权错误不会盖过授权交换的首因。
-- 回调页直接显示本次结果、失败阶段、应用与官方错误码，并可一键复制报错；打开新标签页只表示回调返回，不表示取得登录令牌。
-- 修正操作记录读取 HTTP 证据的属性名，模型/API 失败的安全状态码、错误码和请求 ID 正确保留；旧版已保存的明确地区证据可直接重新分类，无需再调用官方接口。
+- 当前宿主对话的模型负责理解、架构、模块、接口与风险分析；中继器只校验、保存并渲染，不额外请求模型 API。工具模式不需要中继器的模型 API Key。
+- 提供 9 个正式 MCP 工具，支持 Streamable HTTP 与 stdio；网页可保存待处理任务，由宿主接续，结果自动同步到原会话。
+- 任务、模式和结果持久化；同一请求或结果重复提交不重复保存，新输入使旧任务失效，取消保留原输入。
+- 继续执行固定七节、只问最多5题、默认假设、来源标记和 R/O/Q→M/I/T/C/K 的规划检查；拒绝任意 Markdown、循环依赖、缺失覆盖和未执行却宣称通过的测试。
+- 增加“一键自检工具接口”“复制工具报错”和中文接入页；区分本机协议正常、隧道配置和实际工具调用，不把自检或保存 Tunnel ID 当作已安装到 ChatGPT。
+- 新增“连接ChatGPT工具.bat”：检查本机协议、官方 client、Tunnel ID、运行凭据、init、doctor、run；每个失败阶段输出安全报错并可反馈。
+- 新表 ToolTask 为增量创建，旧会话与原 Generation 记录保留。宿主结果来源单独保存，不虚构宿主模型名称、温度或 API 生成记录。
+- 保留“启动中继器.bat”“一键自检.bat”和原登录地区错误修复；模型权限仍以官方结果为准。
 
-- 修复官方回调尚在处理时误报“服务重启”，保证自动状态检查持续到真实结果；拒绝时保留具体失败原因。
-
-- 提供醒目的中文启动器和自检入口；首次启动自动打开已验证的本机页面。重复启动会重新打开同一项目的页面，不创建第二个服务；旧进程版本不符时提示关闭旧窗口。
-- 将账号登录、模型授权、实际模型连接分成三步。身份已登录但计划未授权时，专用“授权模型调用”按钮显式请求重新同意（`prompt=consent`），普通登录不强制重新授权。
-- 修正模型调用的 403 错误分类：只有官方明确资格错误码才提示资格限制；一般权限拒绝、缺少作用域、额度、网络与超时分别记录，不用刷新后的“未登录”覆盖实际原因。
-- 保存最近一次所选模型的连接检测或生成结果；刷新和重启后仍可看到。更换账号或模型后旧结果失效。连接失败保留已验证身份，不自动切换为 API 计费。
-- 登录区域新增“复制登录报错”：一键离线生成并复制错误码、中文失败位置、已完成步骤和脱敏 JSON；浏览器禁止复制时自动下载同一报告。安装、API Key 检测、结果校验、历史存储与导出失败也保存安全操作结果，刷新、诊断和重启不会改写为无关的未登录。
-- 自检增加模型调用阶段、安全错误码与 HTTP 请求 ID。自检本身不调用模型；“保存并检测连接”会发送合成测试并消耗所选连接额度。
-
-- 优化需求理解：明确使用者、操作闭环、约束、首版排除范围与待验证项；追问按影响排序，保留最新修订和否定要求。
-- 需求清单统一编号：R 为必须做、O 为可选做、Q 为量化指标。第 4 / 6 节复用同一清单，模块、接口、任务和验收引用统一编号。
-- 增加架构选择、备选、理由、代价与调整条件，以及数据流、失败路径、数据实体和状态约束。小项目优先最小可运行方案。
-- 增加模块职责、文件归属、依赖与任务交付/验证；拒绝未知引用、循环依赖、冲突文件、不完整覆盖和混合必做/可选任务。
-- 完整接口契约支持 HTTP、内部函数、事件和 CLI：参数与校验、返回、错误、权限、重复调用、成功与失败例子；不强制给离线工具添加服务器。
-- 增加具体风险及处理/降级、需求映射表，区分实际程序结构检查与尚待执行的项目实现验证；第 6 节独立复制仍包含架构、约束、接口、风险和验证。
-- 规划失败时，在原有两次重试与 28 秒预算内给模型反馈允许列出的具体检查问题，不把原始生成内容或异常加入系统指令。
-- 增加 `QUALITY.md` 和五组真实模型验收案例。离线列出案例不联网；显式 `--live` 才调用所选模型，结果保存本机并保留人工内容评审。
-
-
-- 修正所有 HTTP 403 被统一归为账户、地区或工作区限制的问题。普通拒绝保留具体失败阶段；只有明确的资格错误码才显示资格限制。不能仅凭旧提示确定你的实际账户问题。
-- 增加页面“一键自检并导出”、复制诊断报告，以及无需第三方依赖的 `diagnose.py` / Windows `diagnose.bat`。旧版或页面打不开时也能收集本机环境与安全反馈。
-- 记录回调、客户端注册、授权码交换、身份配置、公钥、签名、计划权限、本机保存和模型列表各阶段；保存 HTTP 状态、响应形状、允许记录的错误码和安全请求 ID，不保存原始错误正文。
-- 首次失败原因不会被后续刷新模型的“尚未授权”覆盖；刷新和实际进程重启后仍可导出。已签发的客户端注册在交换失败后保留，但不会因此显示已登录或已授权。
-- 可选网络自检只检查 OpenAI 官方公开身份接口，以及已有未过期授权的模型列表；不调用模型、不消耗模型生成额度、不刷新令牌或改变设置。自检使用独立锁，不阻塞官方登录回调。
-- 诊断报告字段严格筛选，不含密钥、令牌、授权码、回调参数、邮箱、账户/工作区 ID、本机用户路径、代理地址、想法、历史或原始日志；只在本机保存，不自动上传。
-- 旧版未保存的上游细节无法事后还原，报告明确提示升级并重新完成一次登录。自检发现权限限制时保留真实状态，不伪造连接成功。
-
-- 修复“官方页面已登录，应用仍显示未登录”：账号身份登录、模型调用授权、等待回调和授权失败分别显示；身份已经验证但没有计划授权时保留账户信息。
-- 登录等待期间刷新页面会继续检查结果；短暂的状态请求失败自动恢复检查。发起登录后立即保存连接方式，不会因刷新回到 API Key 模式。
-- 重复点击登录沿用当前未过期的授权请求，避免第一次回调因第二次点击失效；增加“检查登录状态”和“取消本次登录”。
-- 登录失败原因保存在本机，刷新、重新打开设置和服务重启后仍能看到。服务在等待授权时重启，会明确提示重新登录；不会伪造授权成功。
-
-- 增加“导入并检测”：粘贴密钥或选择 `.txt`、`.env`、JSON 文件后，自动保存并发送一条简短连接测试；不上传会话历史，不在页面或接口回显密钥。
-- 区分密钥缺失、无效、API 额度不足、权限限制、模型配置、网络失败和超时；保存成功与检测通过分别提示。检测失败保留已导入密钥，格式错误保留原配置。
-- 增加官方“使用 ChatGPT 登录”连接方式，无须手动配置 API Key。采用官方动态注册、PKCE、身份签名验证、授权刷新和撤销；账户资格、地区、工作区、模型权限与额度以官方结果为准。
-- ChatGPT 模型列表来自账户接口；请求使用官方 Responses API，不读取浏览器 Cookie。没有授权或不符合使用条件时给出提示，不自动切换为收费的 API Key 连接。
-- 两种连接方式共用同一中继规则：信息不足仅第 3 节、最多 5 个问题；要求默认假设或结果时完整 1–7 节；未核验的内容逐项标记“假设”。
-- 第 6 节固定包含角色、目标、上下文、技术栈、功能清单、文件结构、接口定义、验收标准、输出格式、分步任务；必须做与可选做分开，模糊要求量化。
-- 会话创建、查看、删除、重命名、输入与历史持久化；复制全文或第 6 节，导出所选版本的 Markdown；草稿、刷新恢复、失败重试与深色模式保留。
-- 暂时的生成失败最多自动重试 2 次；授权刷新、生成调用与等待共用默认 28 秒预算。永久的认证、权限或额度错误直接提示处理方法。
-- 静态资源在本机加载，应用只连接 OpenAI 官方授权与模型接口；凭据保存在本机，正式启动入口不记录带授权码的请求网址。
-- 保留 Windows / macOS / Linux 启动文件、依赖自检与修复、端口占用处理、Dockerfile 和测试。支持用户现有 Python 3.14.8，无须另外安装 3.11。
+**长期使用条件：** 插件仍安装在你的 ChatGPT 工作区、权限有效、电脑及本机服务与官方隧道在线。此安装包不能为工作区自动授予权限，也不声称已经连接了你的 ChatGPT 账户。网页版访问私有 localhost 需官方安全隧道；其运行凭据与模型 API Key 用途不同。详见 [TOOL_GUIDE.md](TOOL_GUIDE.md)。
 
 技术实现为 Python 3.11+（已验证 3.11 和 3.14.8）、FastAPI、Uvicorn、Pydantic、SQLAlchemy、SQLite、OpenAI Python SDK、Jinja2、HTMX、Tailwind 和原生 JavaScript。
 
@@ -64,13 +27,31 @@
 
 ```text
 language-relay/
+  .dockerignore
+  .env.example
+  .gitignore
+  ACCEPTANCE.md
+  CHANGELOG.md
+  Dockerfile
+  QUALITY.md
+  README.md
+  TOOL_GUIDE.md
   app/
+    __init__.py
     api/
       __init__.py
       routes.py
+      tool_routes.py
+    config.py
+    db.py
+    errors.py
+    main.py
+    mcp_tools.py
+    models.py
     prompts/
       __init__.py
       relay_prompt.py
+    schemas.py
     services/
       __init__.py
       chatgpt_auth.py
@@ -81,25 +62,33 @@ language-relay/
       relay_service.py
       session_service.py
       settings_service.py
-    __init__.py
-    config.py
-    db.py
-    errors.py
-    main.py
-    models.py
-    schemas.py
+      tool_access.py
+      tool_service.py
+  bootstrap.py
+  diagnose.bat
+  diagnose.py
+  mcp_stdio.py
+  pytest.ini
+  requirements-dev.txt
+  requirements.txt
+  ruff.toml
+  run.py
+  start.bat
+  start.sh
   static/
+    app.css
+    app.js
+    icon.svg
     vendor/
       HTMX-LICENSE.txt
       TAILWIND-LICENSE.txt
       htmx.min.js
       tailwind.css
-    app.css
-    app.js
-    icon.svg
+  tailwind.config.cjs
   templates/
     index.html
     session_list.html
+    tool_guide.html
   tests/
     __init__.py
     conftest.py
@@ -114,35 +103,23 @@ language-relay/
     test_planning_service.py
     test_quality_check.py
     test_relay_service.py
+    test_tool_connect.py
+    test_tools.py
+  tool_check.py
+  tool_connect.py
   tools/
     browser_check.py
     live_check.py
+    mcp_check.py
     quality_check.py
     tailwind.input.css
-  .dockerignore
-  .env.example
-  .gitignore
-  ACCEPTANCE.md
-  CHANGELOG.md
-  Dockerfile
-  README.md
-  QUALITY.md
-  bootstrap.py
-  diagnose.bat
-  diagnose.py
-  pytest.ini
-  requirements-dev.txt
-  requirements.txt
-  ruff.toml
-  run.py
-  start.bat
-  start.sh
-  tailwind.config.cjs
+    tool_browser_check.py
   一键自检.bat
   启动中继器.bat
-  开始使用.txt
   安装说明.txt
+  开始使用.txt
   诊断使用说明.txt
+  连接ChatGPT工具.bat
 ```
 
 运行后会出现 `.data/`，它不是交付源码的一部分。其中 `relay.sqlite3` 存储会话、消息、生成记录和模型/温度；`api-key.json` 保存通过页面设置的密钥，`chatgpt-auth.json` 保存本机 ChatGPT 注册身份和授权；`chatgpt-login-result.json` 仅保存安全的中文登录结果，不含授权码或令牌。`chatgpt-connection-result.json` 保存最近模型调用结果，并用仅在本机使用的身份指纹防止套用其他账号的旧结果；接口和诊断不导出这个指纹。`chatgpt-login-trace.json` 仅保存经过字段筛选的授权阶段记录；`diagnostics-latest.json` 保存最近的安全自检报告。`operation-results.json` 只保存允许列出的环节、错误码、时间和 HTTP 证据，不包含用户输入或原始日志；同一步成功重试会替换对应失败状态。独立诊断工具将报告写入 `diagnostics/`。也可以通过 `.env` 或环境变量配置密钥。
@@ -151,12 +128,13 @@ language-relay/
 
 ## 3. 每个文件的完整代码
 
-交付 ZIP 内包含上面全部文件，无省略号、伪代码或待补实现。[下载 language-relay-full-source-1.2.2.md](https://github.com/1400627710-creator/-/raw/refs/heads/language-relay-1.2.2/language-relay/downloads/language-relay-full-source-1.2.2.md)，按文件逐一列出完整内容，包括第三方静态文件和许可文本。`downloads/` 是仓库的下载附件目录，不放入 ZIP 中，避免递归打包。
+交付 ZIP 内包含上面全部文件，无省略号、伪代码或待补实现。[下载 language-relay-full-source-1.3.0.md](https://github.com/1400627710-creator/-/raw/refs/heads/language-relay-1.3.0/language-relay/downloads/language-relay-full-source-1.3.0.md)，按文件逐一列出完整内容，包括第三方静态文件和许可文本。`downloads/` 是仓库的下载附件目录，不放入 ZIP 中，避免递归打包。
 
 ### 数据与输出契约
 
 - `Session`：标题、状态、默认假设模式、错误信息、创建和更新时间。
 - `Message`：会话、角色、类型（输入/问题/完整报告）、内容、创建时间。
+- `ToolTask`：持久化宿主任务、幂等请求编号、上下文版本、重试预算和已保存输出的消息编号；不存宿主模型或温度。
 - `Generation`：来源输入、对应输出消息、完整 Markdown、模型、温度、默认假设模式和创建时间。
 - `Setting`：连接方式、API 模型、ChatGPT 模型、API 温度；API Key 和 OAuth 令牌不写入这个表。ChatGPT 连接不使用温度参数。
 
@@ -176,7 +154,7 @@ GPT 返回经过 JSON Schema 约束的结构化内容。Pydantic 和业务校验
 
 每个接口定义输入、返回、错误、权限、重复调用与两个例子，架构包含选择/备选/理由/代价，风险包含触发/处理/验证。第 7 节显示程序实际执行的结构检查和映射表，并明确尚未实现目标项目、没有执行其测试。来源标记约束仍逐项应用于新的所有说明。
 
-具体数据字段、适用边界和五项能力验收见 [QUALITY.md](QUALITY.md)。升级不改 SQLite 数据模型，旧 Markdown 历史仍能原样查看、复制和导出。
+具体数据字段、适用边界和五项能力验收见 [QUALITY.md](QUALITY.md)。升级增量创建 ToolTask 表，不修改旧表或旧 Markdown；旧历史仍能原样查看、复制和导出。
 
 标记“用户已提供”需要模型返回的内容与依据相同，且依据是用户输入中的完整语句；校验保留词与数字之间的空格，并检查语句边界。例如，“不需要联网”不能截成“需要联网”，“首屏 ≤1 0 秒”不能合并为“首屏 ≤10 秒”。无法核验的片段、改写和新增内容均标记“假设”。这项检查约束来源标记，复杂内容的语义正确性仍需真实 API 验收和人工检查。
 
@@ -235,7 +213,7 @@ GPT 返回经过 JSON Schema 约束的结构化内容。Pydantic 和业务校验
 2. 右键 ZIP，选择“全部解压”，解压到桌面或文档中的普通文件夹。进入其中的 `language-relay` 文件夹。
 3. 双击 **`启动中继器.bat`**（`start.bat` 是兼容入口）。首次运行会安装依赖，保持联网，等待“依赖与程序环境校验通过”。
 4. 网页会在服务就绪后自动打开。也可以按启动窗口显示的网址进入，通常是 [http://127.0.0.1:8000](http://127.0.0.1:8000)；端口占用时窗口显示备用网址。启动窗口需要保持打开。
-5. 打开“连接与设置”：选择“使用 ChatGPT 登录（免 API Key）”，点击“使用 ChatGPT 继续”，在官方页面登录并授权。回到应用后查看“账号登录 / 模型授权 / 模型连接”三步。若已登录但未授权，点击“授权模型调用”完成重新同意；选择账户可用模型后点击“保存并检测连接”。也可以选择 API 连接，粘贴密钥并点击“导入并检测”，或选择密钥文件。
+5. 若要通过当前 ChatGPT 对话使用，点击“连接 ChatGPT 工具”，保存工具模式，执行本机协议自检，按 [TOOL_GUIDE.md](TOOL_GUIDE.md) 一次配置官方安全隧道及插件，以后运行“连接ChatGPT工具.bat”即可续接。也可保留 API 或“使用 ChatGPT 登录”的直接模型方式，它们需要各自的官方权限；不是工具模式的必经登录步骤。
 6. 输入“我想做卡牌游戏”，发送；补充回答，或点击“使用默认假设，我需要结果”。
 7. 使用“复制 Markdown”“复制第 6 节”或“导出 .md”获得结果。
 
@@ -272,13 +250,13 @@ sh start.sh
 | 浏览器没有自动打开 | 将启动窗口里的完整网址粘贴到浏览器地址栏 |
 | 提示本地配置无法使用 | 检查 `.env` 的温度为 0–2、预算为 1–28 秒，数据目录可写 |
 
-Python 3.14.8 与 Python 3.11 的完整测试与浏览器结果见 ACCEPTANCE.md。本次重新执行 Python 3.14.8 的全新标准 venv/pip 安装、中文空格路径启动、自动打开页面、重复启动复用、独立诊断、实际进程关闭重启与历史恢复，全部通过；环境为 Linux。依赖未变，Windows 3.14 / 64 位全部 38 个依赖安装文件此前已核验。尚未在 Windows 真机执行双击启动。
+Python 3.14.8 与 Python 3.11 的完整测试与浏览器结果见 ACCEPTANCE.md。1.3.0 的实际 MCP、浏览器、跨 Python 版本、安装文件兼容性检查见 ACCEPTANCE.md；没有在用户的 Windows 真机执行双击启动，也没有取得用户的官方隧道凭据。
 
 此程序需要完整 Python 安装中的 `venv` 与 `ensurepip`。Linux 发行版若拆分这两个组件，需安装对应的 `python3-venv` 包。
 
 ### 先自检并反馈连接问题
 
-**官方地区拒绝：** 如果报告在 `token_exchange` 等环节记录 HTTP 403 和 `unsupported_country_region_territory`，说明官方拒绝本次请求的国家、地区或领土。应用没有取得令牌，显示未授权是正确状态。打开新中继器标签页只说明回调返回。版本 1.2.2 会明确显示阶段与具体错误码，不再归为原因未知；较早的 API Key 错误不会盖过当前 ChatGPT 登录失败。
+**官方地区拒绝：** 如果报告在 `token_exchange` 等环节记录 HTTP 403 和 `unsupported_country_region_territory`，说明官方拒绝本次请求的国家、地区或领土。应用没有取得令牌，显示未授权是正确状态。打开新中继器标签页只说明回调返回。版本 1.3.0 会明确显示阶段与具体错误码，不再归为原因未知；较早的 API Key 错误不会盖过当前 ChatGPT 登录失败。
 
 核对 [OpenAI 官方支持地区](https://developers.openai.com/api/docs/supported-countries) 和 [官方错误说明](https://developers.openai.com/api/docs/guides/error-codes)。如果在受支持地区仍被拒绝，可通过 OpenAI 官方帮助中心联系支持，提供发生时间、失败阶段和官方错误码。报告不能确定官方判定的地区或依据；软件更新、刷新模型和导入 API Key 不能授予被拒绝的权限。
 
@@ -370,6 +348,16 @@ HTMX 2.0.11 和 Tailwind 3.4.19 的许可随静态文件提供。应用 API 的�
 
 ## 5. 测试命令
 
+新增工具检查（不调用模型，不访问已有用户会话）：
+
+```powershell
+.\.venv\Scripts\python.exe tools\mcp_check.py
+.\.venv\Scripts\python.exe tools\tool_browser_check.py
+```
+
+网页点击“一键自检工具接口”只初始化协议与发现工具；不会把内部检查计为宿主调用。界面显示“已收到工具调用”仍不独立证明客户端身份。
+
+
 ### 自动化测试：不需要密钥，不会调用 OpenAI
 
 Windows：
@@ -431,6 +419,7 @@ python tools/quality_check.py --live --url http://127.0.0.1:8000
 | 所有假设标记“假设” | 服务端逐项标记；未通过完整语句与依据核验的“用户事实”也降级为假设 |
 | 第 6 节包含十项内容 | 结构模型强制存在，渲染与浏览器复制检查通过 |
 | 一键复制格式不乱 | 实际 Chromium 剪贴板内容与页面原文完全一致 |
+| MCP 工具模式 | 协议/目录、完整流程、保存、重试、网页同步、复制导出和重启持久化通过；用户工作区及官方隧道连接待配置 |
 | API Key 与免 Key 连接 | 一步导入和检测、错误分类、官方登录协议、令牌刷新和撤销已覆盖；真实账户资格待实测 |
 | 一键诊断与反馈 | 分阶段 403 分类、首次原因保留、报告脱敏、旧版缺失提示、离线运行与回调并发通过 |
 | 需求、架构、模块、接口、风险和自检 | 统一需求映射、完整接口、依赖/文件/任务/验收检查、具体修复反馈与旧历史兼容已覆盖；真实内容质量待模型与人工验收 |
@@ -439,4 +428,4 @@ python tools/quality_check.py --live --url http://127.0.0.1:8000
 | 导出与页面一致 | 对当前结果和选中的历史版本进行逐字节比较，通过 |
 | 首屏 ≤1 秒，GPT 响应 ≤30 秒 | 浏览器实际首屏通过；授权刷新与生成的共同预算默认 28 秒。真实 GPT 成功响应的速度尚未测得，超时返回提示 |
 
-**当前限制：** 本次 Python 3.11 / 3.14.8 各 358 项测试及 53 项实际浏览器流程通过；OAuth 上游和模型响应使用模拟服务。Python 3.14.8 的真实标准安装、进程启动、重启历史恢复通过，Windows 64 位依赖下载核验通过；用户提供的 Windows 3.14.8 报告已确认 1.2.1 的依赖、本机服务和可写目录通过，1.2.2 的 Windows 双击仍未由本环境实测。没有使用你的真实密钥或 ChatGPT 账户验证授权、生成质量与真实速度；Docker 镜像未在本环境构建。语音输入和局域网密码未实现，它们属于可选范围。
+**当前限制：** 本次 Python 3.11 / 3.14.8 各 400 项测试、53 项原有浏览器流程、11 项工具浏览器流程和8项真实 MCP 协议检查通过；OAuth 上游和模型响应使用模拟服务。Python 3.14.8 的真实标准安装、进程启动、重启历史恢复通过，Windows 64 位依赖下载核验通过；用户提供的 Windows 3.14.8 报告已确认 1.2.1 的依赖、本机服务和可写目录通过，1.3.0 的 Windows 双击仍未由本环境实测。已由当前助手生成结构化方案并通过本机 MCP 校验保存；没有使用你的真实密钥、ChatGPT 账户或官方隧道验证账号接入，也没有保证所有需求场景的语义质量或宿主速度；Docker 镜像未在本环境构建。语音输入和局域网密码未实现，它们属于可选范围。

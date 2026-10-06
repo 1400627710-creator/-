@@ -103,6 +103,8 @@ def run(base_url, output):
         try:
             settings = client.get("/api/settings")
             settings.raise_for_status()
+            if settings.json().get("provider") == "tool":
+                raise SystemExit("当前为工具模式。协议验收运行 python tools/mcp_check.py；内容验收在连接了工具的 ChatGPT 对话执行 QUALITY.md 中的案例。")
             if settings.json().get("provider") == "chatgpt":
                 status = client.get("/api/auth/chatgpt/status")
                 status.raise_for_status()

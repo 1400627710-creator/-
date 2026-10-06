@@ -27,7 +27,7 @@ def startup_result(installer, operation, outcome, code=None):
 
 MODULES = (
     "fastapi", "uvicorn", "pydantic", "sqlalchemy", "openai", "jinja2", "dotenv",
-    "httpx", "httpx2", "pytest", "pytest_asyncio", "jwt", "cryptography",
+    "httpx", "httpx2", "pytest", "pytest_asyncio", "jwt", "cryptography", "mcp",
 )
 PROBE = """
 import json, sys

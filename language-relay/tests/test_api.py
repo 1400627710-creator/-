@@ -457,8 +457,10 @@ def test_cross_origin_and_missing_custom_header_blocked(client):
     )
     assert client.post("/api/sessions", json={}, headers={"Origin": "http://testserver"}).status_code == 201
     assert client.post("/api/sessions", json={}, headers={"Origin": "null"}).status_code == 403
-    with TestClient(client.app) as anonymous:
-        assert anonymous.post("/api/sessions", json={}).status_code == 403
+    # The fixture owns the single ASGI lifespan (including MCP task groups).
+    # A second client may issue requests, but must not re-enter that lifespan.
+    anonymous = TestClient(client.app)
+    assert anonymous.post("/api/sessions", json={}).status_code == 403
     assert client.get("/health", headers={"Host": "attacker.example"}).status_code == 400
 
 

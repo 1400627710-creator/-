@@ -11,6 +11,8 @@
   let connectionBusy = false;
   let chatgptStatus = { connected: false, models: [] };
   let diagnosticReport = "";
+  let toolStatus = { protocol_ready: false, tool_call_observed: false };
+  let toolPolling = false;
   const loginReturned = new URLSearchParams(window.location.search).get("chatgpt_login") === "finished";
 
   function stored(key, value) {
@@ -212,6 +214,8 @@
     renderHistory();
     selectOutput([...state.messages].reverse().find((m) => m.role === "assistant"));
     highlightSession();
+    $("tool-task-notice").hidden = state.session?.status !== "awaiting_tool";
+    if (state.session?.status === "awaiting_tool") $("output-state").textContent = "等待 ChatGPT 工具";
     if (state.session?.last_error) showError({ message: state.session.last_error });
   }
 
@@ -293,7 +297,7 @@
         forgetPending();
       } else await api(`${base}/generate`, { method: "POST", body: JSON.stringify({ use_default_assumptions: true }) });
       renderSession(await api(base));
-      toast(state.messages.at(-1)?.kind === "questions" ? "请补充回答，或选择使用默认假设。" : "开发指令已生成并保存。");
+      toast(state.session?.status === "awaiting_tool" ? "想法已保存，请在连接了工具的 ChatGPT 对话中继续。" : state.messages.at(-1)?.kind === "questions" ? "请补充回答，或选择使用默认假设。" : "开发指令已生成并保存。");
     } catch (error) {
       if (state.session) {
         try {
@@ -328,10 +332,13 @@
     document.body.dataset.keySet = String(settings.openai_api_key_set);
     state.provider = settings.provider || "api";
     $("provider-input").value = state.provider;
-    $("connection-banner").hidden = state.provider === "chatgpt" ? chatgptStatus.connected : settings.openai_api_key_set;
-    $("key-dot").classList.toggle("configured", state.provider === "chatgpt" ? chatgptStatus.connected : settings.openai_api_key_set);
+    const connected = state.provider === "tool" ? toolStatus.tool_call_observed : state.provider === "chatgpt" ? chatgptStatus.connected : settings.openai_api_key_set;
+    $("connection-banner").hidden = connected;
+    $("connection-banner").querySelector("strong").textContent = state.provider === "tool" ? "从 ChatGPT 对话调用中继器。" : "先连接 OpenAI，就可以开始。";
+    $("connection-banner").querySelector("span").textContent = state.provider === "tool" ? "输入可先保存为待处理任务；工具接通后由当前对话模型整理，无需模型 API Key。" : "可使用 ChatGPT 官方登录或导入 API Key。输入的想法只发送给 OpenAI。";
+    $("key-dot").classList.toggle("configured", connected);
     $("key-status").textContent = settings.openai_api_key_set ? "已保存，待检测" : "未配置";
-    $("model-badge").textContent = state.provider === "chatgpt" ? `ChatGPT · ${settings.chatgpt_model || "请选择模型"}` : settings.model;
+    $("model-badge").textContent = state.provider === "tool" ? "ChatGPT · 当前对话宿主" : state.provider === "chatgpt" ? "ChatGPT · " + (settings.chatgpt_model || "请选择模型") : settings.model;
     $("plan-usage").hidden = state.provider !== "chatgpt" || !chatgptStatus.connected;
     $("model-input").value = settings.model;
     $("temperature-input").value = String(settings.temperature);
@@ -372,6 +379,7 @@
     else if (patch.provider === "api" && $("clear-api-key").checked) patch.openai_api_key = "";
     $("save-settings").disabled = true;
     try {
+      await saveToolSetup(patch);
       applySettings(await api("/api/settings", { method: "PUT", body: JSON.stringify(patch) }));
       closeSettings();
       toast("设置已在本机保存。需要时可在设置中检测连接。");
@@ -455,12 +463,16 @@
 
   function updateProviderFields() {
     const chatgpt = $("provider-input").value === "chatgpt";
-    $("api-fields").hidden = chatgpt;
+    const tool = $("provider-input").value === "tool";
+    $("api-fields").hidden = chatgpt || tool;
     $("chatgpt-fields").hidden = !chatgpt;
-    $("model-input").required = !chatgpt;
+    $("tool-fields").hidden = !tool;
+    $("model-input").required = !chatgpt && !tool;
+    if (tool) void refreshTools().catch((error) => { $("tool-connection-result").textContent = error.message; });
   }
 
   function settingsPatch() {
+    if ($("provider-input").value === "tool") return { provider: "tool" };
     const patch = { provider: $("provider-input").value, model: $("model-input").value.trim(), temperature: Number($("temperature-input").value) };
     if ($("chatgpt-model").value) patch.chatgpt_model = $("chatgpt-model").value;
     return patch;
@@ -494,6 +506,91 @@
   }
 
   $("provider-input").addEventListener("change", () => { updateProviderFields(); $("connection-result").hidden = true; showLoginResult(); });
+  async function saveToolSetup(patch) {
+    if (patch.provider === "tool") await api("/api/tools/setup", { method: "PUT", body: JSON.stringify({ tunnel_id: $("tool-tunnel-id").value.trim() }) });
+  }
+
+  async function refreshTools() {
+    toolStatus = await api("/api/tools/status");
+    $("tool-step-protocol").textContent = "本机接口：" + (toolStatus.protocol_check?.ok ? "真实 MCP 协议自检通过" : "接口已加载，尚未完成协议自检");
+    $("tool-step-tunnel").textContent = "官方隧道：" + (toolStatus.tunnel_configured ? "已保存 Tunnel ID；运行状态需核对官方隧道" : "尚未配置；本机 stdio 客户端可直接使用");
+    $("tool-step-call").textContent = "工具调用：" + (toolStatus.tool_call_observed ? "已收到；客户端身份未独立验证" : "尚未收到；不代表已安装到 ChatGPT");
+    $("tool-connection-result").textContent = toolStatus.message;
+    if (!$("tool-tunnel-id").dataset.loaded) {
+      const setup = await api("/api/tools/setup");
+      $("tool-tunnel-id").value = setup.tunnel_id || "";
+      $("tool-tunnel-id").dataset.loaded = "true";
+    }
+    if (state.provider === "tool") {
+      $("connection-banner").hidden = toolStatus.tool_call_observed;
+      $("key-dot").classList.toggle("configured", toolStatus.tool_call_observed);
+    }
+  }
+
+  $("open-tools").addEventListener("click", async () => {
+    await openSettings(); $("provider-input").value = "tool"; updateProviderFields();
+  });
+  $("copy-tool-config").addEventListener("click", async () => {
+    try {
+      const setup = await api("/api/tools/setup");
+      await copy(JSON.stringify({ mcpServers: { "language-relay": setup.stdio } }, null, 2), "已复制本机 MCP 配置；网页版请按中文说明连接官方隧道。");
+    } catch (error) { $("tool-connection-result").textContent = error.message; }
+  });
+  $("check-tools").addEventListener("click", async () => {
+    $("check-tools").disabled = true;
+    try {
+      await saveToolSetup({ provider: "tool" });
+      const result = await api("/api/tools/check", { method: "POST" });
+      await refreshTools();
+      $("tool-connection-result").textContent = result.message + " 错误码：" + (result.code || "无") + "。此检查不代表 ChatGPT 插件已连接。";
+    } catch (error) { $("tool-connection-result").textContent = error.message; }
+    finally { $("check-tools").disabled = false; }
+  });
+  $("copy-tool-error").addEventListener("click", async () => {
+    try {
+      const result = await api("/api/tools/diagnostics");
+      const report = JSON.stringify(result, null, 2);
+      try {
+        if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+        await navigator.clipboard.writeText(report); toast("已复制工具报错，可直接粘贴反馈。");
+      } catch (_) {
+        const url = URL.createObjectURL(new Blob([report], { type: "application/json;charset=utf-8" }));
+        const anchor = document.createElement("a");
+        anchor.href = url; anchor.download = "relay-tool-diagnostics.json";
+        document.body.append(anchor); anchor.click(); anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 5000); toast("无法自动复制，已下载工具诊断 JSON。");
+      }
+    } catch (error) { $("tool-connection-result").textContent = error.message; }
+  });
+  $("copy-tool-continuation").addEventListener("click", () => {
+    if (state.session) void copy("请使用语言转换指令中继器，继续处理会话 " + state.session.id + " 的待处理任务，读取中继规则，分析并保存结果。", "已复制接续指令，粘贴到已连接工具的 ChatGPT 对话即可。");
+  });
+  $("cancel-tool-task").addEventListener("click", async () => {
+    if (!state.session || state.busy) return;
+    setBusy(true, "正在取消待处理任务");
+    try {
+      const tasks = await api("/api/tools/tasks?session_id=" + state.session.id);
+      for (const task of tasks.filter((item) => ["pending", "error"].includes(item.status))) await api("/api/tools/tasks/" + task.task_id + "/cancel", { method: "POST" });
+      renderSession(await api("/api/sessions/" + state.session.id));
+      await refreshSessions(); toast("待处理任务已取消，输入仍保存在历史中。");
+    } catch (error) { showError(error); }
+    finally { setBusy(false); }
+  });
+  setInterval(async () => {
+    if (toolPolling || state.busy || connectionBusy || document.hidden || (state.provider !== "tool" && state.session?.status !== "awaiting_tool")) return;
+    toolPolling = true;
+    try {
+      await refreshSessions();
+      if (state.session) {
+        const detail = await api("/api/sessions/" + state.session.id);
+        if (detail.messages.at(-1)?.id !== state.messages.at(-1)?.id || detail.session.status !== state.session.status || detail.session.last_error !== state.session.last_error) {
+          renderSession(detail); restoreDraft();
+        }
+      }
+    } catch (_) { /* Preserve drafts and show errors on explicit user actions. */ }
+    finally { toolPolling = false; }
+  }, 2500);
+
   async function collectDiagnostics(checkNetwork, copyOnly = false) {
     const result = await api("/api/diagnostics/run", { method: "POST", body: JSON.stringify({ check_network: checkNetwork }) });
     diagnosticReport = JSON.stringify(result, null, 2) + "\n";
@@ -540,6 +637,7 @@
       if (patch.openai_api_key) throw new Error("填写新密钥和清除密钥不能同时选择。");
       patch.openai_api_key = "";
     }
+    await saveToolSetup(patch);
     applySettings(await api("/api/settings", { method: "PUT", body: JSON.stringify(patch) }));
     $("api-key").value = "";
     const result = await api("/api/settings/test-connection", { method: "POST" });

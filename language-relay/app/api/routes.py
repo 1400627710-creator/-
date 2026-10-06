@@ -1,3 +1,4 @@
+import uuid
 from contextlib import asynccontextmanager
 from typing import Annotated
 
@@ -19,6 +20,8 @@ from app.schemas import (
     SessionRename,
     SettingsOut,
     SettingsUpdate,
+    ToolPrepare,
+    ToolPrepared,
 )
 from app.services import session_service
 
@@ -68,6 +71,9 @@ async def import_key(body: KeyImport, request: Request, db: DB):
 @router.post("/settings/test-connection")
 async def test_connection(request: Request, db: DB):
     async with mutation(request):
+        if request.app.state.settings.get(db).provider == "tool":
+            status = request.app.state.tools.status(db)
+            return {"ok": status["tool_call_observed"], **status}
         return await request.app.state.connection.check(db)
 
 
@@ -115,7 +121,7 @@ async def chatgpt_logout(request: Request, db: DB):
 @router.post("/diagnostics/run")
 async def run_diagnostics(body: DiagnosticRequest, request: Request, db: DB):
     # Read-only probes use a separate lock so they cannot block the OAuth callback.
-    return await request.app.state.diagnostics.run(body.check_network, request.url.port or 80, request.app.state.settings.get(db))
+    return await request.app.state.diagnostics.run(body.check_network, request.url.port or 80, request.app.state.settings.get(db), tool_status=request.app.state.tools.status(db))
 
 
 @router.get("/diagnostics/export")
@@ -145,15 +151,19 @@ async def rename_session(session_id: int, body: SessionRename, request: Request,
         return session_service.rename(db, session_id, body.title)
 
 
-@router.post("/sessions/{session_id}/messages", response_model=MessageResult)
+@router.post("/sessions/{session_id}/messages", response_model=MessageResult | ToolPrepared)
 async def post_message(session_id: int, body: MessageCreate, request: Request, db: DB):
     async with mutation(request):
+        if request.app.state.settings.get(db).provider == "tool":
+            return request.app.state.tools.prepare(db, ToolPrepare(request_key=uuid.uuid4().hex, session_id=session_id, idea=body.content))
         return await request.app.state.relay.run(db, session_id, content=body.content)
 
 
-@router.post("/sessions/{session_id}/generate", response_model=GenerateResult)
+@router.post("/sessions/{session_id}/generate", response_model=GenerateResult | ToolPrepared)
 async def generate(session_id: int, body: GenerateRequest, request: Request, db: DB):
     async with mutation(request):
+        if request.app.state.settings.get(db).provider == "tool":
+            return request.app.state.tools.prepare(db, ToolPrepare(request_key=uuid.uuid4().hex, session_id=session_id, use_default_assumptions=body.use_default_assumptions))
         result = await request.app.state.relay.run(
             db, session_id, force_defaults=body.use_default_assumptions
         )
@@ -166,9 +176,11 @@ async def generate(session_id: int, body: GenerateRequest, request: Request, db:
         )
 
 
-@router.post("/sessions/{session_id}/retry", response_model=MessageResult)
+@router.post("/sessions/{session_id}/retry", response_model=MessageResult | ToolPrepared)
 async def retry(session_id: int, request: Request, db: DB):
     async with mutation(request):
+        if request.app.state.settings.get(db).provider == "tool":
+            return request.app.state.tools.prepare(db, ToolPrepare(request_key=uuid.uuid4().hex, session_id=session_id))
         return await request.app.state.relay.run(db, session_id, retry=True)
 
 

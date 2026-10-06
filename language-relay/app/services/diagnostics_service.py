@@ -54,10 +54,11 @@ class DiagnosticsService:
         except (httpx2.HTTPError, ValueError, TypeError):
             return {"stage": stage, "outcome": "error", "code": network_error(sys.exception()), "duration_ms": round((time.monotonic() - started) * 1000)}
 
-    async def run(self, check_network, port, settings):
+    async def run(self, check_network, port, settings, *, tool_status=None):
         if self.lock.locked():
             raise RelayError("diagnostic_busy", "自检正在运行，请等待完成后再导出。", 409)
         async with self.lock:
+            check_network = bool(check_network and settings.provider != "tool")
             probes = []
             if check_network:
                 try:
@@ -87,6 +88,10 @@ class DiagnosticsService:
                 local["auth_record_unreadable"] = True
             snapshot = auth_snapshot(data, self.auth.status(settings.chatgpt_model))
             snapshot.update(selected_provider=settings.provider, api_key_configured=settings.openai_api_key_set)
+            if tool_status:
+                snapshot.update(tool_protocol_ready=tool_status["protocol_ready"],
+                                tool_call_observed=tool_status["tool_call_observed"],
+                                tool_tunnel_configured=tool_status["tunnel_configured"])
             operations = [*clean_operations(read_json(PROJECT_ROOT / ".data" / "operation-results.json")), *clean_operations(read_json(self.config.data_dir / "operation-results.json"))]
             report = make_report(app_version=self.version, environment=environment_snapshot(), local=local, auth=snapshot, trace=self.auth.trace.snapshot(), probes=probes, network_requested=check_network, server_port=port, operations=operations)
             try:

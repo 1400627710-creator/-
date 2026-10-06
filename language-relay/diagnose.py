@@ -12,6 +12,7 @@ import os
 import platform
 import re
 import socket
+import sqlite3
 import ssl
 import struct
 import sys
@@ -20,11 +21,12 @@ import time
 import urllib.error
 import urllib.request
 import uuid
+from contextlib import closing
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
-DIAGNOSTIC_VERSION = "1.2.2"
+DIAGNOSTIC_VERSION = "1.3.0"
 REGION_PROVIDER_CODE = "unsupported_country_region_territory"
 REGION_MESSAGE = "官方拒绝了本次请求：国家、地区或领土不受支持。浏览器账号登录不代表本应用已经取得授权；刷新模型或重新导入密钥不会改变这项拒绝。"
 REGION_NEXT_STEP = "核对 OpenAI 官方支持地区说明；如果你在受支持地区仍遇到此错误，向官方支持提供发生时间、失败阶段和安全错误码。报告不能确定官方判定的地区或依据；应用无法授予被拒绝的权限。"
@@ -32,7 +34,7 @@ DISCOVERY_URL = "https://auth.openai.com/.well-known/openid-configuration"
 JWKS_URL = "https://auth.openai.com/.well-known/jwks.json"
 PLAN_SCOPE = "chatgpt.tokens.use.direct"
 SCOPES = ("openid", "profile", "email", "offline_access", "resource.invoke", PLAN_SCOPE)
-PACKAGES = ("fastapi", "uvicorn", "pydantic", "SQLAlchemy", "openai", "Jinja2", "python-dotenv", "httpx", "httpx2", "PyJWT", "cryptography")
+PACKAGES = ("fastapi", "uvicorn", "pydantic", "SQLAlchemy", "openai", "Jinja2", "python-dotenv", "httpx", "httpx2", "PyJWT", "cryptography", "mcp")
 PROVIDER_CODES = frozenset({
     "invalid_grant", "invalid_refresh_token", "refresh_token_reused", "token_expired",
     "refresh_token_expired", "refresh_token_invalidated", "refresh_token_invalid",
@@ -74,6 +76,12 @@ LOCAL_CODES = frozenset({
     "key_import_invalid", "empty_session", "more_info_needed", "login_local_only",
     "diagnostic_busy", "diagnostic_missing", "diagnostic_write_failed",
     "diagnostic_response_invalid", "diagnostic_unreachable",
+    "tool_credentials_unreadable", "tool_unauthorized", "tool_task_not_found", "tool_request_conflict",
+    "tool_result_conflict", "tool_task_closed", "tool_context_changed", "tool_result_invalid",
+    "tool_arguments_invalid", "tool_internal_error", "tool_server_unreachable", "tool_host_not_connected",
+    "tool_mode_requires_host", "tool_protocol_mismatch", "tool_tunnel_client_missing", "tool_tunnel_id_missing",
+    "tool_tunnel_credentials_missing", "tool_tunnel_configuration_failed", "tool_tunnel_doctor_failed",
+    "tool_tunnel_stopped",
 })
 STAGES = {
     "authorization_start": "打开官方授权页", "callback": "接收并检查本机回调",
@@ -93,6 +101,8 @@ STAGES = {
     "markdown_export": "导出 Markdown", "generation": "生成中继指令",
     "application_request": "处理本机网页请求",
     "diagnostic_report": "生成或保存自检报告",
+    "tool_connection": "连接ChatGPT工具", "tool_call": "执行中继器工具",
+    "tool_task": "保存工具任务", "tool_result_validation": "校验并保存工具结果",
     "unknown": "未记录阶段",
 }
 PHASES = frozenset({"waiting_callback", "callback", "client_registration", "token_exchange", "verify_identity", "save_credentials", "scope_check", "loading_models", "plan_required", "connected", "connection_verified", "connection_failed", "expired", "failed", "signed_out"})
@@ -131,7 +141,7 @@ def atomic_json(path, value):
             temporary.unlink()
 
 
-OPERATIONS = frozenset({"installation", "server_start", "settings", "connection", "generation", "history", "export", "application", "diagnostics"})
+OPERATIONS = frozenset({"installation", "server_start", "settings", "connection", "generation", "history", "export", "application", "diagnostics", "tool_prepare", "tool_submit", "tool_call"})
 
 
 def timestamp(value):
@@ -156,7 +166,7 @@ def clean_operations(value):
         event["operation"] = item["operation"]
         if timestamp(at) is not None:
             event["at"] = at
-        provider = enum_value(item.get("provider"), {"api", "chatgpt"})
+        provider = enum_value(item.get("provider"), {"api", "chatgpt", "tool"})
         if provider:
             event["provider"] = provider
         previous = results.get(item["operation"], {})
@@ -221,7 +231,7 @@ def operation_context(event, auth, trace):
     code = event.get("code", "")
     provider = event.get("provider")
     if not provider:
-        provider = "api" if code.startswith("api_") else "chatgpt" if code.startswith("chatgpt_") else None
+        provider = "api" if code.startswith("api_") else "chatgpt" if code.startswith("chatgpt_") else "tool" if code.startswith("tool_") else None
     selected = auth.get("selected_provider")
     if provider and selected and provider != selected:
         return "other_provider"
@@ -530,7 +540,7 @@ def findings_for(auth, trace, local, probes, environment):
         add("identity_without_plan", "本机保存了账号登录，但没有获准使用 ChatGPT 计划。", "需要官方授予计划调用权限后才能刷新模型或生成指令。", "scope_check")
     elif auth.get("pending"):
         add("callback_not_completed", "官方回调尚未完成，当前正在等待授权流程。", "完成官方页面后返回；如果一直等待，核对是否返回同一启动窗口的本机地址。", "callback", "warning")
-    elif not auth.get("connected") and auth.get("selected_provider") != "api":
+    elif not auth.get("connected") and auth.get("selected_provider") not in {"api", "tool"}:
         add("local_grant_unavailable", "本机没有可用的 ChatGPT 计划授权。", "结合首次失败原因完成官方授权；刷新模型不能代替授权。", "local_authorization", "warning")
     if first and first.get("provider_code") == REGION_PROVIDER_CODE and environment.get("windows_browser_proxy_enabled") is True:
         add("browser_backend_network_configuration_differs", "Windows 浏览器代理已开启；应用后端按设计直接连接官方接口。这是已观察到的配置差异。", "假设：浏览器与后端的请求出口可能不同。本报告未探测出口 IP 或地区，不能证明配置差异造成了此次 403；在受支持地区仍被拒绝时，可请网络管理员或官方支持核查。", first["stage"], "info")
@@ -539,6 +549,12 @@ def findings_for(auth, trace, local, probes, environment):
             if finding["stage"] in {"callback", "client_registration", "token_exchange", "discovery", "jwks", "verify_identity", "scope_check", "models", "token_refresh", "local_authorization", "model_inference"}:
                 finding.update(level="info", context="other_provider", message="历史 ChatGPT 连接记录（当前选择 API，仅供参考）：" + finding["message"])
         add("api_key_present" if auth.get("api_key_configured") else "api_key_missing", "当前选择 API 密钥连接；" + ("已保存密钥。" if auth.get("api_key_configured") else "尚未配置密钥。"), "自检不调用模型，也不验证密钥的计费或生成权限。需要时可另行使用保存并检测连接。", "connection_settings", level="info" if auth.get("api_key_configured") else "error")
+    if auth.get("selected_provider") == "tool":
+        for finding in findings:
+            if finding["stage"] in {"callback", "client_registration", "token_exchange", "discovery", "jwks", "verify_identity", "scope_check", "models", "token_refresh", "local_authorization", "model_inference"}:
+                finding.update(level="info", context="other_provider", message="历史 ChatGPT 登录记录（当前使用工具模式，仅供参考）：" + finding["message"])
+        observed = auth.get("tool_call_observed") is True
+        add("tool_call_observed" if observed else "tool_host_not_connected", "当前使用ChatGPT工具模式；" + ("本机已收到工具调用，宿主身份未独立验证。" if observed else "尚未收到工具调用。"), "保持本机中继器与官方隧道运行，在ChatGPT安装并选择此工具；不需要模型API Key。", "tool_connection", level="info" if observed else "error")
     for probe in probes:
         if probe["outcome"] == "error":
             stage = probe["stage"]
@@ -563,10 +579,10 @@ def make_report(*, app_version, environment, local, auth, trace, probes=(), netw
     env = {"python_version": safe_version(environment.get("python_version")), "python_supported": environment.get("python_supported") is True, "os": enum_value(environment.get("os"), {"Windows", "Linux", "Darwin"}, "other"), "bits": environment.get("bits") if type(environment.get("bits")) is int and environment["bits"] in {32, 64} else None, "windows_build": safe_number(environment.get("windows_build"), 0, 999999), "packages": {name: "not_installed" if packages.get(name) == "not_installed" else safe_version(packages.get(name)) for name in PACKAGES}, "environment_proxy_set": environment.get("environment_proxy_set") is True, "windows_browser_proxy_enabled": environment.get("windows_browser_proxy_enabled") if type(environment.get("windows_browser_proxy_enabled")) is bool else None, "backend_uses_environment_proxy": False}
     local_fields = ("data_directory_exists", "data_directory_writable", "auth_file_exists", "login_result_exists", "trace_exists", "database_exists", "key_file_exists", "auth_record_unreadable", "server_reachable", "legacy_app", "virtualenv_exists")
     clean_local = {key: local[key] for key in local_fields if type(local.get(key)) is bool}
-    auth_fields = ("signed_in", "plan_enabled", "connected", "pending", "result_ok", "access_token_present", "refresh_token_present", "id_token_present", "issued_client_id_present", "host_registration_present", "token_expired", "api_key_configured", "connection_checked", "connection_ok")
+    auth_fields = ("signed_in", "plan_enabled", "connected", "pending", "result_ok", "access_token_present", "refresh_token_present", "id_token_present", "issued_client_id_present", "host_registration_present", "token_expired", "api_key_configured", "connection_checked", "connection_ok", "tool_protocol_ready", "tool_call_observed", "tool_tunnel_configured")
     clean_auth = {key: auth[key] if type(auth.get(key)) is bool else None for key in auth_fields}
     granted = auth.get("granted_scopes") if isinstance(auth.get("granted_scopes"), list) else []
-    clean_auth.update(phase=enum_value(auth.get("phase"), PHASES, "signed_out"), result_code=enum_value(auth.get("result_code"), LOCAL_CODES, "unrecognized"), granted_scopes=[scope for scope in SCOPES if scope in granted], selected_provider=enum_value(auth.get("selected_provider"), {"api", "chatgpt"}))
+    clean_auth.update(phase=enum_value(auth.get("phase"), PHASES, "signed_out"), result_code=enum_value(auth.get("result_code"), LOCAL_CODES, "unrecognized"), granted_scopes=[scope for scope in SCOPES if scope in granted], selected_provider=enum_value(auth.get("selected_provider"), {"api", "chatgpt", "tool"}))
     clean_auth["connection_code"] = enum_value(auth.get("connection_code"), LOCAL_CODES, "unrecognized")
     if timestamp(auth.get("result_at")) is not None:
         clean_auth["result_at"] = auth["result_at"]
@@ -635,7 +651,7 @@ def standalone_report(project, *, port=None, offline=False):
             status, _, body = get_bytes(f"http://127.0.0.1:{server_port}/api/diagnostics/run", body={"check_network": not offline}, timeout=13)
             result = json.loads(body)
             if status == 200 and result.get("application") == "language-relay" and result.get("schema_version") == 1:
-                return make_report(app_version=result.get("app_version"), environment=result.get("environment", {}), local=result.get("local", {}), auth=result.get("authorization", {}), trace=result.get("login_trace", {}), probes=result.get("network", {}).get("probes", []), network_requested=not offline, server_port=server_port, source="standalone", operations=[*clean_operations(read_json(project / ".data" / "operation-results.json")), *result.get("operations", [])])
+                return make_report(app_version=result.get("app_version"), environment=result.get("environment", {}), local=result.get("local", {}), auth=result.get("authorization", {}), trace=result.get("login_trace", {}), probes=result.get("network", {}).get("probes", []), network_requested=result.get("network", {}).get("requested") is True, server_port=server_port, source="standalone", operations=[*clean_operations(read_json(project / ".data" / "operation-results.json")), *result.get("operations", [])])
             legacy = status in (404, 405)
             code = enum_value(mapping(mapping(result).get("detail")).get("code"), LOCAL_CODES, "diagnostic_response_invalid")
             report_failure = [{"operation": "diagnostics", "stage": "diagnostic_report", "outcome": "error", "code": code, "http_status": status}]
@@ -672,11 +688,29 @@ def standalone_report(project, *, port=None, offline=False):
         app_version = match[1] if match else "unknown"
     except (OSError, UnicodeError):
         pass
+    snapshot = auth_snapshot(data, server_status)
+    try:
+        database = data_dir / "relay.sqlite3"
+        with closing(sqlite3.connect(database.resolve().as_uri() + "?mode=ro", uri=True, timeout=1)) as connection:
+            # Query only safe mode/transport fields, never keys or conversations.
+            saved = dict(connection.execute("SELECT key,value FROM settings WHERE key IN ('provider','tool_last_call','tool_tunnel_id')"))
+        if saved.get("provider") in {"api", "chatgpt", "tool"}:
+            snapshot["selected_provider"] = saved["provider"]
+        if saved.get("provider") == "tool":
+            try:
+                call = json.loads(saved.get("tool_last_call", "null"))
+            except ValueError:
+                call = None
+            snapshot.update(tool_protocol_ready=False, tool_call_observed=isinstance(call, dict) and timestamp(call.get("at")) is not None,
+                            tool_tunnel_configured=bool(saved.get("tool_tunnel_id")))
+    except (OSError, sqlite3.Error, ValueError):
+        pass
     probes = []
-    if not offline:
+    check_network = not offline and snapshot.get("selected_provider") != "tool"
+    if check_network:
         with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
             probes = list(pool.map(public_probe, [("auth_discovery", DISCOVERY_URL), ("auth_jwks", JWKS_URL)]))
-    return make_report(app_version=app_version, environment=environment_snapshot(), local=local, auth=auth_snapshot(data, server_status), trace=trace, probes=probes, network_requested=not offline, server_port=server_port, source="standalone_legacy" if legacy else "standalone", operations=[*clean_operations(read_json(project / ".data" / "operation-results.json")), *clean_operations(read_json(data_dir / "operation-results.json")), *report_failure])
+    return make_report(app_version=app_version, environment=environment_snapshot(), local=local, auth=snapshot, trace=trace, probes=probes, network_requested=check_network, server_port=server_port, source="standalone_legacy" if legacy else "standalone", operations=[*clean_operations(read_json(project / ".data" / "operation-results.json")), *clean_operations(read_json(data_dir / "operation-results.json")), *report_failure])
 
 
 def main():

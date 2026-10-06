@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>连接 ChatGPT 工具 · 中继器</title><link rel="stylesheet" href="/static/app.css"></head>
+<body><main class="idea-panel"><p><a href="/">← 返回中继器</a> · {{ app_version }}</p><h1>让 ChatGPT 直接使用中继器</h1>
+<p>当前 ChatGPT 模型读取你的想法、组织结构化需求，中继器执行格式校验、保存历史、复制和导出。此模式不额外调用模型 API。任务和结果保存在本机；宿主对话读取的资料会经过 OpenAI。</p>
+<h2>首次连接（Windows）</h2>
+<ol><li>完整解压新版本，双击“启动中继器.bat”，保持启动窗口打开。在“连接 ChatGPT 工具”中选择工具模式并保存，一键自检本机接口。</li>
+<li>按<a href="https://developers.openai.com/api/docs/guides/secure-mcp-tunnels" target="_blank" rel="noopener noreferrer">OpenAI 官方安全隧道说明</a>进入 Platform tunnel settings，创建隧道并关联你正在使用的 ChatGPT 工作区。你需要 Tunnel ID、自己的隧道运行凭据以及 Read + Use 权限。无法创建或关联时，此环节须由官方或工作区管理员解决。</li>
+<li>从<a href="https://github.com/openai/tunnel-client/releases/latest" target="_blank" rel="noopener noreferrer">官方 tunnel-client 最新发布页</a>下载完整 Windows amd64 client（64 位），解压后把 tunnel-client.exe 放到本项目目录。不要选择仅支持 run 的 runtime 版本。</li>
+<li>双击“连接ChatGPT工具.bat”。首次会提示输入 Tunnel ID 和隐藏的运行凭据，之后在本机保存。它先检查 MCP，再配置官方 client、执行 doctor，最后保持隧道运行。失败时打印中文阶段与安全报错，并保存 diagnostics/relay-tool-launcher.json。</li>
+<li>打开<a href="https://chatgpt.com/plugins" target="_blank" rel="noopener noreferrer">ChatGPT 插件页面</a>，点击加号 → Add custom MCP server。名称填“语言转换指令中继器”，Connection 选择 Tunnel，选中或粘贴官方 Tunnel ID。stdio 工具由隧道控制访问，选择无需额外应用身份认证；审核提示后创建并安装。</li>
+<li>新建 ChatGPT Work 对话，输入 @ 并选择此插件。发送“用中继器整理：我想做卡牌游戏”，补充时发送“使用默认假设，我需要结果”。已在本机输入的想法可用“复制接续指令”继续。</li></ol>
+<h2>每次使用</h2><p>运行中继器和连接启动器，在 ChatGPT 对话中选择已安装的工具即可。它支持续接本机任务，不需要在中继器重复登录或导入模型 Key。跨会话使用依赖插件保留、权限有效、本机电脑及隧道在线；电脑关闭时不能调用。</p>
+<h2>遇到问题直接反馈</h2>
+<table><thead><tr><th>位置</th><th>检查与安全报错</th></tr></thead><tbody>
+<tr><td>本机服务</td><td>网页打不开时运行“一键自检.bat”，反馈 diagnostics 中的 JSON。</td></tr>
+<tr><td>MCP 接口</td><td>“一键自检工具接口”真实检查协议初始化和 9 个工具目录；不访问想法，也不表示 ChatGPT 已安装插件。</td></tr>
+<tr><td>官方隧道</td><td>连接启动器区分 client 缺失、ID 缺失、凭据缺失、init 失败、doctor 失败、run 停止。ID 已保存不代表隧道在线。</td></tr>
+<tr><td>ChatGPT 工具</td><td>“复制工具报错”返回未收到调用或结果校验失败。隧道在插件列表不可见时检查工作区关联与 Read + Use 权限。</td></tr>
+<tr><td>需求结果</td><td>宿主最多修正两次，错误码 tool_result_invalid；任意 Markdown 不能绕过七节、假设和规划引用校验。</td></tr>
+</tbody></table><p>诊断报告不含凭据、想法或历史。无需发送 .env、授权文件、运行凭据或原始日志。工具调用记录只能证明收到调用，不能独立验证客户端身份。</p>
+<h2>其他本机 MCP 客户端</h2><p>在设置复制“本机 MCP 配置”，粘贴到支持 stdio 的客户端配置中。配置会使用当前虚拟环境 Python 与自动发现端口；先保持中继器启动。网页版仍需要官方隧道。</p>
+<p>开发者说明及接口表见下载包中的 TOOL_GUIDE.md。</p></main></body></html>

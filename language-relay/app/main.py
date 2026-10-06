@@ -7,13 +7,17 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from mcp.server.transport_security import TransportSecuritySettings
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.routes import DB, mutation, router
+from app.api.tool_routes import invoke_tool
+from app.api.tool_routes import router as tool_router
 from app.config import PROJECT_ROOT, Config
 from app.db import Database
 from app.errors import RelayError
+from app.mcp_tools import make_mcp_server
 from app.services import session_service
 from app.services.chatgpt_auth import ChatGPTAuth
 from app.services.connection_service import ConnectionService
@@ -21,9 +25,11 @@ from app.services.diagnostics_service import DiagnosticsService
 from app.services.llm_client import LLMClient
 from app.services.relay_service import RelayService
 from app.services.settings_service import SettingsService
+from app.services.tool_access import ToolAccess
+from app.services.tool_service import ToolService
 from diagnose import record_operation
 
-APP_VERSION = "1.2.2"
+APP_VERSION = "1.3.0"
 
 
 def create_app(config: Config | None = None, *, transport=None, auth_http_factory=None, connection_transport=None) -> FastAPI:
@@ -41,8 +47,11 @@ def create_app(config: Config | None = None, *, transport=None, auth_http_factor
             app.state.connection = ConnectionService(app.state.settings, app.state.chatgpt_auth, connection_transport)
             app.state.relay = RelayService(app.state.settings, LLMClient(config, transport), app.state.chatgpt_auth)
             app.state.mutation_lock = asyncio.Lock()
+            app.state.tools = ToolService(config)
+            app.state.tool_access = ToolAccess(config)
             record_operation(config.data_dir, "server_start", "server_start", "ok")
-            yield
+            async with mcp_server.session_manager.run():
+                yield
         finally:
             database.close()
 
@@ -57,13 +66,27 @@ def create_app(config: Config | None = None, *, transport=None, auth_http_factor
     templates = Jinja2Templates(directory=PROJECT_ROOT / "templates")
     app.mount("/static", StaticFiles(directory=PROJECT_ROOT / "static"), name="static")
     app.include_router(router)
+    app.include_router(tool_router)
+    async def mcp_invoke(operation, arguments):
+        return await invoke_tool(app, operation, arguments, "mcp_http")
+    mcp_server = make_mcp_server(mcp_invoke)
+    mcp_app = mcp_server.streamable_http_app(
+        stateless_http=True, json_response=True, max_request_body_size=100000,
+        transport_security=TransportSecuritySettings(
+            allowed_hosts=["127.0.0.1:*", "localhost:*", "[::1]:*", "testserver"],
+            allowed_origins=["http://127.0.0.1:*", "http://localhost:*", "http://[::1]:*", "http://testserver"],
+        ),
+    )
 
     def track_error(request, error):
         path = request.url.path
         if path.startswith("/api/diagnostics") or path.startswith("/api/auth/") or path == "/auth/callback" or error.code == "busy":
             return
         operation, stage = "application", "application_request"
-        if path in {"/api/settings/test-connection", "/api/settings/import-key"}:
+        if path.startswith("/api/tools") or path.startswith("/mcp"):
+            operation, stage = "tool_submit" if error.code == "tool_result_invalid" else "tool_call", "tool_result_validation" if error.code == "tool_result_invalid" else "tool_call"
+            error.selected_provider = "tool"
+        elif path in {"/api/settings/test-connection", "/api/settings/import-key"}:
             operation, stage = "connection", "model_inference"
         elif path.startswith("/api/settings"):
             operation, stage = "settings", "connection_settings"
@@ -77,7 +100,15 @@ def create_app(config: Config | None = None, *, transport=None, auth_http_factor
 
     @app.middleware("http")
     async def local_security(request: Request, call_next):
-        if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+        if request.url.path in {"/mcp", "/mcp/"}:
+            try:
+                authorized = app.state.tool_access.authorized(request.headers.get("authorization"))
+            except RelayError as error:
+                return JSONResponse({"detail": error.detail()}, status_code=error.status_code)
+            if not authorized:
+                return JSONResponse({"detail": {"code": "tool_unauthorized", "message": "MCP 工具连接口令缺失或错误。"}},
+                                    status_code=401, headers={"WWW-Authenticate": 'Bearer realm="language-relay"'})
+        elif request.method in ("POST", "PUT", "PATCH", "DELETE"):
             origin = request.headers.get("origin")
             expected = f"{request.url.scheme}://{request.url.netloc}"
             if origin is not None and origin != expected:
@@ -172,6 +203,10 @@ def create_app(config: Config | None = None, *, transport=None, auth_http_factor
             context={"sessions": session_service.list_sessions(db)},
         )
 
+    @app.get("/tool-guide")
+    def tool_guide(request: Request):
+        return templates.TemplateResponse(request=request, name="tool_guide.html", context={"app_version": APP_VERSION})
+
     @app.get("/auth/callback")
     async def chatgpt_callback(request: Request, db: DB):
         try:
@@ -196,6 +231,7 @@ def create_app(config: Config | None = None, *, transport=None, auth_http_factor
         # Remove authorization code from the address bar; no popup tokens or messages.
         return RedirectResponse("/?chatgpt_login=finished", status_code=303)
 
+    app.mount("/", mcp_app)
     return app
 
 

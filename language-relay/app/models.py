@@ -56,3 +56,22 @@ class Setting(Base):
 
     key: Mapped[str] = mapped_column(String(40), primary_key=True)
     value: Mapped[str] = mapped_column(Text)
+
+
+class ToolTask(Base):
+    """A host-generated result has its own provenance, without invented API settings."""
+    __tablename__ = "tool_tasks"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    request_key: Mapped[str] = mapped_column(String(80), unique=True)
+    request_hash: Mapped[str] = mapped_column(String(64))
+    session_id: Mapped[int] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"), index=True)
+    source_message_id: Mapped[int] = mapped_column(ForeignKey("messages.id", ondelete="CASCADE"))
+    context_message_id: Mapped[int] = mapped_column()
+    assistant_message_id: Mapped[int | None] = mapped_column(ForeignKey("messages.id", ondelete="CASCADE"), default=None)
+    use_default_assumptions: Mapped[bool] = mapped_column(Boolean)
+    status: Mapped[str] = mapped_column(String(16), default="pending")
+    validation_failures: Mapped[int] = mapped_column(default=0)
+    result_hash: Mapped[str | None] = mapped_column(String(64), default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)

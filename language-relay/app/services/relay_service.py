@@ -417,6 +417,8 @@ class RelayService:
         settings = None
         try:
             settings: SettingsOut = self.settings.get(db)
+            if settings.provider == "tool":
+                raise RelayError("tool_mode_requires_host", "工具模式由宿主ChatGPT完成分析，请创建工具任务。", 409)
             deadline = time.monotonic() + self.llm.config.llm_budget_seconds
             async with asyncio.timeout_at(deadline):
                 if settings.provider == "chatgpt":

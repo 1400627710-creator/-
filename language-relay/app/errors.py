@@ -18,9 +18,13 @@ class RelayError(Exception):
         self.attempts = attempts
 
     def detail(self) -> dict:
-        return {
+        detail = {
             "code": self.code,
             "message": self.message,
             "retryable": self.retryable,
             "attempts": self.attempts,
         }
+        if self.code == "tool_result_invalid":
+            detail["issues"] = getattr(self, "tool_issues", ["reply_schema"])
+            detail["remaining_retries"] = getattr(self, "remaining_retries", 0)
+        return detail

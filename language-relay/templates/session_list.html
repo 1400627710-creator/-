@@ -1,7 +1,7 @@
 {% for item in sessions %}
 <button class="session-item" data-session-id="{{ item.id }}" type="button">
   <span class="session-title">{{ item.title }}</span>
-  <span class="session-meta"><span class="status-dot {{ item.status }}"></span>{% if item.status == 'ready' %}已生成{% elif item.status == 'waiting' %}待补充{% elif item.status == 'error' %}待重试{% elif item.status == 'processing' %}生成中{% else %}新会话{% endif %}<span class="session-time">{{ item.updated_at.strftime('%m-%d') }}</span></span>
+  <span class="session-meta"><span class="status-dot {{ item.status }}"></span>{% if item.status == 'ready' %}已生成{% elif item.status == 'awaiting_tool' %}等待 ChatGPT 工具{% elif item.status == 'waiting' %}待补充{% elif item.status == 'error' %}待重试{% elif item.status == 'processing' %}生成中{% else %}新会话{% endif %}<span class="session-time">{{ item.updated_at.strftime('%m-%d') }}</span></span>
 </button>
 {% else %}
 <p class="history-empty">还没有会话。<br>从一个想法开始吧。</p>

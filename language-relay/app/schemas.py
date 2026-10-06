@@ -15,7 +15,7 @@ class SettingsUpdate(StrictModel):
     openai_api_key: SecretStr | None = None
     model: str | None = Field(default=None, min_length=1, max_length=100)
     temperature: float | None = Field(default=None, ge=0, le=2, allow_inf_nan=False)
-    provider: Literal["api", "chatgpt"] | None = None
+    provider: Literal["api", "chatgpt", "tool"] | None = None
     chatgpt_model: str | None = Field(default=None, min_length=1, max_length=100)
 
     @field_validator("model", "chatgpt_model")
@@ -39,7 +39,7 @@ class SettingsOut(StrictModel):
     openai_api_key_set: bool
     model: str
     temperature: float
-    provider: Literal["api", "chatgpt"] = "api"
+    provider: Literal["api", "chatgpt", "tool"] = "api"
     chatgpt_model: str = ""
 
 
@@ -264,3 +264,41 @@ class LLMReply(StrictModel):
     need_more_info: bool
     questions: list[str] = Field(max_length=5)
     report: Report | None
+
+
+class ToolPrepare(StrictModel):
+    request_key: str = Field(min_length=8, max_length=80, pattern=r"^[A-Za-z0-9_-]+$")
+    session_id: int | None = Field(default=None, ge=1)
+    idea: str | None = Field(default=None, min_length=1, max_length=20000)
+    use_default_assumptions: bool | None = None
+
+
+class ToolPrepared(StrictModel):
+    queued_for_tool: bool
+    task_id: str
+    session_id: int
+    status: str
+    use_default_assumptions: bool
+    user_message: MessageOut
+    next_step: str
+
+
+class ToolInvoke(StrictModel):
+    operation: Literal["status", "sessions", "prepare", "next_task", "context", "submit", "result", "cancel", "diagnostics"]
+    arguments: dict = Field(default_factory=dict)
+
+
+class ToolSubmit(StrictModel):
+    task_id: str = Field(pattern=r"^[a-f0-9]{32}$")
+    reply: dict
+
+
+class ToolConnectionUpdate(StrictModel):
+    tunnel_id: str = Field(default="", max_length=160)
+
+    @field_validator("tunnel_id")
+    @classmethod
+    def tunnel_format(cls, value):
+        if value and not re.fullmatch(r"tunnel_[A-Za-z0-9_-]{5,150}", value):
+            raise ValueError("请填写官方页面提供的 tunnel_ 开头的隧道 ID。")
+        return value

@@ -22,6 +22,7 @@
       </nav>
       <div class="sidebar-bottom">
         <button class="button settings-button" id="open-settings" type="button"><span aria-hidden="true">⚙</span> 连接与设置<span class="key-dot {{ 'configured' if settings.openai_api_key_set else '' }}" id="key-dot"></span></button>
+        <button class="button settings-button" id="open-tools" type="button">↗ 连接 ChatGPT 工具</button>
         <button class="button theme-button" id="theme-toggle" type="button">切换深色模式</button>
         <p class="privacy-note"><span class="status-dot ready"></span> 本地存储 · 单用户私人版</p>
       </div>
@@ -67,6 +68,7 @@
           <div class="default-choice"><p>想先拿到一份完整方案？</p><button class="button" id="generate-defaults" type="button" disabled>使用默认假设，我需要结果</button><small>未确认的范围、技术和数值都会标记“假设”。</small><small id="mode-status" role="status">当前先确认信息；缺少关键信息时只问最多 5 个问题。</small></div>
           <div class="request-status" id="request-status" role="status" aria-live="polite" hidden><span class="spinner" aria-hidden="true"></span><span id="request-status-text">正在整理…</span></div>
           <div class="error-box" id="error-box" role="alert" hidden><p id="error-text"></p><button class="button" id="retry-request" type="button" hidden>重试上次请求</button><button class="button" id="error-settings" type="button" hidden>打开设置</button></div>
+          <section class="error-box" id="tool-task-notice" role="status" hidden><p>想法已保存，等待 ChatGPT 工具处理。请在已连接工具的 ChatGPT 对话中让它继续；结果保存后此页自动更新。</p><button class="button" id="copy-tool-continuation" type="button">复制接续指令</button><button class="button" id="cancel-tool-task" type="button">取消待处理任务</button></section>
           <section class="conversation" id="conversation" aria-label="输入与生成历史" hidden><div class="sidebar-label">本次会话</div><div id="message-history"></div></section>
         </section>
 
@@ -84,7 +86,18 @@
   <dialog id="settings-dialog" class="settings-dialog" aria-labelledby="settings-heading">
     <form id="settings-form"><div class="dialog-heading"><div><span class="step-label">本地配置</span><h2 id="settings-heading">连接与设置</h2></div><button class="icon-button" id="close-settings" type="button" aria-label="关闭设置">×</button></div>
       <p class="dialog-description">应用在本机直接打开。调用模型可选择 API 密钥或 ChatGPT 官方登录，凭据只在本机保存。</p>
-      <label for="provider-input">模型连接方式</label><select id="provider-input"><option value="api">OpenAI API（使用密钥）</option><option value="chatgpt">使用 ChatGPT 登录（免 API Key）</option></select>
+      <label for="provider-input">模型连接方式</label><select id="provider-input"><option value="api">OpenAI API（使用密钥）</option><option value="chatgpt">使用 ChatGPT 登录（免 API Key）</option><option value="tool">通过 ChatGPT 工具处理（由当前对话生成）</option></select>
+      <section id="tool-fields" hidden>
+        <h3>让当前 ChatGPT 对话直接使用中继器</h3>
+        <p class="dialog-description">当前对话的模型整理需求，中继器校验并保存结果。此模式不额外调用模型 API，也不需要在中继器重新登录。</p>
+        <ol class="connection-steps" aria-label="工具连接进度"><li id="tool-step-protocol">本机接口：待自检</li><li id="tool-step-tunnel">官方隧道：尚未配置</li><li id="tool-step-call">工具调用：尚未收到</li></ol>
+        <label for="tool-tunnel-id">官方 Tunnel ID（可选，供网页版接入）</label><input id="tool-tunnel-id" type="text" maxlength="160" placeholder="tunnel_…" spellcheck="false">
+        <small>网页版无法直接访问你的 localhost。官方安全隧道需要独立运行凭据及工作区权限；该凭据用于连接工具，与模型 API Key 用途不同。</small>
+        <div class="connection-actions"><button class="button" id="copy-tool-config" type="button">复制本机 MCP 配置</button><button class="button" id="check-tools" type="button">一键自检工具接口</button><button class="button" id="copy-tool-error" type="button">复制工具报错</button></div>
+        <p id="tool-connection-result" class="dialog-description" role="status"></p>
+        <ol><li>保持中继器运行，查看<a href="/tool-guide" target="_blank" rel="noopener noreferrer">中文接入说明</a>；下载包也含“连接ChatGPT工具.bat”。</li><li>在<a href="https://chatgpt.com/plugins" target="_blank" rel="noopener noreferrer">ChatGPT 插件页面</a>添加自定义 MCP，选择 Tunnel，填入官方 Tunnel ID，创建并安装。</li><li>在新 ChatGPT Work 对话中选择“语言转换指令中继器”，让它处理你的想法或继续本机待处理任务。</li></ol>
+        <small>跨会话使用取决于插件仍安装、权限有效、本机服务与隧道持续运行。本机只能确认收到工具调用，不能独立认证调用者就是 ChatGPT。</small>
+      </section>
       <section id="api-fields">
       <label for="api-key">OpenAI API Key <span class="field-status" id="key-status"></span></label>
       <input id="api-key" name="api-key" type="password" autocomplete="new-password" spellcheck="false" maxlength="512" placeholder="sk-…（留空保留现有密钥）">

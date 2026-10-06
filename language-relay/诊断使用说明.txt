@@ -1,4 +1,4 @@
-语言转换指令中继器 · 一键自检 1.2.2
+语言转换指令中继器 · 一键自检 1.3.0
 
 先确定三步：账号登录、模型授权、实际模型连接。
 官网账号登录不等于本应用模型授权；模型列表可访问也不等于生成成功。
@@ -49,3 +49,6 @@ py -V:3.14 diagnose.py
 自检可以定位失败环节，不能替官方授予账户权限；通过公开接口不保证授权或生成。
 
 只反馈诊断JSON。不要发送 .env、api-key.json、chatgpt-auth.json、完整回调或原始日志。
+
+工具模式：在“连接 ChatGPT 工具”一键自检真实MCP协议，复制工具报错。保存Tunnel ID不等于隧道在线，自检通过不等于ChatGPT已安装插件。
+连接ChatGPT工具.bat 分别定位 client、ID、运行凭据、init、doctor、run；失败生成 diagnostics/relay-tool-launcher.json。工具模式不会要求模型API Key或检测无关OAuth。

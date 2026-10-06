@@ -192,7 +192,7 @@ def planning_issues(report: Report) -> tuple[str, ...]:
         "unearned_verification",
         any(
             re.search(
-                r"测试(?:已经|已)(?:全部)?通过|已运行.{0,8}测试|已(?:完成|实现).{0,8}(?:全部功能|项目代码)",
+                r"测试(?:已经|已)(?:全部)?通过|(?:已经|已)运行.{0,8}测试|(?:已经|已)(?:运行|执行).{0,8}测试.{0,8}通过|已(?:完成|实现).{0,8}(?:全部功能|项目代码)",
                 check.text,
             )
             for check in checks
