@@ -1,4 +1,0 @@
-interface:
-  display_name: "语言转换指令中继器"
-  short_description: "把模糊想法转成七节开发指令，强化架构、接口、模块与风险自检"
-  default_prompt: "使用 $language-relay 整理我的想法；信息不足最多问五个问题，使用默认假设时直接给完整开发指令。"

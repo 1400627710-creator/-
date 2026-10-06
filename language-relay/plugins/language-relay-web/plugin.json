@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "language-relay-web",
-  "version": "1.0.1",
-  "description": "供 ChatGPT 网页对话使用的中继器技能插件，当前对话模型分析，无需额外模型Key或本地MCP服务。",
+  "version": "1.0.2",
+  "description": "语言转换指令中继器：必须加载随附language-relay-web技能。信息不足只第3节最多5题；默认假设完整七节，补充逐项标假设。无需额外模型Key或中继器登录。",
   "author": {
     "name": "1400627710-creator"
   },
@@ -20,9 +20,9 @@
           "Write"
         ],
         "defaultPrompt": [
-          "使用中继器整理我的开发想法。",
-          "使用默认假设，我需要完整开发指令。",
-          "给中继器做一键自检。"
+          "请先加载并执行随附的language-relay-web中继器技能。信息不足只输出第3节、最多5个问题；要求默认假设时输出固定七节。我的想法是：",
+          "请加载并执行随附的language-relay-web中继器技能。使用默认假设，我需要结果；严格输出1我理解的想法、2动机分析、3需要确认的问题、4需求规格、5技术方案、6给编程AI的指令、7自检，所有补充逐项标假设。",
+          "请加载随附的language-relay-web技能，给中继器做一键自检。返回实际失败阶段、错误码、证据与下一步，不伪造程序执行或安装状态。"
         ]
       }
     }

@@ -1,0 +1,4 @@
+interface:
+  display_name: "语言转换指令中继器（网页版）"
+  short_description: "信息不足仅第3节最多5题，默认假设完整七节并逐项标假设"
+  default_prompt: "使用 $language-relay-web 整理我的想法；先加载技能，严格遵守澄清或完整七节两种格式。"

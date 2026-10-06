@@ -20,7 +20,7 @@ from pathlib import Path
 from relay_core.errors import PluginError
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 TABLES = {"sessions", "messages", "generations", "settings", "tool_tasks"}
 SETTINGS = {"provider", "tool_last_call", "tool_protocol_check"}
 
