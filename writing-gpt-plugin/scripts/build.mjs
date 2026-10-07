@@ -1,0 +1,12 @@
+import {build} from 'esbuild';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+const root=path.resolve('.');
+const aliases={'node:fs':path.join(root,'browser/localFs.ts'),'node:path':path.join(root,'browser/localPath.ts'),'node:crypto':path.join(root,'browser/localCrypto.ts')};
+const plug={name:'browser-local-store',setup(b){b.onResolve({filter:/^node:(fs|path|crypto)$/},a=>({path:aliases[a.path]}));}};
+const output=await build({entryPoints:['browser/main.tsx'],write:false,bundle:true,platform:'browser',format:'iife',target:'es2022',charset:'utf8',minify:true,define:{'process.env.NODE_ENV':'"production"'},plugins:[plug],legalComments:'none'});
+const css=await fs.readFile('browser/style.css','utf8');const js=output.outputFiles[0].text.replace(/<\/script/gi,'<\\/script');
+const html='<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>小说码字助手</title><style>'+css+'</style></head><body><div id="root"></div><script>'+js+'</script></body></html>';
+await fs.writeFile('worker/ui.generated.js','export const EDITOR_HTML='+JSON.stringify(html)+';\n');
+await build({entryPoints:['worker/mcp.ts'],outfile:'worker/index.js',bundle:true,platform:'browser',format:'esm',target:'es2022',charset:'utf8',minify:true,legalComments:'none'});
+console.log('Built GPT plugin, single-file writing view, and stateless MCP endpoint.');
