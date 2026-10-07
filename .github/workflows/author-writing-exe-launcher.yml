@@ -35,9 +35,18 @@ jobs:
           Invoke-WebRequest -UseBasicParsing -Uri 'https://github.com/1400627710-creator/-/releases/download/author-writing-v0.1.2/author-writing-0.1.2-windows-x64.zip' -OutFile $archive
           if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'a7fbcccc5fcf1e790313873d494fdaf18e04670728c962af32092b7a30c1470c') { throw 'Previously verified app SHA256 changed.' }
           Expand-Archive -LiteralPath $archive -DestinationPath "$env:RUNNER_TEMP\writer-exe-delivery"
+      - name: Package and extract the delivered launcher
+        shell: powershell
+        run: |
+          $exe="$env:RUNNER_TEMP\author-writing-start-0.1.3.exe"
+          $zip="$env:RUNNER_TEMP\author-writing-launcher-0.1.3.zip"
+          python -c "import zipfile,sys; z=zipfile.ZipFile(sys.argv[1],'w',zipfile.ZIP_DEFLATED); z.write(sys.argv[2],'START.exe'); z.write('README.md','使用说明.md'); z.close()" $zip $exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Expand-Archive -LiteralPath $zip -DestinationPath "$env:RUNNER_TEMP\delivered-exe"
+          if ((Get-FileHash "$env:RUNNER_TEMP\delivered-exe\START.exe").Hash -ne (Get-FileHash $exe).Hash) { throw 'Delivered EXE bytes changed.' }
       - name: Test the real executable and writing window
         run: |
-          node native.test.mjs "$env:RUNNER_TEMP\author-writing-start-0.1.3.exe" "$env:RUNNER_TEMP\writer-exe-delivery\author-writing" "$env:RUNNER_TEMP\author-writing-0.1.2-windows-x64.zip"
+          node native.test.mjs "$env:RUNNER_TEMP\delivered-exe\START.exe" "$env:RUNNER_TEMP\writer-exe-delivery\author-writing" "$env:RUNNER_TEMP\author-writing-0.1.2-windows-x64.zip"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Publish only after native tests pass
         env:
@@ -47,8 +56,6 @@ jobs:
         run: |
           $exe="$env:RUNNER_TEMP\author-writing-start-0.1.3.exe"
           $zip="$env:RUNNER_TEMP\author-writing-launcher-0.1.3.zip"
-          python -c "import zipfile,sys; z=zipfile.ZipFile(sys.argv[1],'w',zipfile.ZIP_DEFLATED); z.write(sys.argv[2],'START.exe'); z.write('README.md','使用说明.md'); z.close()" $zip $exe
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $tag='author-writing-launcher-v0.1.3'
           gh release view $tag --json tagName 2>$null
           if ($LASTEXITCODE -eq 0) {
