@@ -51,11 +51,12 @@ export class HostBridge {
     if(!this.canTrigger)throw Error('稿件已保存在本机。请从 GPT 插件内打开窗口，再发送请求。');
     const context=await this.serial(async()=>{await this.load();const c=this.service.store.context(jobId);await this.publish();return c;});
     let ticket:Ticket|undefined=await this.persistence.read('ticket:'+jobId);
+    if(ticket?.failed&&ticket.expires>Date.now())throw Error('这条回复已失效，请在原问题上点“编辑重问”，按当前原稿重新发送。');
     if(!ticket||ticket.expires<Date.now()){
       const keys=await makeKeys();ticket={...keys,jobId,readToken:randomBytes(32).toString('hex'),writeToken:randomBytes(32).toString('hex'),expires:Date.now()+20*60*1000,rev:context.job.rev,memoryRev:context.job.memoryRev,branch:context.job.branch};
-      await this.remote('writer_begin',{jobId,readToken:ticket.readToken,writeToken:ticket.writeToken,publicKey:ticket.publicKey,rev:ticket.rev,memoryRev:ticket.memoryRev,branch:ticket.branch,mode:context.job.mode});
       await this.persistence.put('ticket:'+jobId,ticket);
     }
+    await this.remote('writer_begin',{jobId,readToken:ticket.readToken,writeToken:ticket.writeToken,publicKey:ticket.publicKey,rev:ticket.rev,memoryRev:ticket.memoryRev,branch:ticket.branch,mode:context.job.mode});
     const sources=await this.serial(async()=>{
       await this.load();const p=this.service.store.project(context.novel.id);const spans:any[]=[];let budget=context.job.mode==='learn'?48000:14000;
       const chapters=context.job.mode==='learn'?p.chapters:[this.service.store.chapter(p,context.currentChapter.id)];
@@ -75,9 +76,11 @@ export class HostBridge {
     if(this.polling||!this.canTrigger)return;this.polling=true;
     try{
       const jobs=await this.serial(async()=>{await this.load();return this.service.store.snapshot().projects.flatMap(p=>p.jobs).filter(j=>['processing','queued'].includes(j.status));});
-      for(const job of jobs.slice(0,4)){
+      let checked=0;
+      for(const job of jobs){
         const ticket:Ticket|undefined=await this.persistence.read('ticket:'+job.id);if(!ticket||ticket.delivered||ticket.failed)continue;
         if(ticket.expires<Date.now()){ticket.failed=true;await this.persistence.put('ticket:'+job.id,ticket);this.onStatus('有一条请求等待超时；原稿已保留，可点“重新唤起”。');continue;}
+        if(checked>=4)break;checked++;
         const result=await this.remote('writer_delivery',{jobId:job.id,readToken:ticket.readToken});if(!result.delivery)continue;
         const packet=await decryptReply(result.delivery,ticket.privateKey,job.id);
         try{

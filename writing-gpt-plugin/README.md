@@ -19,3 +19,5 @@
 npm ci → npm run typecheck → npm run build → npm test → npm run validate。Worker ESM 构建将窗口嵌入单个 worker/index.js，无需运行时安装依赖。部署资源通过 .openai/hosting.json 声明，复用其中的 Site 身份。
 
 自动检查包含原稿版本保护、作者采纳/撤销、纠错确认、浏览器存储适配核心、MCP 工具和资源发现、回复加密、权限隔离、重复提交与超时。Node 中的核心及协议测试不等同于实际 GPT 窗口渲染或作者电脑操作；账户连接与完整宿主流程须另行验证。
+
+模拟宿主的流程检查使用实际 HostBridge 和 Worker，覆盖窗口提交、加密候选回写、作者采纳、撤销和存稿恢复，并验证旧待办不挡新回复、通道注册成功但网络超时后仍可重试。此模拟检查使用内存持久化替身，不等同于浏览器 IndexedDB 或真实 GPT 消息通道检查。

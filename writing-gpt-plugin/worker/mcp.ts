@@ -17,7 +17,7 @@ const TOOLS=[
  {name:'writer_open',title:'打开码字窗口',description:'在 GPT 内打开三栏小说编辑窗口：本机存稿、原稿导入、选段润色、问词、过渡代笔、来源记忆和作者采纳。不需要本机启动器或模型 Key。',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:annotations(true),_meta:{ui:{resourceUri:UI_URI},'openai/outputTemplate':UI_URI,'openai/ui':{entrypoints:[{type:'global'},{type:'thread'}]}}},
  {name:'writer_status',title:'查看码字连接',description:'只读检查此 GPT 插件连接与运行版本。不读取或虚构作者本机稿件。',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:annotations(true)},
  {name:'writer_begin',title:'窗口准备回复通道',description:'仅供作者窗口创建短期加密回复通道；不上传或保存小说正文。',inputSchema:schema(Begin),annotations:annotations(false),_meta:{ui:{visibility:['app']}}},
- {name:'writer_delivery',title:'窗口接收回复',description:'仅供作者窗口接收并确认短期加密回复。不会直接更改正式正文或确认记忆。',inputSchema:schema(Delivery),annotations:annotations(true),_meta:{ui:{visibility:['app']}}},
+ {name:'writer_delivery',title:'窗口接收回复',description:'仅供作者窗口接收并确认短期加密回复；确认后删除已收取的短期通道。不会直接更改正式正文或确认记忆。',inputSchema:schema(Delivery),annotations:annotations(false),_meta:{ui:{visibility:['app']}}},
  {name:'writer_finish',title:'把 GPT 回答交回码字窗口',description:rules,inputSchema:schema(Finish),annotations:annotations(false)},
 ];
 const enc=new TextEncoder();
