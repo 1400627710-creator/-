@@ -1,21 +1,4 @@
-@echo off
-setlocal DisableDelayedExpansion
-chcp 65001 >nul
-set "WRITER_LAUNCH_DIR=%~dp0"
-set "WRITER_BOOT_FILE=%~f0"
-set "WRITER_ACTION=Start"
-if /i "%~1"=="--check" set "WRITER_CHECK_ONLY=1"
-"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -STA -ExecutionPolicy Bypass -Command "$s=[IO.File]::ReadAllText($env:WRITER_BOOT_FILE,[Text.Encoding]::UTF8);$m='# WRITER_POWERSHELL'; & ([scriptblock]::Create($s.Substring($s.LastIndexOf($m)+$m.Length)))"
-set "WRITER_EXIT_CODE=%ERRORLEVEL%"
-echo.
-echo Exit code: %WRITER_EXIT_CODE%
-echo This window keeps the result. Close it only after reading the message.
-if "%WRITER_NONINTERACTIVE%"=="1" goto done
-pause
-:done
-exit /b %WRITER_EXIT_CODE%
-# WRITER_POWERSHELL
-$ErrorActionPreference='Stop'
+﻿$ErrorActionPreference='Stop'
 $utf8=New-Object Text.UTF8Encoding($false)
 [Console]::OutputEncoding=$utf8
 $OutputEncoding=$utf8

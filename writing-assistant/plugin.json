@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "author-writing",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "作者主导的本机小说码字助手，依据原稿与可纠正记忆协作，使用当前 GPT，无需额外 Key。",
   "repository": "https://github.com/1400627710-creator/-/tree/main/writing-assistant",
   "extensions": {

@@ -43,7 +43,7 @@ try {
  $logs=Join-Path $base 'AuthorWriting\logs'
  try{[IO.Directory]::CreateDirectory($logs)|Out-Null}catch{$logs=Join-Path ([IO.Path]::GetTempPath()) 'AuthorWriting\logs';[IO.Directory]::CreateDirectory($logs)|Out-Null}
  $script:LogFile=Join-Path $logs ('launcher-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')+'-'+$PID+'.txt')
- Write-Stage ('小说码字助手 0.1.1；日志：'+$script:LogFile)
+ Write-Stage ('小说码字助手 0.1.2；日志：'+$script:LogFile)
  if(!(Test-Path -LiteralPath (Join-Path $script:Root 'scripts\launcher.mjs'))) {throw '[ARCHIVE_INCOMPLETE] 请完整解压压缩包，不要只提取启动器。'}
  $node=Find-SupportedNode
  if(!$node) {

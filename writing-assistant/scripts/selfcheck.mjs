@@ -15,7 +15,7 @@ export async function runSelfCheck({root=source,output}={}){
   await step('Node 版本与运行文件',()=>{if(Number(process.versions.node.split('.')[0])<22)throw Object.assign(Error(),{code:'NODE_UNSUPPORTED'});for(const p of ['dist/main.js','dist/editor.html','plugin.json','mcp.json'])if(!fs.existsSync(path.join(root,p)))throw Object.assign(Error(),{code:'FILE_MISSING'});});
   const [{Client},{StdioClientTransport}]=await Promise.all([import('@modelcontextprotocol/sdk/client/index.js'),import('@modelcontextprotocol/sdk/client/stdio.js')]);
   temp=fs.mkdtempSync(path.join(os.tmpdir(),'author-writing-selfcheck-'));
-  const connect=async()=>{client=new Client({name:'author-writing-selfcheck',version:'0.1.1'},{capabilities:{}});await client.connect(new StdioClientTransport({command:process.execPath,args:[path.join(root,'dist/main.js'),'--stdio'],cwd:root,env:{...process.env,WRITER_DATA_DIR:temp},stderr:'pipe'}));};
+  const connect=async()=>{client=new Client({name:'author-writing-selfcheck',version:'0.1.2'},{capabilities:{}});await client.connect(new StdioClientTransport({command:process.execPath,args:[path.join(root,'dist/main.js'),'--stdio'],cwd:root,env:{...process.env,WRITER_DATA_DIR:temp},stderr:'pipe'}));};
   await step('启动真实本机 MCP 服务',connect);
   await step('10 个 MCP 工具',async()=>{const names=(await client.listTools()).tools.map(x=>x.name);if(needed.some(n=>!names.includes(n)))throw Object.assign(Error(),{code:'TOOLS_MISSING'});});
   await step('码字窗口资源',async()=>{const data=await client.readResource({uri:'ui://author-writing/editor.html'});if(data.contents[0].mimeType!=='text/html;profile=mcp-app'||!data.contents[0].text.includes('LOCAL_BOOT'))throw Object.assign(Error(),{code:'UI_RESOURCE_INVALID'});});

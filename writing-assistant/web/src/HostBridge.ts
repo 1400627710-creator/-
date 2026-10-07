@@ -18,7 +18,7 @@ export class HostBridge {
   async initialize() {
     if(this.mode==='local'){await this.call('snapshot',{});this.connected=true;return;}
     if(window.parent!==window){
-      this.app=new App({name:'小说码字助手',version:'0.1.0'}, {availableDisplayModes:['inline','fullscreen']}, {autoResize:false});
+      this.app=new App({name:'小说码字助手',version:'0.1.2'}, {availableDisplayModes:['inline','fullscreen']}, {autoResize:false});
       const first=new Promise<void>(resolve=>{this.readyResolve=resolve;});
       this.app.ontoolresult=(result)=>{
         const meta=result._meta as any;if(meta?.clientKey)this.key=meta.clientKey;

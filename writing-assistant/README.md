@@ -2,13 +2,13 @@
 
 原稿由作者写，GPT 帮你理解、推敲和衔接。三栏窗口包含小说与章节仓库、正文编辑区、交流及出处记忆。无需新账号或模型 API Key，使用你现有 ChatGPT 登录。
 
-**当前版本 0.1.1 是尚未完成作者电脑验收的本机编辑器和插件开发包，不能视为“窗口直连当前 GPT”的完成版。** 独立窗口不会自动调用 GPT，文件接力需要作者手动传递请求与回复；桌面插件连接、真实模型回写和主动建议尚未在作者客户端验证。已完成的隔离环境、浏览器和 MCP 协议测试不能替代实际客户端验收。启动问题仍需根据作者电脑上的错误日志定位。详见 [需求验收核查](docs/requirements-audit.md)。
+**当前版本 0.1.2 是尚未完成作者电脑验收的本机编辑器和插件开发包，不能视为“窗口直连当前 GPT”的完成版。** 独立窗口不会自动调用 GPT，文件接力需要作者手动传递请求与回复；桌面插件连接、真实模型回写和主动建议尚未在作者客户端验证。0.1.2 修复缺少配套脚本时的启动入口，并增加最终 ZIP 的解压启动测试；作者电脑能否运行仍待实际验证。详见 [需求验收核查](docs/requirements-audit.md)。
 
 ## 下载与打开
 
-Windows x64 优先下载 [完整包发布页面](https://github.com/1400627710-creator/-/releases/tag/author-writing-v0.1.1) 的 `author-writing-0.1.1-windows-x64.zip`，完整解压后双击 `START.cmd`。完整包包含 Node 和运行依赖，正常启动无需另行安装或联网下载。发布只在原生 Windows 的启动、诊断和安装测试全部通过后执行。
+Windows x64 下载 [完整包发布页面](https://github.com/1400627710-creator/-/releases/tag/author-writing-v0.1.2) 的 `author-writing-0.1.2-windows-x64.zip`，完整解压后双击 `START.cmd`。遇到缺少脚本的报错，可单独下载同页面的 `author-writing-0.1.2-start.cmd`，双击后选择已经下载的 Windows 完整 ZIP；启动器自动完整解压后启动，兼容旧版完整包的反斜杠格式。后续点击同一启动器会复用已恢复程序。完整包包含 Node 和运行依赖，正常启动无需另行安装或联网下载。发布只在最终 ZIP 实际解压及原生 Windows 启动、恢复、诊断和安装测试全部通过后执行。
 
-通用源码包在 `releases/author-writing-0.1.1.zip`，它不包含 Node 和依赖。Windows 启动器会检查 Node 版本，缺少合适版本时通过系统 winget 安装 LTS，并继续启动；依赖缺失时会自动修复。macOS/Linux 使用 Node.js 22 或更高版本，可运行 `START.command`。这些依赖不需要新账号。
+通用源码可直接从仓库获取，它不包含 Node 和依赖。Windows 启动器会检查 Node 版本，缺少合适版本时通过系统 winget 安装 LTS，并继续启动；依赖缺失时会自动修复。macOS/Linux 使用 Node.js 22 或更高版本，可运行 `START.command`。这些依赖不需要新账号。
 
 启动和安装入口在退出前保留结果，日志保存于 `%LOCALAPPDATA%\AuthorWriting\logs`。双击 `DIAGNOSE.cmd` 可运行真实服务、页面、存稿重启自检，输出 JSON 报告；测试数据与作者稿件隔离。遇到报错请提供错误码或该报告，不需要密码。详见 [启动与安装诊断](docs/startup.md)。
 

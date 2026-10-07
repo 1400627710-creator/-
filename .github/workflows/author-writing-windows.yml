@@ -53,10 +53,12 @@ jobs:
           $version=(Get-Content package.json -Raw | ConvertFrom-Json).version
           $tag="author-writing-v$version"
           $asset="$env:RUNNER_TEMP\author-writing-$version-windows-x64.zip"
+          $launcher="$env:RUNNER_TEMP\author-writing-$version-start.cmd"
+          Copy-Item -LiteralPath START.cmd -Destination $launcher
           gh release view $tag --json tagName 2>$null
           if ($LASTEXITCODE -eq 0) {
-            gh release upload $tag $asset "$asset.sha256" --clobber
+            gh release upload $tag $asset "$asset.sha256" $launcher --clobber
           } else {
-            gh release create $tag $asset "$asset.sha256" --target $env:RELEASE_SHA --title "Author writing $version - Windows full package" --notes "Includes Windows x64 Node and production dependencies. Native cmd.exe, Windows PowerShell, real local MCP, persistence, diagnostics and installed runtime tested. Desktop ChatGPT account installation and proactive GPT triggering still require verification on the author's computer."
+            gh release create $tag $asset "$asset.sha256" $launcher --target $env:RELEASE_SHA --title "Author writing $version - Windows startup recovery" --notes "Final ZIP extracted and tested on native Windows, including Chinese and space paths. Standalone start.cmd can recover from an already downloaded full ZIP, including the old backslash ZIP format. Includes Windows x64 Node and production dependencies; real local MCP, persistence, diagnostics and installed runtime tested. Desktop ChatGPT account installation, automatic model replies and proactive GPT triggering are still unverified."
           }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
