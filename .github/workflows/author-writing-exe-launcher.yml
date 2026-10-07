@@ -31,6 +31,7 @@ jobs:
       - name: Download and extract the verified writing app
         shell: powershell
         run: |
+          $ProgressPreference='SilentlyContinue'
           $archive="$env:RUNNER_TEMP\author-writing-0.1.2-windows-x64.zip"
           Invoke-WebRequest -UseBasicParsing -Uri 'https://github.com/1400627710-creator/-/releases/download/author-writing-v0.1.2/author-writing-0.1.2-windows-x64.zip' -OutFile $archive
           if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'a7fbcccc5fcf1e790313873d494fdaf18e04670728c962af32092b7a30c1470c') { throw 'Previously verified app SHA256 changed.' }
@@ -40,7 +41,7 @@ jobs:
         run: |
           $exe="$env:RUNNER_TEMP\author-writing-start-0.1.3.exe"
           $zip="$env:RUNNER_TEMP\author-writing-launcher-0.1.3.zip"
-          python -c "import zipfile,sys; z=zipfile.ZipFile(sys.argv[1],'w',zipfile.ZIP_DEFLATED); z.write(sys.argv[2],'START.exe'); z.write('README.md','使用说明.md'); z.close()" $zip $exe
+          python -c "import zipfile,sys; z=zipfile.ZipFile(sys.argv[1],'w',zipfile.ZIP_DEFLATED); z.write(sys.argv[2],'START.exe'); z.write('README.md','README.md'); z.close()" $zip $exe
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Expand-Archive -LiteralPath $zip -DestinationPath "$env:RUNNER_TEMP\delivered-exe"
           if ((Get-FileHash "$env:RUNNER_TEMP\delivered-exe\START.exe").Hash -ne (Get-FileHash $exe).Hash) { throw 'Delivered EXE bytes changed.' }
