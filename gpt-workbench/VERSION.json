@@ -1,0 +1,21 @@
+{
+  "版本": "1.1",
+  "日期": "2026-10-22",
+  "产品": [
+    "卡递",
+    "车卡机"
+  ],
+  "基线": "GPT 初始版 1.0",
+  "冻结远程提交": "07a5d0e9e69ca50ac6758a7c00528e08cf826771",
+  "用户真实资料": "未包含、未读取、未迁移",
+  "原插件": "novel-archive/plugin 保留 1.0.1 快照，未更新安装",
+  "检查": {
+    "Node": 46,
+    "真实IndexedDB": 21,
+    "Windows及fileURL": "未实机验证"
+  },
+  "可运行入口SHA256": {
+    "cardstudio/CardStudio-Local.html": "1464e75989a09f9d1a64c383cfbf2d186f0c2049090901dc54866d1268b0a0e8",
+    "novel-archive/Novel-Archive.html": "2fa0dd9bb19786da7ec97e50df5cfffccec1268bfcf64cdfa82d0d7428f7dddc"
+  }
+}

@@ -1,0 +1,5 @@
+import {DatabaseSync} from 'node:sqlite';import {readFileSync} from 'node:fs';
+const sql=new DatabaseSync(':memory:');sql.exec(readFileSync('drizzle/0000_dusty_arachne.sql','utf8').replaceAll('--> statement-breakpoint',''));
+class Statement{constructor(query,args=[]){this.query=query;this.args=args;}bind(...args){return new Statement(this.query,args);}async first(){return sql.prepare(this.query).get(...this.args)||null;}async all(){return {results:sql.prepare(this.query).all(...this.args)}}async run(){const r=sql.prepare(this.query).run(...this.args);return {success:true,meta:{changes:Number(r.changes)}}}}
+const files=new Map;
+export const env={DB:{prepare:q=>new Statement(q),async batch(statements){sql.exec('BEGIN');try{const out=[];for(const s of statements)out.push(await s.run());sql.exec('COMMIT');return out;}catch(e){sql.exec('ROLLBACK');throw e;}}},BUCKET:{async put(key,value){files.set(key,String(value));},async get(key){const text=files.get(key);return text===undefined?null:{json:async()=>JSON.parse(text),text:async()=>text};}}};

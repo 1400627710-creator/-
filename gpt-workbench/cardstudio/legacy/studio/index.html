@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1.0" name="viewport"/>
+<meta content="#f8f8f9" name="theme-color"/>
+<title>CardStudio — 桌游卡牌工作台</title>
+<script src="/vendor/papaparse/papaparse.min.js"></script>
+<script src="/vendor/xlsx/dist/xlsx.full.min.js"></script>
+<script src="/vendor/html-to-image/dist/html-to-image.js"></script>
+<script src="/vendor/jspdf/dist/jspdf.umd.min.js"></script>
+<script src="/vendor/jszip/dist/jszip.min.js"></script>
+<link href="/styles.css?v=3.0.0-beta10" rel="stylesheet"/>
+<link href="/public-repository.css" rel="stylesheet"/>
+<link href="/workspace-ui.css?v=3.0.0-beta10" rel="stylesheet"/></head>
+<body class="workspace-v9">
+<header class="top app-header">
+<div class="brand">
+<span aria-hidden="true" class="brand-mark"><i></i><i></i><i></i></span>
+<div class="brand-copy"><b>CardStudio</b><span>Card design workspace</span></div>
+<span class="version-badge">Beta 10</span>
+<label class="project-pill" title="项目名称"><input aria-label="项目名称" class="project-name" id="projectName" value="未命名卡牌项目"/></label>
+</div>
+<div class="actions">
+<button class="top-menu-toggle" id="openPublicTerms">词条库</button><button class="top-menu-toggle" id="openPublicAssets">素材库</button>
+<div aria-label="历史操作" class="history-actions">
+<button aria-label="撤销" class="icon-action" id="undoBtn" title="撤销 Ctrl/Cmd+Z">↶</button>
+<button aria-label="重做" class="icon-action" id="redoBtn" title="重做 Ctrl/Cmd+Shift+Z">↷</button>
+</div>
+<div class="menu-shell">
+<button aria-expanded="false" class="top-menu-toggle" id="projectMenuToggle">项目 <span>⌄</span></button>
+<div class="top-menu" hidden="" id="projectMenu">
+<small>数据与项目</small>
+<button id="importBtn"><b>导入数据</b><span>CSV / Excel / JSON</span></button>
+<input accept=".csv,.json,.xlsx,.xls" hidden="" id="importFile" type="file"/>
+<button id="projectImport"><b>打开项目</b><span>.cardstudio</span></button>
+<input accept=".json,.cardstudio" hidden="" id="projectFile" type="file"/>
+<button id="projectExport"><b>保存项目</b><span>保存完整工程</span></button>
+<button id="openRecovery"><b>安全恢复</b><span>恢复上一次稳定自动保存</span></button>
+<button id="openQuickStart"><b>快速开始</b><span>新项目 / 示例 / 导入</span></button>
+</div>
+</div>
+<div class="menu-shell">
+<button aria-expanded="false" class="top-menu-toggle" id="workspaceMenuToggle">工作台 <span>⌄</span></button>
+<div class="top-menu workspace-menu" hidden="" id="workspaceMenu">
+<small>卡牌生产工具</small>
+<button class="workspace-command hub-command" id="openProjectHub"><b>⌂ 项目中心</b><span>Set · 测试 · 版本</span></button>
+<button class="workspace-command review-command" id="openReviewWall"><b>▦ 全套审阅墙</b><span>缩略图 · 一致性 · 异常聚焦</span></button>
+<button class="workspace-command" id="openDataTable"><b>▦ 卡牌数据表</b><span>批量编辑与公式</span></button>
+<button class="workspace-command" id="openFieldSchema"><b>⌘ 字段结构</b><span>自定义卡牌数据</span></button>
+<button class="workspace-command" id="openDesignSystem"><b>◇ 设计系统</b><span>精度 · 规则排版 · 视觉</span></button>
+<button class="workspace-command" id="openAssetManager"><b>▣ 项目素材管理</b><span>插画 · 图标 · 卡背</span></button>
+<button class="workspace-command" id="openPreflight"><b>✓ 项目检查</b><span>发布前卡牌 QA</span></button>
+</div>
+</div>
+<div aria-label="保存与检查状态" class="header-status-slot" id="headerStatusSlot"></div>
+<button class="primary publish-action" id="batchPdfTop"><span class="publish-dot"></span>发布</button>
+</div>
+</header>
+<div class="app-subbar">
+<div aria-label="编辑模式" class="editor-mode-bar" role="toolbar">
+<div class="editor-mode-title"><b>编辑模式</b></div>
+<button class="mode-choice active" id="safeMode"><strong>内容</strong><small>安全编辑</small></button>
+<button class="mode-choice layout-choice" id="layoutMode"><strong>布局</strong><small>精确排版</small><kbd>L</kbd></button>
+</div>
+<div aria-label="项目状态" class="project-summary">
+<button id="summaryCards" title="打开数据表"><b>0</b><span>卡牌</span></button>
+<button id="summaryReady" title="筛选已锁定/可发布卡牌"><b>0</b><span>可发布</span></button>
+<button id="summaryIssues" title="打开项目检查"><b>0</b><span>待处理</span></button>
+<div class="save-indicator" id="summarySave"><i></i><span>已自动保存</span></div>
+</div>
+</div>
+<div class="runtime-banner" hidden="" id="runtimeBanner">
+<div><b>运行异常已被拦截</b><span id="runtimeBannerText">当前项目数据仍保留。建议先保存项目，必要时使用安全恢复。</span></div>
+<div><button id="runtimeSaveNow">立即保存项目</button><button id="runtimeOpenRecovery">安全恢复</button><button id="runtimeDismiss">关闭提示</button></div>
+</div>
+<div class="workspace">
+<aside class="left">
+<div class="panel-head">
+<div><b>卡牌</b><small id="count"></small></div>
+<button id="newCard">＋ 新建</button>
+</div>
+<div class="sidebar-search-wrap"><span aria-hidden="true">⌕</span><input class="search" id="cardSearch" placeholder="搜索卡牌"/></div>
+<details class="sidebar-disclosure filter-disclosure">
+<summary><span>筛选与排序</span><small>按模板、系别、稀有度</small></summary>
+<div class="left-tools">
+<select id="templateFilter"><option value="all">全部模板</option></select>
+<select id="factionFilter"><option value="all">全部系别</option></select>
+<select id="rarityFilter"><option value="all">全部稀有度</option></select>
+<select id="sortCards"><option value="manual">当前顺序</option><option value="name">按名称</option><option value="cost">按费用</option><option value="faction">按系别</option><option value="rarity">按稀有度</option><option value="template">按模板</option></select>
+</div>
+</details>
+<div class="card-list" id="cardList"></div>
+<div class="row card-list-actions">
+<button id="duplicate">复制</button>
+<button id="delete">删除</button>
+</div><section class="navigator-overview"><div class="navigator-section-title"><b>本卡概览</b><button data-workspace-action="openProjectHub" type="button">项目中心 ↗</button></div><strong id="navigatorCardName"></strong><div class="navigator-facts" id="navigatorFacts"></div><div class="navigator-shortcuts"><button data-workspace-action="projectExport" type="button">保存项目</button><button data-workspace-action="openPreflight" type="button">检查 / 修复</button></div></section><details class="navigator-disclosure" id="navigatorTemplates" open=""><summary>卡牌类型与模板<span>切换 / 另存</span></summary><section class="navigator-template-content">
+<h3>模板 / 成品版式</h3>
+<div class="template-cards" id="templateCards"></div>
+<div class="row mini-gap"><button id="cloneTemplate">另存为自定义模板</button><button id="deleteTemplate">停用当前模板</button></div>
+<div class="finish-presets">
+<b>成品视觉版式</b><small>不是换颜色，而是重新安排信息层级</small>
+<div class="row"><button class="primary" id="presetShowcase">全幅插画 · 竞技卡</button><button id="presetClassicFrame">古典双槽 · 边框卡</button></div>
+</div>
+</section></details><details class="navigator-disclosure navigator-layers" open=""><summary>图层导航<span>点击选中模块</span></summary><div class="layer-manager">
+<div class="layer-manager-head"><b>图层</b><small>上面的层会遮住下面的层 · 点击即可选中</small></div>
+<div class="layer-list" id="layerList"></div>
+</div></details>
+<details class="sidebar-disclosure snapshot-disclosure">
+<summary><span>版本快照</span><small>本机保存</small></summary>
+<div class="snapshot-tools"><button id="saveSnapshot">保存当前快照</button></div>
+<div class="snapshot-list" id="snapshotList"></div>
+</details>
+</aside>
+<main class="stage">
+<div class="stagebar">
+<div class="stage-mode-slot" id="stageModeSlot"></div>
+<div class="stage-context"><span>模板 <b id="templateName">标准单位卡</b><i>·</i><b id="layoutModeLabel">内容</b></span><button class="layout-quick" id="layoutQuickButton" title="切换内容 / 布局编辑">布局</button></div>
+<div class="stage-actions"><button class="live-qa-badge ok" id="liveQaBadge" title="当前卡牌持续检查：点击打开项目检查"><i></i><b>编辑检查中</b><span>0</span></button><span class="edit-scope-badge" id="editScopeBadge" title="当前布局修改影响范围">本卡精调</span><div aria-label="面板显示" class="panel-visibility"><button aria-pressed="true" class="panel-toggle" id="toggleLeftPanel" title="显示 / 隐藏卡牌列表">卡牌</button><button aria-pressed="true" class="panel-toggle" id="toggleRightPanel" title="显示 / 隐藏属性面板">属性</button></div><button class="focus-stage-btn" id="openPrintGuides" title="调整裁切出血线与安全区">裁切 / 出血</button><button class="focus-stage-btn" id="reviewWallQuick" title="打开全套卡牌审阅墙">审阅</button><button class="focus-stage-btn" id="focusStage" title="专注预览（F）">专注</button><span class="status" id="status">就绪</span></div>
+</div>
+<div aria-label="卡牌画布" class="canvas-viewport"><div class="checker"><div id="preview"></div></div></div>
+<p class="hint" id="stageHint">自由布局：双击卡面空白处直接输入；双击文字继续编辑。</p>
+<div class="export-actions"><button class="canvas-text-action" id="canvasAddText" type="button">＋ 画布文字</button>
+<button id="png">PNG 300dpi</button>
+<button id="jpg">JPG 300dpi</button>
+<button id="singlePdf">单张 PDF</button>
+<button class="primary" id="batchPdf">A4 拼版 PDF</button>
+</div>
+</main>
+<aside class="right">
+<div class="inspector-heading"><div><b>属性</b><small id="inspectorContext">当前卡牌</small></div></div>
+<div class="lock-banner" hidden="" id="currentLockBanner"><b>🔒 已锁定</b><span></span><small>到“项目中心”解除锁定后才能修改，避免已发布内容被误改。</small></div>
+<div class="right-mode-tabs" id="rightModeTabs">
+<button class="active" data-tool-mode="content">内容 <kbd>1</kbd></button>
+<button data-tool-mode="text">文字 <kbd>2</kbd></button>
+<button data-tool-mode="layout">布局 <kbd>3</kbd></button>
+<button data-tool-mode="visual">视觉 <kbd>4</kbd></button>
+<button data-tool-mode="rules">规则 <kbd>5</kbd></button>
+<button data-tool-mode="export">输出 <kbd>6</kbd></button>
+</div><div class="inspector-quick-actions"><button data-workspace-action="projectExport" type="button">保存项目</button><button data-workspace-action="openPreflight" type="button">检查 / 修复</button><button data-workspace-action="png" type="button">导出 PNG</button></div>
+<section data-tool-group="content">
+<h3>填写卡牌</h3>
+<div class="grid">
+<label class="field-wide"><button class="field-label-button" data-default-label="名称" data-rename-field="name" title="点击修改字段名称" type="button">名称<span aria-hidden="true">✎</span></button><input data-form="name"/></label>
+<label><button class="field-label-button" data-default-label="费用" data-rename-field="cost" title="点击修改字段名称" type="button">费用<span aria-hidden="true">✎</span></button><input data-form="cost" type="number"/></label>
+<label><button class="field-label-button" data-default-label="系别" data-rename-field="faction" title="点击修改字段名称" type="button">系别<span aria-hidden="true">✎</span></button><input data-form="faction"/></label>
+<label id="typeLabel"><button class="field-label-button" data-default-label="兵种" data-rename-field="unitType" title="点击修改字段名称" type="button">兵种<span aria-hidden="true">✎</span></button><input data-form="unitType"/></label>
+<label><button class="field-label-button" data-default-label="稀有度" data-rename-field="rarity" title="点击修改字段名称" type="button">稀有度<span aria-hidden="true">✎</span></button><input data-form="rarity"/></label>
+</div>
+<div class="grid" id="dynamicStats"></div>
+<label><button class="field-label-button" data-default-label="卡牌效果" data-rename-field="description" type="button">卡牌效果<span aria-hidden="true">✎</span></button><textarea id="description" rows="4"></textarea></label><details class="inspector-foldout" id="contentRuleTools"><summary>词条、图标与规则工具<span>展开更多</span></summary><div class="foldout-body"><div class="term-toolbar">
+<input id="termQuickColor" title="词条颜色" type="color" value="#38bdf8"/>
+<button class="term-primary" id="markRuleTerm">选中文字 → 设为规则词条</button>
+<button id="insertKnownTerm">＋ 插入已有词条</button><button id="autoMarkTerms">自动识别词条</button><button id="openRuleTerms">📚 词条库</button>
+</div><div class="term-quick-list" id="termQuickList"></div><div class="variables" id="variables"></div><div class="rule-structure-toolbar" id="ruleStructureToolbar">
+<b>规则结构</b><small>让规则文字按语义排版，而不是靠手工空格与换行。</small>
+<button data-rule-block="触发">触发</button><button data-rule-block="效果">效果</button><button data-rule-block="条件">条件</button><button data-rule-block="限制">限制</button><button data-rule-block="持续">持续</button><button data-rule-block="提示">提示</button><button data-rule-block="风味">风味</button>
+</div><div class="inline-icon-palette" id="inlineIconPalette">
+<b>插入卡牌图标</b>
+<button data-insert-icon="cost" title="插入费用图标">◆ 费用</button><button data-insert-icon="attack" title="插入攻击图标">⚔ 攻击</button><button data-insert-icon="health" title="插入生命图标">♥ 生命</button><button data-insert-icon="move" title="插入移动图标">↗ 移动</button><button data-insert-icon="range" title="插入射程图标">◎ 射程</button><button data-insert-icon="armor" title="插入护甲图标">⬟ 护甲</button>
+<select id="customInlineIcon" title="资产库中的自定义卡面图标"><option value="">自定义图标…</option></select><button id="insertCustomInlineIcon">插入</button>
+<span class="palette-divider"></span><b>实时数值</b>
+<button data-insert-stat="cost" title="插入会随卡牌费用自动更新的图标+数值">◆ 当前费用</button><button data-insert-stat="attack">⚔ 当前攻击</button><button data-insert-stat="health">♥ 当前生命</button><button data-insert-stat="move">↗ 当前移动</button><button data-insert-stat="range">◎ 当前射程</button>
+</div><p class="micro-help">三种方式：①选中文字直接建词条；②从词条库插入；③先正常输入，再点“自动识别词条”。卡面只显示彩色短词，完整解释保存在词条库。</p></div></details>
+<label><button class="field-label-button" data-default-label="检索关键词" data-rename-field="tags" title="点击修改字段名称" type="button">检索关键词<span aria-hidden="true">✎</span></button><input data-form="tags" placeholder="快速,远程,守备"/></label>
+<details class="inspector-foldout" id="customFieldDisclosure"><summary>自定义字段<span>按需展开</span></summary><div class="custom-field-panel">
+<div class="tool-subtitle"><b>项目自定义字段</b><small>字段结构统一定义，卡牌只填写值</small></div>
+<div class="custom-field-inputs" id="customFieldInputs"></div>
+<button class="wide" id="openFieldSchemaInline">管理字段结构</button>
+</div></details>
+</section>
+<section class="layout-panel" data-tool-group="layout" id="layoutPanel">
+<h3>布局 <span class="mode-required">进入布局模式后使用</span></h3>
+<div class="layout-actions">
+<button class="image-element-primary" id="addImageElement">＋ 导入小素材 / 图标</button>
+<input accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden="" id="freeImageFile" type="file"/>
+<button id="addTextElement">＋ 自定义文本</button>
+<button id="addNumberElement">＋ 卡牌编号</button>
+<button id="duplicateElement">复制元素</button>
+<button id="deleteElement">删除元素</button>
+</div>
+<div class="image-label-tools" id="imageLabelTools">
+<b>图标文字</b>
+<select id="imageLabelPosition" title="文字相对图标的位置">
+<option value="center">覆盖在图标中央</option>
+<option value="top">图标上方</option>
+<option selected="" value="bottom">图标下方</option>
+<option value="left">图标左侧</option>
+<option value="right">图标右侧</option>
+</select>
+<button id="addImageLabel">给选中图标加文字</button>
+<button id="detachImageLabel">解除文字跟随</button>
+</div>
+<div class="selected-layer-head"><b>当前选择：<span id="selectedLayerName">未选择</span></b><small><span id="selectionCount">0 个模块</span> · 卡面框选 / Ctrl(Cmd)+点击多选 / Esc 清空</small><button id="renameSelectedField" type="button">改名</button></div>
+<div class="edit-scope-box" id="editScopeBox">
+<div><b>编辑范围</b><small id="editScopeHint">本卡精调：移动标准模块只影响当前卡，并自动记录为局部覆盖。</small></div>
+<div class="edit-scope-switch"><button class="active" id="editScopeCard">本卡精调</button><button id="editScopeTemplate">类型模板</button></div>
+</div>
+<div class="semantic-object-box" id="semanticObjectBox">
+<div><b id="semanticRole">未选择语义对象</b><small id="semanticHint">选择卡名、数值、规则区等对象后，这里会显示它真正的排版规则。</small><small class="semantic-control-profile" id="semanticControlProfile">控件策略：—</small><small class="semantic-anchor-readout" id="semanticAnchorReadout">语义锚点：—</small></div>
+<label class="inherit-switch"><input disabled="" id="inheritLayout" type="checkbox"/> 跟随主模板</label>
+<button disabled="" id="snapSemanticAnchor" title="只恢复语义中心，不改变模块宽高和文字样式">吸附语义锚点</button>
+<button disabled="" id="opticalCenterSelected" title="按实际文字/数值内容而不是外框校正视觉中心">光学居中</button>
+<button disabled="" id="resetSelectedLayout">恢复模板值</button>
+</div>
+<details class="inspector-foldout"><summary>数值徽章样式<span>展开设置</span></summary><div class="semantic-badge-box disabled" id="semanticBadgeBox">
+<div class="tool-subtitle"><b>数值徽章 / 图标组件</b><small>费用、攻击、生命等语义数值由卡牌类型统一控制</small></div>
+<div class="badge-control-grid">
+<label>徽章外形<select disabled="" id="badgeShape"><option value="none">沿用原始样式 / 无额外徽章</option><option value="circle">圆形</option><option value="pill">胶囊</option><option value="hex">六边形</option><option value="diamond">菱形</option></select></label>
+<label>语义图标<select disabled="" id="badgeIcon"><option value="none">不显示图标</option></select></label>
+<label>图标位置<select disabled="" id="badgeIconPlacement"><option value="corner">左上角</option><option value="left">数字左侧</option><option value="top">数字上方</option><option value="behind">数字背后</option></select></label>
+<label>图标比例 (%)<input disabled="" id="badgeIconScale" max="140" min="40" step="1" type="number" value="72"/></label>
+<label>数字光学校正 X (px)<input disabled="" id="badgeValueDx" max="8" min="-8" step="0.1" type="number" value="0"/></label>
+<label>数字光学校正 Y (px)<input disabled="" id="badgeValueDy" max="8" min="-8" step="0.1" type="number" value="0"/></label>
+<label>物理宽度 (mm)<input disabled="" id="badgeWidthMm" max="30" min="3" step="0.1" type="number"/></label>
+<label>物理高度 (mm)<input disabled="" id="badgeHeightMm" max="30" min="3" step="0.1" type="number"/></label>
+<label class="checkline"><input checked="" disabled="" id="badgeShowLabel" type="checkbox"/> 显示“攻 / 血 / 移 / 射”等短标签</label>
+<button disabled="" id="saveBadgeStyle">保存到当前类型</button><button disabled="" id="applyBadgePhysicalSize">应用物理尺寸</button><button disabled="" id="resetBadgeStyle">恢复默认</button>
+</div>
+<small id="badgeSummary">选择费用、攻击、生命、移动或射程后，可定义该卡牌类型统一的数值徽章。</small>
+</div></details>
+<details class="inspector-foldout"><summary>条件显示<span>展开设置</span></summary><div class="semantic-condition-box" id="semanticConditionBox">
+<div class="tool-subtitle"><b>条件显示</b><small>规则属于当前卡牌类型主模板，不属于单张卡</small></div>
+<div class="condition-grid">
+<select disabled="" id="conditionField"></select>
+<select disabled="" id="conditionOp">
+<option value="always">始终显示</option>
+<option value="eq">等于</option>
+<option value="neq">不等于</option>
+<option value="contains">包含</option>
+<option value="empty">为空</option>
+<option value="notEmpty">不为空</option>
+<option value="gt">大于</option>
+<option value="lt">小于</option>
+</select>
+<input disabled="" id="conditionValue" placeholder="比较值"/>
+<button disabled="" id="saveCondition">保存条件</button>
+<button disabled="" id="clearCondition">始终显示</button>
+</div>
+<small id="conditionSummary">选择一个标准语义对象后，可按费用、稀有度、阵营或自定义字段控制是否显示。</small>
+</div></details>
+<div class="template-master-box"><b>类型统一坐标 · 防止每张卡产生轴线误差</b><small>每一种卡牌类型只需要排版一次。名称永久锁定卡牌水平中轴；调整名称宽度时会从中轴向两侧等量伸缩。完成当前类型排版后，点击下方“设为此类型统一布局”，同类型现有卡牌与以后新建卡都会使用完全一致的坐标。</small><span class="axis-chip">名称中轴：X = 50% · 自动居中缩字</span><span class="template-precision-summary" id="templatePrecisionSummary">正在检查类型模板一致性…</span><button id="repairTemplateFollowers">校准所有“跟随模板”的同类型卡</button></div>
+<div class="component-box">
+<div class="tool-subtitle"><b>语义布局组件</b><small>把一组标准对象保存成可复用布局片段</small></div>
+<div class="component-save-row"><input id="componentName" placeholder="例如：双槽标题区"/><button id="saveLayoutComponent">保存当前选择</button></div>
+<div class="layout-component-list" id="layoutComponentList"></div>
+</div>
+<div class="multi-edit-tools">
+<div class="tool-subtitle"><b>多选与校准</b><small>类似图像编辑器的对齐与分布 · 单选“水平居中”可直接吸附卡牌中轴</small></div>
+<div class="align-grid">
+<button id="alignLeft">左对齐</button><button id="alignHCenter" title="单选时精确对齐卡牌 X=50% 中轴">水平居中</button><button id="alignRight">右对齐</button>
+<button id="alignTop">顶对齐</button><button id="alignVCenter" title="单选时精确对齐卡牌 Y=50% 中轴">垂直居中</button><button id="alignBottom">底对齐</button>
+<button id="distributeH">水平等距</button><button id="distributeV">垂直等距</button><button id="selectAllLayers">全选可见层</button>
+</div>
+<div class="row compact-checks"><label class="checkline"><input id="lockAspect" type="checkbox"/> 锁定宽高比</label><label class="checkline"><input checked="" id="snapEnabled" type="checkbox"/> 智能吸附</label></div>
+<p class="micro-help hotkey-help"><b>快捷键：</b>方向键微调 0.2%；Shift+方向键 1%；Alt+方向键 0.05%；Ctrl/Cmd+A 全选；Ctrl/Cmd+D 复制；+ / - 缩放；Q / E 旋转；[ / ] 调层级；Delete 隐藏固定模块 / 删除自定义模块；Esc 清空选择；双击文字直接编辑，双击空白处新增文本。</p>
+</div>
+<div class="geometry-head"><b>位置与尺寸</b><label class="checkline"><input id="advancedGeometry" type="checkbox"/> 显示全部几何参数</label></div>
+<div class="grid semantic-geometry-grid" id="semanticGeometryGrid">
+<label data-geom-field="x"><span id="elXLabel">X</span><input id="elX" step="0.05" type="number"/></label>
+<label data-geom-field="y"><span id="elYLabel">Y</span><input id="elY" step="0.05" type="number"/></label>
+<label data-geom-field="w"><span id="elWLabel">宽</span><input id="elW" min="2" step="0.05" type="number"/></label>
+<label data-geom-field="h"><span id="elHLabel">高</span><input id="elH" min="2" step="0.05" type="number"/></label>
+<label data-geom-field="r"><span id="elRLabel">角度</span><input id="elR" step="0.05" type="number"/></label>
+<label data-geom-field="z">层级<input id="elZ" step="1" type="number"/></label>
+</div>
+<label class="opacity-control"><span>模块透明度 <b id="elOpacityValue">100%</b></span><input id="elOpacity" max="100" min="0" step="1" type="range" value="100"/></label>
+<div class="row layer-command-row">
+<button id="toggleElementVisibility">显示 / 隐藏</button>
+<button id="toggleElementLock">锁定 / 解锁</button>
+<button id="layerUp">上移一层</button>
+<button id="layerDown">下移一层</button>
+<button id="bringFront">置顶</button>
+<button id="sendBack">置底</button>
+</div>
+<div class="row top-gap">
+<button id="resetLayout">当前卡恢复统一布局</button>
+<button class="primary" id="copyLayoutAll">设为此类型统一布局</button>
+</div>
+<label class="top-gap">元素文字<textarea id="elementText" placeholder="选中文字元素后直接输入；给图标加文字后会自动选中新文字" rows="2"></textarea></label>
+<p class="micro-help">自由编辑模式：所有标准字段和自定义元素都是独立图层。支持框选、Ctrl/Cmd 多选、批量拖动、比例缩放、对齐/分布、透明度、锁定、隐藏与排序；双击空白处可直接新增文字。</p>
+</section>
+<section data-tool-group="text">
+<h3>文字样式</h3>
+<div class="grid">
+<label>文字模块<select id="textTarget"><option value="selected">当前自由编辑选择</option><option value="title">名称</option><option value="faction">系别</option><option value="type">类型</option><option value="rarityText">稀有度文字</option><option value="effect">效果正文</option><option value="cost">费用</option><option value="stat_attack">攻击 / 威力</option><option value="stat_health">血量 / 耐久</option><option value="stat_move">移速</option><option value="stat_range">射程</option></select></label>
+<label>字号<input id="textSize" max="40" min="8" type="number"/></label>
+<label>颜色<input id="textColor" type="color"/></label>
+<label>对齐<select id="textAlign"><option value="left">左对齐</option><option value="center">居中</option><option value="right">右对齐</option></select></label><label>字体<select id="textFont"><option value="default">默认黑体</option><option value="serif">古典书卷体</option><option value="display">醒目标题体</option><option value="soft">柔和正文体</option></select></label>
+</div>
+<label class="checkline"><input id="textBold" type="checkbox"/> 加粗</label>
+<div class="row"><button id="clearTextOverride">恢复该模块默认文字样式</button><button class="primary" id="applyTextAll">把该模块样式应用到全部卡牌</button></div><p class="micro-help">选择“当前自由编辑选择”时，文字设置会直接作用于你在卡面选中的单个文字模块；名称、系别、类型、攻击、血量等互不绑定。卡牌名称的水平对齐固定为正中央，避免不同字数造成视觉偏轴。</p>
+</section>
+<section data-tool-group="visual">
+<h3>插画</h3>
+<div class="row">
+<button id="uploadArt">上传图片</button>
+<button id="clearArt">清空</button>
+<input accept="image/*" hidden="" id="artFile" type="file"/>
+</div>
+<div class="ai-prompt-planner">
+<div class="tool-subtitle"><b>AI 插画工作流</b><small>提示词与外置生成统一在这里完成</small></div>
+<label>画面要求<textarea id="aiPrompt" rows="3">战场中的主体，动态构图，环境叙事丰富</textarea></label>
+<label>快速画风<select id="aiStylePreset"><option value="premium">高端幻想 · 概念厚涂（默认）</option><option value="inkAnime">动漫笔触 · 墨线厚涂</option><option value="oil">古典幻想 · 传统油画</option><option value="abstract">史诗光影 · 抽象笔触</option><option value="custom">自定义 / 保留当前文字</option></select></label>
+<label>整套统一风格<textarea id="aiStyle" rows="4"></textarea></label>
+<button class="wide ai-style-reset" id="resetAiStyle">恢复高端卡牌默认风格</button>
+<div class="ai-bridge">
+<div class="ai-bridge-head"><div><b>外置 AI</b><small id="aiProviderStatus">正在读取本机连接状态…</small></div><span class="ai-provider-dot" id="aiProviderDot"></span></div>
+<div class="grid ai-bridge-grid">
+<label>提供商<select id="aiProvider"><option value="manual">仅复制提示词</option><option value="openai">OpenAI GPT Image</option><option value="stability">Stability AI</option><option value="comfyui">ComfyUI 本地</option></select></label>
+<label>生成级别<select id="aiGeneratePreset"><option value="draft">草图 · 快</option><option selected="" value="standard">标准</option><option value="final">成品 · 高质量</option></select></label>
+</div>
+<div class="ai-key-row" hidden="" id="aiKeyRow">
+<input autocomplete="off" id="aiSessionKey" placeholder="粘贴 API Key（只保存在本次运行内存）" type="password"/>
+<button id="saveAiSessionKey">本次连接</button>
+<button class="subtle" id="clearAiSessionKey">清除</button>
+</div>
+<details class="ai-comfy-details" hidden="" id="aiComfyDetails">
+<summary>ComfyUI 工作流设置</summary>
+<p class="micro-help">请从 ComfyUI 导出 API 格式工作流。可在节点字符串中使用 {{PROMPT}}、{{NEGATIVE_PROMPT}}、{{WIDTH}}、{{HEIGHT}}、{{SEED}} 占位符。</p>
+<div class="row"><button id="importComfyWorkflow">导入工作流 JSON</button><input accept="application/json,.json" hidden="" id="comfyWorkflowFile" type="file"/><button class="subtle" id="clearComfyWorkflow">清空工作流</button></div>
+<textarea id="aiComfyWorkflow" placeholder="粘贴 API 格式工作流 JSON" rows="5" spellcheck="false"></textarea>
+</details>
+<label hidden="" id="aiNegativePromptWrap">负面提示词<textarea id="aiNegativePrompt" placeholder="例如：文字、水印、额外手指、低清晰度" rows="2"></textarea></label>
+<div class="row ai-generate-actions"><button class="primary" id="aiGenerateArt">生成插画</button><button id="aiRedrawArt">基于当前插画重绘</button><button class="subtle" hidden="" id="aiCancelGenerate">取消等待</button></div>
+<div class="ai-generated-result" hidden="" id="aiGeneratedResult">
+<img alt="AI 生成插画预览" id="aiGeneratedPreview"/>
+<div class="ai-generated-meta"><span id="aiGeneratedInfo">等待生成</span><div class="row"><button class="primary" id="aiApplyGenerated">使用此图</button><button id="aiDiscardGenerated">放弃</button></div></div>
+</div>
+<div class="private-ai-note">API Key 不会写入项目、浏览器存储或导出文件。点击“本次连接”后仅保存在当前本机 Node 进程内存中；关闭 CardStudio 后自动失效。生成时会把提示词发送给所选外部服务；执行重绘时还会发送当前插画。外部服务可能产生费用。</div>
+</div>
+<div class="row"><button id="copyAiPrompt">复制生图提示词</button><button id="copyRedrawPrompt">复制重绘提示词</button></div>
+<label>完整提示词预览<textarea id="aiPromptPreview" readonly="" rows="6"></textarea></label>
+</div>
+<div class="art-focus-box"><b>插画构图微调</b><small>无需重生成，也能把人物脸部/主体移到正确位置</small>
+<label>横向焦点 <span id="artFocusXValue">50%</span><input id="artFocusX" max="100" min="0" type="range" value="50"/></label>
+<label>纵向焦点 <span id="artFocusYValue">50%</span><input id="artFocusY" max="100" min="0" type="range" value="50"/></label>
+<div class="art-subject-controls"><b>主体安全焦点</b><small>标记人物脸部 / 武器核心 / 关键叙事主体在原图中的位置；系统会检查当前裁切是否把主体推到危险边缘。</small>
+<label>主体 X <span id="artSubjectXValue">50%</span><input id="artSubjectX" max="100" min="0" type="range" value="50"/></label>
+<label>主体 Y <span id="artSubjectYValue">42%</span><input id="artSubjectY" max="100" min="0" type="range" value="42"/></label>
+<button id="centerArtSubject" type="button">把当前画面中心标为主体</button>
+<div class="art-subject-info" id="artSubjectInfo">主体安全：等待插画</div>
+</div>
+<div class="art-dpi-info" id="artDpiInfo">插画 DPI：等待素材尺寸</div>
+<label>插画缩放 <span id="artZoomValue">100%</span><input id="artZoom" max="180" min="100" type="range" value="100"/></label><button class="wide" id="autoPalette">🎨 从插画自动协调卡框配色</button>
+</div>
+<div class="row mini-gap"><button id="batchImages">批量导入图片</button></div>
+<input accept="image/*" hidden="" id="batchImageFiles" multiple="" type="file"/>
+</section>
+<section data-tool-group="visual">
+<h3>素材库 / 卡框 / 背景</h3>
+<div class="tool-row">
+<input class="search" id="assetSearch" placeholder="搜索边框 / 底纹 / 标记 / 字体"/>
+<select id="assetCategory">
+<option value="all">全部分类</option>
+<option value="frame">边框</option>
+<option value="texture">底纹</option>
+<option value="cost">费用标记</option>
+<option value="rarity">稀有度标记</option>
+<option value="font">字体样式</option>
+<option value="custom">自定义图片素材</option>
+</select>
+</div>
+<div class="asset-list" id="assetList"></div>
+<div class="smart-frame-box"><b>智能卡框导入</b><small>普通白底边框图也能直接使用：自动去白底、保留线稿与灰色功能区，并自动套用古典双槽版式。</small><button class="primary wide" id="smartFrameBtn">✨ 一键导入普通卡框图</button><input accept="image/png,image/jpeg,image/webp" hidden="" id="smartFrameFile" type="file"/></div>
+<div class="upload-asset-box"><select id="uploadAssetCategory"><option value="icon">卡面图标</option><option value="frameImage">透明图片边框</option><option value="textureImage">图片底纹</option></select><button id="uploadAssetBtn">上传其他素材</button><input accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden="" id="customAssetFile" type="file"/></div>
+<div class="custom-assets" id="customAssetList"></div>
+</section>
+<section data-tool-group="visual">
+<h3>配色与皮肤</h3>
+<input class="search" id="skinSearch" placeholder="搜索皮肤"/>
+<div class="skin-list" id="skinList"></div>
+<div class="colors">
+<label>主色<input data-color="primary" type="color"/></label>
+<label>辅色<input data-color="secondary" type="color"/></label>
+<label>强调<input data-color="accent" type="color"/></label>
+<label>边框<input data-color="frame" type="color"/></label>
+</div>
+<div class="stack-actions">
+<button id="saveSkin">保存当前皮肤</button>
+<button class="primary" id="applyAll">一键应用到全部卡牌</button>
+</div>
+</section>
+<section data-tool-group="export"><h3>裁切与出血</h3><div class="grid">
+<label>纸张<select id="sheetSize"><option value="a4">A4</option><option value="a3">A3</option><option value="letter">Letter</option></select></label>
+<label>DPI<input disabled="" value="300"/></label>
+<label>成品尺寸<input id="printTrimSize" readonly="" value="63 × 88 mm"/></label>
+<label>四周出血 (mm)<input id="printBleedMm" max="10" min="0" step="0.1" type="number" value="3"/></label>
+<label>拖动调整出血<input id="printBleedRange" max="10" min="0" step="0.1" type="range" value="3"/></label>
+<label>成品内安全距 (mm)<input id="printSafeMm" max="10" min="0" step="0.1" type="number" value="3"/></label>
+<label class="checkline"><input id="showPrintGuides" type="checkbox"/> 显示裁切线 / 安全区</label>
+<button id="resetPrintGeometry">恢复 3mm 默认</button>
+<small class="grid-note" id="printGeometryHint" role="status">画布保持 69 × 94 mm；红线内为成品，绿色为文字安全区。</small>
+</div><label class="checkline"><input checked="" id="cropMarks" type="checkbox"/> 添加裁切线</label>
+<h3>卡牌生产预设</h3>
+<div class="production-presets">
+<button class="production-card" id="pnpPdf"><b>家庭测试 PnP</b><small>按当前裁切线去掉出血，以实际成品尺寸拼版</small></button>
+<button class="production-card" id="duplexPnpPdf"><b>双面 PnP</b><small>正面页 + 自动镜像的卡背页，保证翻面后卡位对应</small></button>
+<button class="production-card primary" id="printPresetPdf"><b>专业印刷</b><small>保留 69 × 94mm 出血画布与裁切线</small></button>
+<button class="production-card" id="duplexPrintPack"><b>印刷正反面包</b><small>生成 fronts.pdf、backs.pdf 与拼版映射，不靠人工猜背面顺序</small></button>
+<button class="production-card" id="ttsPackPreset"><b>Tabletop Simulator</b><small>生成 RGB 卡牌 Sheet + 数据映射，卡面自动去掉出血</small></button>
+</div>
+<div class="card-back-box">
+<div class="card-back-preview" id="cardBackPreview"><span>尚未设置项目卡背</span></div>
+<div><b>卡背策略</b><small>优先级：扩展包卡背 → 卡牌类型卡背 → 项目默认卡背。图片仍只在资产库保存一份。</small><strong class="resolved-back-label" id="resolvedCardBackLabel">当前卡没有可用卡背</strong><div class="row"><button id="uploadCardBack">上传项目卡背</button><button id="clearCardBack">清除默认</button></div><div class="row"><button id="uploadTemplateBack">上传类型卡背</button><button id="clearTemplateBack">清除类型</button></div><div class="row"><button id="uploadSetBack">上传扩展包卡背</button><button id="clearSetBack">清除扩展包</button></div></div>
+<input accept="image/png,image/jpeg,image/webp" hidden="" id="cardBackFile" type="file"/><input accept="image/png,image/jpeg,image/webp" hidden="" id="templateBackFile" type="file"/><input accept="image/png,image/jpeg,image/webp" hidden="" id="setBackFile" type="file"/>
+</div>
+<details class="inspector-foldout"><summary>双面翻页与方向<span>校准设置</span></summary><div class="duplex-settings"><b>双面卡位校准</b><label>翻页方式<select id="duplexFlip"><option value="long">长边翻页 · 背面左右镜像</option><option value="short">短边翻页 · 背面上下镜像</option></select></label><label class="checkline"><input id="backRotate" type="checkbox"/> 卡背额外旋转 180°</label><small>只改变背面拼版位置/方向，不改变卡面数据。第一次正式印刷前建议先用普通纸做一页校准。</small></div></details>
+<p class="micro-help">导出卡面为 69 × 94 mm（含出血），拼版会按纸张自动计算每页数量；双面模式会根据翻页方式自动镜像背面卡位。</p>
+</section><section data-tool-group="export">
+<h3>批量与项目</h3>
+<div class="grid">
+<label>批量前缀<input id="namePrefix" placeholder="例如 UNIT-"/></label>
+<label>起始编号<input id="nameStart" type="number" value="1"/></label>
+</div>
+<div class="row">
+<button id="batchRename">批量命名</button>
+<button id="clearAllArt">清空全部插画</button>
+</div>
+<div class="stack-actions top-gap">
+<button id="exportManifest">导出清单 CSV</button>
+<button id="exportJsonList">导出清单 JSON</button>
+<button class="primary" id="buildRelease">构建发布包</button>
+</div>
+<div class="row top-gap"><button id="batchPngZip">PNG ZIP</button><button id="batchJpgZip">JPG ZIP</button></div>
+<p class="micro-help">批量图片优先按“图片文件名 = 卡牌名称”匹配，剩余图片再按卡牌顺序填入空位。</p>
+</section>
+<section data-tool-group="rules">
+<h3>标签 / 词条 / 卡查 / TTS</h3>
+<div class="grid"><label><button class="field-label-button" data-default-label="workflowStatus" data-rename-field="workflowStatus" title="点击修改字段名称" type="button">workflowStatus<span aria-hidden="true">✎</span></button><select data-form="workflowStatus"><option>概念</option><option>设计中</option><option>待插画</option><option>待测试</option><option>测试中</option><option>待调整</option><option>通过</option><option>锁定</option></select></label><label>所属扩展包<select id="cardSetSelect"></select></label><label><button class="field-label-button" data-default-label="cardNumber" data-rename-field="cardNumber" title="点击修改字段名称" type="button">cardNumber<span aria-hidden="true">✎</span></button><input data-form="cardNumber" placeholder="例如 SET01-001"/></label><label><button class="field-label-button" data-default-label="year" data-rename-field="year" title="点击修改字段名称" type="button">year<span aria-hidden="true">✎</span></button><input data-form="year" placeholder="2026"/></label><label><button class="field-label-button" data-default-label="credit" data-rename-field="credit" title="点击修改字段名称" type="button">credit<span aria-hidden="true">✎</span></button><input data-form="credit" placeholder="作者 / AI绘画 / 工作室"/></label></div>
+<label><button class="field-label-button" data-default-label="检索关键词" data-rename-field="tags" title="点击修改字段名称" type="button">检索关键词<span aria-hidden="true">✎</span></button><input data-form="tags" placeholder="单位,王国,守备,长枪"/></label>
+<label><button class="field-label-button" data-default-label="rulesKeywords" data-rename-field="rulesKeywords" title="点击修改字段名称" type="button">rulesKeywords<span aria-hidden="true">✎</span></button><input data-form="rulesKeywords" placeholder="部署,守备,相邻据点"/></label>
+<div class="row top-gap"><button class="wide" id="openRuleTermsRules">📚 打开规则词条仓库</button></div><div class="grid top-gap"><label>编号前缀<input id="numberPrefix" value="SET01-"/></label><label>起始号<input id="numberStart" type="number" value="1"/></label></div><div class="row"><button id="batchNumber">批量生成卡号</button><button id="openCardSearch">打开卡牌图鉴</button><button id="exportTTS">导出 TTS 卡牌包</button></div>
+<p class="micro-help">卡牌图鉴会索引名称、编号、扩展包、状态、标签、效果与规则词条，并支持多卡对比；TTS 卡牌包会同时生成无出血卡面 Sheet、卡牌数据与 Width / Height / Number 映射。正文可写 <b>{{icon:attack}}</b>、<b>{{icon:health}}</b>、<b>{{icon:move}}</b>、<b>{{icon:range}}</b>、<b>{{icon:cost}}</b> 嵌入语义图标。</p>
+</section>
+</aside>
+</div>
+<div class="modal-backdrop" hidden="" id="projectHubModal">
+<div class="project-hub-dialog">
+<div class="modal-head"><div><b>项目中心</b><small>扩展包 · 变体 · Playtest · 统计 · 版本与发布治理</small></div><button id="closeProjectHub">关闭</button></div>
+<div class="hub-tabs" id="hubTabs"><button class="active" data-hub-tab="overview">项目概览</button><button data-hub-tab="sets">扩展包 / Set</button><button data-hub-tab="develop">当前卡开发</button><button data-hub-tab="versions">版本 / 发布</button></div>
+<div class="hub-body">
+<section class="hub-panel" data-hub-panel="overview">
+<div class="hub-stat-grid" id="hubOverviewStats"></div>
+<div class="hub-grid two"><section class="hub-card"><h3>生产进度</h3><div class="hub-progress" id="hubWorkflow"></div></section><section class="hub-card"><h3>扩展包</h3><div class="hub-set-summary" id="hubSetSummary"></div></section></div>
+<section class="hub-card"><div class="hub-card-head"><h3>数值概览</h3><small>仅提供统计参照，不替你判断平衡性</small></div><div class="balance-summary" id="hubBalanceSummary"></div></section>
+</section>
+<section class="hub-panel" data-hub-panel="sets" hidden="">
+<div class="hub-grid set-grid"><section class="hub-card"><div class="hub-card-head"><h3>扩展包目录</h3><button id="newSet">＋ 新扩展包</button></div><div class="set-list" id="setList"></div></section><section class="hub-card"><h3>扩展包设置</h3><div class="grid"><label>名称<input id="setNameInput" placeholder="例如：北境崛起"/></label><label>代码<input id="setCodeInput" placeholder="例如：NOR"/></label><label>编号前缀<input id="setPrefixInput" placeholder="NOR-"/></label><label>起始号<input id="setStartInput" type="number" value="1"/></label><label>编号位数<input id="setPaddingInput" max="6" min="1" type="number" value="3"/></label><label>状态<select id="setStatusInput"><option>开发中</option><option>测试中</option><option>准备发布</option><option>已发布</option><option>归档</option></select></label><label>发布日期<input id="setDateInput" type="date"/></label></div><button class="primary wide" id="saveSet">新建扩展包</button><p class="micro-help">发布锁定会把整个 Set 变成只读，并自动建立版本基线；解除锁定必须在这里显式执行。</p></section></div>
+</section>
+<section class="hub-panel" data-hub-panel="develop" hidden="">
+<div class="current-dev-card" id="currentDevCard"></div>
+<div class="hub-grid two"><section class="hub-card"><div class="hub-card-head"><h3>卡牌家族与变体</h3><button id="toggleCardLock">锁定当前卡</button></div><label>家族名称<input id="familyNameInput"/></label><label>新变体类型<select id="variantKind"><option>异画</option><option>Promo</option><option>Foil</option><option>语言版</option><option>其他</option></select></label><div class="row"><button id="createFamily">建立家族</button><button class="primary" id="createVariant">创建变体</button></div><div class="row"><button id="syncFamilyCore">把当前卡核心数据同步给家族</button><button id="detachFamily">脱离家族</button></div><div class="family-info" id="familyInfo"></div><p class="micro-help">同步只影响名称、费用、规则、战斗数值、标签与自定义字段；插画、编号、布局、扩展包和发布状态保持独立，避免异画被误覆盖。</p></section><section class="hub-card"><h3>Playtest 记录</h3><div class="playtest-summary" id="playtestSummary"></div><div class="grid"><label>日期<input id="playtestDate" type="date"/></label><label>场次<input id="playtestSessions" min="0" type="number" value="1"/></label><label>使用次数<input id="playtestPlays" min="0" type="number" value="0"/></label><label>胜场<input id="playtestWins" min="0" type="number" value="0"/></label><label>设计判断<select id="playtestRating"><option>待观察</option><option>偏弱</option><option>正常</option><option>偏强</option></select></label></div><label>测试备注<textarea id="playtestNote" placeholder="发生了什么，不急着下结论" rows="3"></textarea></label><label>调整依据<textarea id="playtestChangeNote" placeholder="例如：计划把攻击 5 → 4，原因是……" rows="2"></textarea></label><button class="primary wide" id="addPlaytest">记录本次测试</button><div class="playtest-list" id="playtestList"></div></section></div>
+</section>
+<section class="hub-panel" data-hub-panel="versions" hidden="">
+<div class="hub-grid two"><section class="hub-card"><h3>建立版本基线</h3><label>版本名称<input id="versionLabel" placeholder="例如：Playtest 05 / 送印候选 1"/></label><label>说明<textarea id="versionNote" placeholder="这次为什么建立基线" rows="3"></textarea></label><button class="primary wide" id="createProjectVersion">保存当前项目为版本基线</button><div class="version-list" id="versionList"></div></section><section class="hub-card"><h3>比较版本差异</h3><div class="row"><select id="versionSelect"></select><button id="compareVersion">比较当前项目</button></div><div class="version-diff" id="versionDiff"><div class="empty-note">选择一个版本后，可以看到新增、删除以及字段级变化。</div></div></section></div><section class="hub-card"><h3>发布构建历史</h3><div class="release-history" id="releaseHistory"></div></section>
+</section>
+</div>
+</div>
+</div>
+<div class="modal-backdrop" hidden="" id="designSystemModal">
+<div class="system-dialog">
+<div class="modal-head"><div><b>项目设计系统</b><small>项目级精度、排版安全值与全局视觉变量</small></div><button id="closeDesignSystem">关闭</button></div>
+<div class="system-body">
+<section class="system-section">
+<h3>精度与吸附</h3>
+<div class="grid">
+<label>坐标精度<select id="designLayoutStep"><option value="0.01">0.01%</option><option value="0.05">0.05%</option><option value="0.1">0.1%</option></select></label>
+<label>吸附距离 (%)<input id="designSnapTolerance" max="3" min="0.1" step="0.05" type="number"/></label>
+<label>卡名中轴容差 (px)<input id="designAxisTolerance" max="3" min="0.1" step="0.05" type="number"/></label>
+<label>光学中心容差 (px)<input id="designOpticalTolerance" max="2" min="0.05" step="0.05" type="number"/></label>
+<label>四周出血 (mm)<input id="designBleedMm" max="10" min="0" step="0.1" type="number"/></label>
+<label>成品内安全距 (mm)<input id="designSafeMargin" max="10" min="0" step="0.1" type="number"/></label>
+<label>理想印刷 DPI<input id="designTargetPrintDpi" max="1200" min="150" step="10" type="number"/></label>
+<label>最低可接受 DPI<input id="designMinimumPrintDpi" max="1200" min="72" step="10" type="number"/></label>
+<small class="grid-note">自由布局：红线 = 当前出血值对应的裁切边界；绿线 = 成品向内的安全区。DPI 按素材真实像素、卡面物理尺寸与插画缩放计算，不用文件大小估算。</small>
+<label>卡名最小字号<input id="designTitleMinFont" max="30" min="5" step="0.5" type="number"/></label>
+<label>规则最小字号<input id="designEffectMinFont" max="30" min="6" step="0.5" type="number"/></label>
+<label>规则行高<input id="designRuleLineHeight" max="2" min="1" step="0.02" type="number"/></label>
+<label>规则块间距 (em)<input id="designRuleBlockGap" max="1" min="0" step="0.02" type="number"/></label>
+<label>规则块视觉<select id="designRuleStyle"><option value="pill">标签胶囊 · 清晰</option><option value="editorial">出版侧标 · 克制</option><option value="minimal">极简文本 · 紧凑</option></select></label>
+<label>图标基线微调 (em)<input id="designRuleIconBaseline" max="0.4" min="-0.4" step="0.01" type="number"/></label>
+<label>短尾保护字符数<input id="designRuleTailChars" max="10" min="0" step="1" type="number"/></label>
+<label>主体边缘安全距 (%)<input id="designArtSubjectSafe" max="30" min="0" step="1" type="number"/></label>
+<label class="checkline"><input id="designRuleWidowControl" type="checkbox"/> 规则文本启用短尾 / 孤行保护</label>
+</div>
+</section>
+<section class="system-section">
+<h3>项目视觉变量</h3>
+<div class="grid">
+<label>主色<input id="designPrimary" type="color"/></label>
+<label>次色<input id="designSecondary" type="color"/></label>
+<label>强调色<input id="designAccent" type="color"/></label>
+<label>文字色<input id="designText" type="color"/></label>
+<label>默认字体<select id="designFontStyle"><option value="default">现代无衬线</option><option value="serif">典籍衬线</option><option value="display">紧凑标题</option><option value="soft">柔和阅读</option><option value="classical">古典书卷体</option></select></label>
+<label class="checkline"><input id="designOpticalCentering" type="checkbox"/> 文字 / 数值启用光学中心校正</label>
+</div>
+<div class="design-system-actions"><button class="primary" id="saveDesignSystem">保存设计变量</button><button id="applyDesignThemeAll">把颜色 / 字体应用到全部卡牌</button></div>
+<p class="micro-help">安全距以裁切线向内的真实毫米计算，横纵方向分别换算，不再用同一个百分比近似。精度变量会直接参与坐标量化、智能吸附、真实文字检查与安全区显示；颜色/字体只有点击“应用到全部”才会批量改变现有卡牌。</p>
+</section>
+</div>
+</div>
+</div>
+<div class="modal-backdrop" hidden="" id="fieldSchemaModal">
+<div class="schema-dialog">
+<div class="modal-head"><div><b>字段结构 Schema</b><small>定义一次，数据表、变量、条件显示、导入导出与检查全部共享</small></div><button id="closeFieldSchema">关闭</button></div>
+<div class="schema-toolbar"><button class="primary" id="addSchemaField">＋ 新字段</button><span id="schemaCount"></span></div>
+<div class="schema-table-wrap">
+<table class="schema-table"><thead><tr><th>适用模板</th><th>字段名</th><th>键名</th><th>类型</th><th>必填</th><th>选项 / 范围</th><th>默认值</th><th></th></tr></thead><tbody id="schemaFieldRows"></tbody></table>
+</div>
+<div class="schema-note">键名用于变量，例如字段键名 <b>armor</b> 可在文字中写 <b>{armor}</b>。删除字段结构不会立即删除卡牌里已有的旧值，避免误操作造成数据丢失。</div>
+</div>
+</div>
+<div class="modal-backdrop" hidden="" id="dataTableModal">
+<div class="data-workbench-dialog">
+<div class="modal-head"><div><b>卡牌数据表</b><small>一处修改，卡面与后续发布数据同步更新</small></div><button id="closeDataTable">关闭</button></div>
+<div class="data-toolbar"><input class="search" id="dataTableSearch" placeholder="搜索名称 / 编号 / 系别 / 标签"/><select id="dataTableTemplate"><option value="all">全部模板</option></select><select id="dataTableStatus"><option value="all">全部状态</option></select><span id="dataTableCount"></span></div>
+<div class="batch-edit-bar"><b>批量修改选中卡牌</b><select id="batchField"><option value="workflowStatus">生产状态</option><option value="faction">系别</option><option value="rarity">稀有度</option><option value="setName">系列</option></select><input id="batchValue" placeholder="输入新值"/><button class="primary" id="applyBatchField">应用到选中</button><button id="clearDataSelection">清空选择</button></div>
+<div class="batch-formula-bar"><b>卡牌数值公式</b><select id="formulaField"><option value="cost">费用</option><option value="attack">攻击</option><option value="health">生命</option><option value="move">移速</option><option value="range">射程</option></select><select id="formulaOp"><option value="add">增加</option><option value="sub">减少</option><option value="mul">乘以</option><option value="set">设为</option></select><input aria-label="公式数值" id="formulaValue" step="any" type="number" value="1"/><input id="formulaMin" placeholder="最小值（可空）" step="any" type="number"/><input id="formulaMax" placeholder="最大值（可空）" step="any" type="number"/><button class="primary" id="applyBatchFormula">计算并应用</button><small>只作用于已勾选且未锁定的卡牌，一次操作只写入一条撤销历史。</small></div>
+<div class="card-replace-bar"><b>卡牌查找 / 替换</b><select id="replaceScope"><option value="description">规则文本</option><option value="name">卡牌名称</option><option value="tags">标签</option><option value="rulesKeywords">规则关键词</option><option value="cardNumber">卡牌编号</option><option value="allText">全部文字字段</option></select><input id="replaceFind" placeholder="查找内容"/><input id="replaceWith" placeholder="替换为"/><label class="checkline"><input id="replaceSelectedOnly" type="checkbox"/> 仅已勾选卡牌</label><button id="previewReplace">预览</button><button class="primary" id="applyReplace">替换</button><small id="replaceSummary">先预览影响范围；锁定卡牌永远不会被修改。</small></div>
+<div class="data-table-wrap"><table class="card-data-table"><thead><tr id="dataTableHead"></tr></thead><tbody id="dataTableBody"></tbody></table></div>
+<div class="data-pagination"><button id="dataPrev">上一页</button><span id="dataPageInfo">第 1 / 1 页</span><select aria-label="每页卡牌数量" id="dataPageSize"><option value="50">50 / 页</option><option selected="" value="100">100 / 页</option><option value="200">200 / 页</option></select><button id="dataNext">下一页</button><small>批量选择仍作用于当前筛选范围，不受分页限制。</small></div>
+</div>
+</div>
+<div class="modal-backdrop" hidden="" id="templateImpactModal">
+<div class="template-impact-dialog">
+<div class="modal-head"><div><b>类型模板影响预览</b><small id="templateImpactSubtitle">在批量传播前确认影响范围</small></div><button id="closeTemplateImpact">关闭</button></div>
+<div class="template-impact-summary" id="templateImpactSummary"></div>
+<div class="template-impact-body">
+<section><div class="impact-section-title"><b>将改变的语义模块</b><small>只有仍跟随模板的模块会更新</small></div><div class="impact-key-list" id="templateImpactKeys"></div></section>
+<section><div class="impact-section-title"><b>代表卡复核</b><small>优先列出长标题、长规则、局部覆盖与低 DPI 卡</small></div><div class="impact-sample-list" id="templateImpactSamples"></div></section>
+</div>
+<div class="template-impact-footer"><div id="templateImpactNote">局部覆盖保持不变；已锁定卡牌冻结，不随模板变化。</div><div><button id="cancelTemplateImpact">取消</button><button class="primary" id="confirmTemplateImpact">确认更新类型模板</button></div></div>
+</div>
+</div>
+<div class="modal-backdrop" hidden="" id="preflightModal">
+<div class="preflight-dialog">
+<div class="modal-head"><div><b>项目检查中心</b><small>用实际卡面 DOM 检查文字、坐标与项目数据</small></div><button id="closePreflight">关闭</button></div>
+<div class="preflight-summary" id="preflightSummary"></div>
+<div class="preflight-toolbar"><select id="preflightFilter"><option value="all">全部问题</option><option value="error">仅错误</option><option value="warn">仅警告</option><option value="auto">可自动修复</option><option value="manual">需要补充 / 确认</option></select><button class="primary" id="repairPreflightAll">一键修复可处理问题</button><button disabled="" id="undoPreflightRepair">撤销本次修复</button><button id="rerunPreflight">重新检查</button><button id="exportPreflightReport">导出检查报告</button></div>
+<p aria-live="polite" class="preflight-repair-status" id="preflightRepairStatus" role="status">可修复的排版问题会自动校正；缺少原图或规则定义的问题可直接进入对应位置补充。</p>
+<div class="preflight-results" id="preflightResults"></div>
+</div>
+</div>
+<div class="modal-backdrop" hidden="" id="ruleTermsModal">
+<div class="term-library-dialog">
+<div class="modal-head"><div><b>规则词条库</b><small>特殊效果的统一定义、颜色与检索仓库 · 与 Community 共用 cardstudio-glossary-v1</small></div><div class="term-modal-actions"><button id="importSharedGlossary">导入共享词条</button><button id="exportSharedGlossary">导出共享词条</button><input accept=".json" hidden="" id="sharedGlossaryFile" type="file"/><button class="primary" id="publishSharedGlossary">发布到两版词条仓库</button><button id="receiveCommunityTerms">接收社区投稿</button><button id="openCommunityEdition">打开社区版</button><button id="downloadCommunityEdition">下载含词条的社区版</button><button id="autoMarkAllCards">全卡组自动识别</button><button id="closeRuleTerms">关闭</button></div></div>
+<div class="shared-glossary-status" id="sharedGlossaryStatus">两版共用已发布词条；社区投稿需要在这里审核后合并。</div>
+<div class="term-library-body">
+<aside class="term-library-list">
+<div class="term-search-row"><input class="search" id="termSearch" placeholder="搜索词条 / 分类 / 标签 / 说明"/><button id="newRuleTerm">＋ 新词条</button></div>
+<div class="library-count" id="termLibraryCount"></div>
+<div id="termList"></div>
+</aside>
+<main class="term-editor">
+<input id="termId" type="hidden"/>
+<div class="grid">
+<label>词条名称<input id="termName" placeholder="例如：穿透"/></label>
+<label>显示颜色<input id="termColor" type="color" value="#38bdf8"/></label>
+<label>分类<input id="termCategory" placeholder="例如：伤害 / 移动 / 状态"/></label>
+<label>检索标签<input id="termTags" placeholder="攻击,护甲,伤害"/></label>
+</div>
+<label>完整规则说明<textarea id="termDescription" placeholder="这里写完整解释。卡牌本身只需要写短词条。" rows="9"></textarea></label>
+<label>检索别名<input id="termAliases" maxlength="2400" placeholder="多个别名用逗号分隔"/></label>
+<label>使用示例<textarea id="termExample" maxlength="8000" placeholder="示例卡牌或典型用法" rows="3"></textarea></label>
+<label>设计说明<textarea id="termDesignNotes" maxlength="8000" placeholder="词条目的、适用范围或设计理由；会随发布提供给社区版查看" rows="3"></textarea></label>
+<div class="term-usage" id="termUsage"></div>
+<div class="row">
+<button class="primary" id="saveRuleTerm">保存词条</button>
+<button id="insertRuleTerm">插入当前卡牌</button>
+<button id="deleteRuleTerm">删除词条</button>
+</div>
+</main>
+</div>
+</div>
+</div>
+<div class="modal-backdrop" hidden="" id="glossaryMergeModal">
+<div class="term-library-dialog glossary-merge-dialog">
+<div class="modal-head"><div><b>审核词条变更</b><small id="glossaryMergeSummary"></small></div><button id="cancelGlossaryMerge">取消</button></div>
+<p class="shared-glossary-status">新词条默认加入；已有词条的变更默认保留原设计。勾选后才采用投稿内容。</p>
+<div class="glossary-merge-rows" id="glossaryMergeRows"></div>
+<div class="row"><button class="primary" id="confirmGlossaryMerge">合并所选词条</button></div>
+</div>
+</div>
+<div class="modal-backdrop" hidden="" id="assetManagerModal">
+<div class="asset-manager-dialog">
+<div class="modal-head"><div><b>统一资产库</b><small>图片二进制只保存一次，卡牌、模板与自由图层只保存 Asset ID 引用</small></div><button id="closeAssetManager">关闭</button></div>
+<div class="asset-manager-summary" id="assetManagerSummary"></div>
+<div class="asset-manager-toolbar">
+<button id="importSharedAssets">导入共享素材库</button>
+<input accept=".json,.csassets" hidden="" id="sharedAssetFile" type="file"/>
+<button id="exportSharedAssets">导出共享素材库</button>
+<button id="cleanupUnusedAssets">清理全部未使用素材</button>
+<span>共享素材库与词条库完全分离；仅交换 PNG / JPG / WebP 图片与素材元数据。</span>
+</div>
+<div class="asset-manager-list" id="assetManagerList"></div>
+</div>
+</div>
+<div class="modal-backdrop" hidden="" id="cardSearchModal">
+<div class="card-search-dialog card-catalog-dialog">
+<div class="modal-head"><div><b>卡牌检索 / 图鉴</b><small>围绕真正的卡牌内容筛选、观察、比较；对比同时给出同费用 / 同模板基准差值</small></div><button id="closeCardSearch">关闭</button></div>
+<div class="card-search-toolbar card-catalog-toolbar">
+<input class="search" id="librarySearch" placeholder="搜索名称 / 编号 / 标签 / 效果 / 规则词条"/>
+<select id="librarySet"><option value="all">全部扩展包</option></select>
+<select id="libraryTemplate"><option value="all">全部卡牌模板</option></select>
+<select id="libraryFaction"><option value="all">全部系别</option></select>
+<select id="libraryType"><option value="all">全部类型</option></select>
+<select id="libraryRarity"><option value="all">全部稀有度</option></select>
+<select id="libraryStatus"><option value="all">全部生产状态</option></select>
+<select id="libraryIssue"><option value="all">全部检查状态</option><option value="ok">仅通过</option><option value="error">仅错误</option><option value="warn">有警告</option><option value="missingArt">缺插画</option></select>
+<select id="librarySort"><option value="number">按编号</option><option value="name">按名称</option><option value="cost">按费用</option><option value="attack">按攻击</option></select>
+</div>
+<div class="tag-cloud" id="tagCloud"></div><div class="library-term-info" hidden="" id="libraryTermInfo"></div>
+<div class="library-compare-panel" hidden="" id="libraryComparePanel"></div>
+<div class="library-count" id="libraryCount"></div>
+<div class="library-results card-catalog-results" id="libraryResults"></div>
+</div>
+</div>
+<div class="modal-backdrop" hidden="" id="reviewWallModal">
+<div class="review-wall-dialog">
+<div class="modal-head"><div><b>全套卡牌审阅墙</b><small>一次观察整套卡的视觉节奏、模板一致性、规则密度和生产异常；双击卡牌回到编辑器。</small></div><button id="closeReviewWall">关闭</button></div>
+<div class="review-toolbar">
+<input class="search" id="reviewSearch" placeholder="搜索名称 / 编号 / 系别 / 规则"/>
+<select id="reviewSet"><option value="all">全部扩展包</option></select>
+<select id="reviewTemplate"><option value="all">全部模板</option></select>
+<select id="reviewStatus"><option value="all">全部状态</option></select>
+<select id="reviewFocus"><option value="all">全部卡牌</option><option value="issues">仅有问题</option><option value="overrides">仅局部覆盖</option><option value="dense">仅高规则密度</option><option value="art">仅插画风险</option></select>
+<select id="reviewSort"><option value="order">项目顺序</option><option value="issues">问题优先</option><option value="rules">规则最密</option><option value="name">按名称</option></select>
+<select id="reviewDensity"><option value="comfortable">舒适</option><option selected="" value="compact">紧凑</option><option value="dense">高密度</option></select>
+</div>
+<div class="review-summary" id="reviewSummary"></div>
+<div class="review-grid" id="reviewGrid"></div>
+<div class="review-pagination"><button id="reviewPrev">上一页</button><span id="reviewPageInfo">第 1 / 1 页</span><button id="reviewNext">下一页</button><small>审阅墙是快速视觉筛查；最终发布仍以“项目检查中心”的真实 DOM / DPI / 裁切检查为准。</small></div>
+</div>
+</div>
+<div class="modal-backdrop" hidden="" id="quickStartModal">
+<div class="quick-start-dialog">
+<div class="quick-start-hero"><span class="quick-start-mark"><i></i><i></i><i></i></span><div><b>开始制作你的卡牌</b><small>CardStudio 先保证卡牌结构一致，再给特殊卡留下自由空间。</small></div></div>
+<div class="quick-start-grid">
+<button class="quick-start-card primary" id="quickStartBlank"><strong>＋ 新建空白项目</strong><span>从一张标准单位卡开始，模板、精度和自动保存已经准备好。</span></button>
+<button class="quick-start-card" id="quickStartSample"><strong>浏览示例项目</strong><span>保留当前示例卡，先熟悉编辑、审阅墙和发布检查。</span></button>
+<button class="quick-start-card" id="quickStartProject"><strong>打开 .cardstudio</strong><span>继续已有 CardStudio 项目。</span></button>
+<button class="quick-start-card" id="quickStartData"><strong>导入 CSV / Excel</strong><span>用表格批量建立卡牌，再统一套用类型模板。</span></button>
+</div>
+<div class="quick-start-footer"><small>以后可从“项目 → 快速开始”重新打开。</small><button id="closeQuickStart">暂时关闭</button></div>
+</div>
+</div>
+<div class="modal-backdrop" hidden="" id="recoveryModal">
+<div class="recovery-dialog">
+<div class="modal-head"><div><b>安全恢复</b><small>CardStudio 会保留上一份成功写入的项目结构；图片资产仍使用统一资产库，不重复复制。</small></div><button id="closeRecovery">关闭</button></div>
+<div class="recovery-body">
+<div class="recovery-info" id="recoveryInfo">正在读取安全备份…</div>
+<div class="runtime-error-list" id="runtimeErrorList"></div>
+<div class="recovery-actions"><button class="primary" id="restoreRecovery">恢复上一次稳定状态</button><button id="recoverySaveCurrent">先保存当前项目</button></div>
+<p class="micro-help">安全恢复主要用于误操作或运行异常后的结构回退。若旧备份引用了后来已经彻底清理的图片素材，项目检查会提示缺失资产。</p>
+</div>
+</div>
+</div>
+<div class="hidden-export"><div id="exportCard"></div></div>
+<div aria-atomic="true" aria-live="polite" class="toast-stack" id="toastStack"></div>
+<script src="/glossary-format.js"></script>
+<script src="/glossary-bridge.js"></script>
+<script src="/public-repository.js"></script>
+<div aria-label="修改字段名称" class="field-rename-popover" hidden="" id="fieldRenamePopover" role="dialog"><label>字段显示名称<textarea id="fieldRenameInput" placeholder="输入你希望使用的名称" rows="2"></textarea></label><div><small>即时保存 · Enter 完成 · Esc 取消</small><button id="finishFieldRename" type="button">完成</button></div></div><script src="/app.js?v=3.0.0-beta10"></script>
+</body>
+</html>

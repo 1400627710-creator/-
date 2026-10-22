@@ -1,0 +1,1582 @@
+{
+  "版本": "1.1",
+  "文件数": 225,
+  "说明": "不包含 MANIFEST.json 和 MD5SUMS.txt 自身；MD5SUMS.txt 另外包含清单校验值。",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 8,
+      "md5": "d3d04ac1b5897688b0d97abfd135aefa",
+      "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da",
+      "gitMode": "100644"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 99,
+      "md5": "7ef839ddd3d2342dc6ccde0af3338aae",
+      "sha256": "551eca6947633908ef7a1aa59b11112f4a4dc2a7f1bae4d46d27429a983582ae",
+      "gitMode": "100644"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3845,
+      "md5": "9c397b815802cef25a5711cd6db4e77c",
+      "sha256": "79689cfd39ea7485bb9b4a8a205cce7a37e0dac179645ff606d7272995cad862",
+      "gitMode": "100644"
+    },
+    {
+      "path": "VERSION.json",
+      "bytes": 690,
+      "md5": "cc5a55e633dd85c1bcbdcbf184e6d47d",
+      "sha256": "5b2877cb832c38244d582bf3ba74232f0673f0fc032361b5d4c2417afe6a58c7",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/.gitignore",
+      "bytes": 914,
+      "md5": "2f35489df1058f4ad57e1d334347a44b",
+      "sha256": "00a8f90163089aa404f4fb69db61286dbcd24fa8bd98cf8c55a59f377a1a825a",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/.npmrc",
+      "bytes": 45,
+      "md5": "ae90aa756117270685bf5c62465a62fa",
+      "sha256": "a3909ac0447c469fda12c57374993be70f47ce73e49fd3124678c7c047f2214d",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/CardStudio-Local.html",
+      "bytes": 3054129,
+      "md5": "eb4ee22dfbc52d158c8432d8b78c0e7b",
+      "sha256": "1464e75989a09f9d1a64c383cfbf2d186f0c2049090901dc54866d1268b0a0e8",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/LOCAL-README.md",
+      "bytes": 1050,
+      "md5": "34195fc9cb901d4c9ba2d44e22161102",
+      "sha256": "9ac4ef7c419d5387592deeb5b8c417b868b18eb7f709e8fbdc987c894538afd2",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/README.md",
+      "bytes": 6681,
+      "md5": "b94bfd51437ab7029803eb75ca48425d",
+      "sha256": "abd8a9689febe706215f5c143cb77d68e7fef0573e55710fa18cbd56656f9f9f",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/app/api/health/route.ts",
+      "bytes": 107,
+      "md5": "794ce392e119128e4f12e5bfa69006f1",
+      "sha256": "dc170d9ff1b82c7cf3725d06ef94b7304f221edc04efb961562014ec0ddb26de",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/app/api/service/route.ts",
+      "bytes": 615,
+      "md5": "a6a7eaf09286b64de57a788209512e22",
+      "sha256": "ee1d85fd1109f1a56196836edc690d628101d20a79d9a3f8042827be6f0fc52d",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/app/chatgpt-auth.ts",
+      "bytes": 2550,
+      "md5": "eef8181aed58aed8260fbe4a78383a83",
+      "sha256": "4265a2e7c2dcb3a6f4b7026f762bf5b6e4caec76cc13c0a45987ee9a9f2e42cc",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/app/globals.css",
+      "bytes": 3928,
+      "md5": "753d551ff9b6130661287bedc6ebd62d",
+      "sha256": "8546d9b115f0addd582f7ceaaa6b1c069310bcc77c43ee7b8acfe0020be3afd7",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/app/layout.tsx",
+      "bytes": 528,
+      "md5": "92a2841c3722530f35aee2149c4047d7",
+      "sha256": "e700e50eecaa380ea76895e43570056b53374ccf74d29efa2f47ccdd66badb4b",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/app/mcp/route.ts",
+      "bytes": 43,
+      "md5": "338dfce0b502970659900d13f64ad64d",
+      "sha256": "cf06b12468a7fce54f77870d56bbd46dfe0e5567be7464e549bed88c41f44df8",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/app/page.tsx",
+      "bytes": 98,
+      "md5": "421395c61d3d467c68612a2531382294",
+      "sha256": "0c7fad23adec196c2fbe3ffa51e0474bdd5c549c2fa38cbb80ff205a41ad8417",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/app/workbench/route.ts",
+      "bytes": 251,
+      "md5": "4cb8e47b0b46c63d07c39587b7ecab50",
+      "sha256": "967f9c51b10a6b712781d46cbe98909fb307d7275a3000d9783d3716d486edc7",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/build/connector-preview-plugin.mjs",
+      "bytes": 7211,
+      "md5": "fee57c3d7cf291e3100b62e28846d12a",
+      "sha256": "a6a9fe2086e302f94a3f91e3c1a68a45bb3aa07d4a79faf01b14732191eb4e80",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/build/connector-preview-worker.mjs",
+      "bytes": 594,
+      "md5": "29c9b25518bbce0633d5b27d879e666c",
+      "sha256": "c1b6b2c420cb67d9e28f8f4ae440f578c0dfd4cb840a12cfe4b58076629a17ba",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/build/sites-vite-plugin.LICENSE",
+      "bytes": 1063,
+      "md5": "f0b6c172591c84278645ef108bacb9a1",
+      "sha256": "7de1e115d165f176e68f962acdb809b5ab8d8ae78d3981e0701392b2ac50c713",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/build/sites-vite-plugin.ts",
+      "bytes": 7185,
+      "md5": "cb0a3f06cbccec752d874b8b47aecd7f",
+      "sha256": "07af20e7097d9ed1d76f7c446d02997550b8fc5ca89668b249e25eabd62c6834",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/build/sites-worker.ts",
+      "bytes": 1279,
+      "md5": "39fd7338170d6acddcacf63177f67177",
+      "sha256": "28a75f74adfc226a773d1c00d5779c26412eea40a104da5c77f7d0f0fc30f0e8",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/cloudflare-env.d.ts",
+      "bytes": 99,
+      "md5": "a34a11421ae7a78d5f5fc622134983ac",
+      "sha256": "8b0eca84aa3364cc7ccc43cc3af6beb88dd34ebd410de08690bf094ce39fbcb0",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components.json",
+      "bytes": 420,
+      "md5": "72d610a67f23316b62796425a4718b99",
+      "sha256": "31f4ca67a4a62572571003d3d5aac85ee6fbfca67a192924bac6b168d95e98fd",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/connector-error.tsx",
+      "bytes": 1082,
+      "md5": "ee594e9073df3be088119620f8605ccc",
+      "sha256": "2d0d04559952ce9c9a327cca499f4b99f35d885cccfce375230e116695d3f155",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/accordion.tsx",
+      "bytes": 2048,
+      "md5": "ca7c6d2563cb840754f6af0ac52a62b8",
+      "sha256": "a4f153089ba886dfcf73fac26b5c01ca933fa12fbe88df6fb723912bfffdfbb0",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/alert-dialog.tsx",
+      "bytes": 5439,
+      "md5": "324ed23ae31556d9a729c0fc780b8ba8",
+      "sha256": "9a8d950f2b9b4352d5ebb762fb44d5c28c2d353aa29712071973656a8736e311",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/alert.tsx",
+      "bytes": 1614,
+      "md5": "f90e428654b2145ee1a80c66f46fdbef",
+      "sha256": "2cc59b5f7bda91c1670884b1bf46bfc8a2a6f226cef184f5762acc037188885b",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/aspect-ratio.tsx",
+      "bytes": 274,
+      "md5": "c6d85ec0522899c5da67ffdae8b4f3ea",
+      "sha256": "b1c157886236782cb92d8fbcd4749532aaf6d8aabefd6e157ca40358f902f407",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/attachment.tsx",
+      "bytes": 6002,
+      "md5": "c97665e00dbe4896df6495725b1d7e71",
+      "sha256": "ae8a25dd1a896d3964e3ef54d97e51221b418cde287dfd794428b89951c5c790",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/avatar.tsx",
+      "bytes": 2916,
+      "md5": "c0136d9a1c07129863348811dcc037e0",
+      "sha256": "58a846bf1617b94b9681921db9b8461d0145f311424663d11678a06b6153cb34",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/badge.tsx",
+      "bytes": 1776,
+      "md5": "8510911fff59be294d64dbfc67f5c710",
+      "sha256": "46a0de5224f6a5d5d63d45246534288518dce888f031064bff925bbc7fe6ad97",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/breadcrumb.tsx",
+      "bytes": 2350,
+      "md5": "f745d4c268d7b95d591932f9ba6c87e2",
+      "sha256": "d4c0831bba2212e778248f54a6ace6ef378df8bba4616d1abf27787a31eabae5",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/bubble.tsx",
+      "bytes": 4699,
+      "md5": "530360479070778092849da6afaa32b3",
+      "sha256": "870cc0c5cfc8a515053f7e41e706a6bd017a909b45f1305fd3b164a52cc4483b",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/button-group.tsx",
+      "bytes": 2202,
+      "md5": "3ed2c390c33124f07ba3b6de13aafc09",
+      "sha256": "784c89d8ee683e1bc972ae69e6ea8225a7f63abe22aa1b5fc3423ae8a2a399c0",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/button.tsx",
+      "bytes": 2392,
+      "md5": "5eb5c23dfc552fe75b9beeffacede350",
+      "sha256": "cc36af0f8b5019c33cc039fbf03bb952a513072b15b55b53c592b78af3e5f4c4",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/calendar.tsx",
+      "bytes": 7832,
+      "md5": "ff77c78f80e73bfde1e4420305dda6bf",
+      "sha256": "3855fbe0d3f8ad3a4b93071f98b76a9f6782d46ec8b05f5d2ddbee1e4e39bc84",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/card.tsx",
+      "bytes": 1987,
+      "md5": "5f465338c9c83716fd67bba76b9852d4",
+      "sha256": "c48dd3b96be90a7066f1aebf294f0af9d00ebcdc367d5d4aca55429ade570c1c",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/carousel.tsx",
+      "bytes": 5556,
+      "md5": "b28bf29b5dccd43ddfa5fd7d38e8517f",
+      "sha256": "b7ea0dda3903d972c186f739e23da61f547bc83b5a0bf13b16856577846d5fc3",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/chart.tsx",
+      "bytes": 10614,
+      "md5": "c2a2b66adc7b5fb32c1674d2d13e0607",
+      "sha256": "45aa5ea4a386f4fb5b8869ff4bab3a08cf89255190ee322043baf84c3e950b6a",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/checkbox.tsx",
+      "bytes": 1214,
+      "md5": "8ab728d8b37af0d62855c63521e6aa5e",
+      "sha256": "b23ab9d4deeedf2ac8f512c368361ede681aa383437ef48563a6f9b7dbe95f27",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/collapsible.tsx",
+      "bytes": 795,
+      "md5": "d3bc158594b1f19fd28d9868792d17f1",
+      "sha256": "c6598e5584f4258b5d9fefadbc5ad6a66888ad58729f4b634a0bb2d9c513188b",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/combobox.tsx",
+      "bytes": 9158,
+      "md5": "c797beec4ac0f85cafc6892c8813e506",
+      "sha256": "2d68e78b2dc7e38a085f222dede60a80b4f8229a6e91732c484605e204d46735",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/command.tsx",
+      "bytes": 4818,
+      "md5": "0fb528fb269684974d66ed609036cadf",
+      "sha256": "361193df1e3d64a9e9b5048f045264782fcb387aab3f00f2b805fdcbf538b16a",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/context-menu.tsx",
+      "bytes": 8268,
+      "md5": "7f0b02ab4aa2c7e64799a49680fd5fa3",
+      "sha256": "2cf1fcf59df0649a3e2a126d1df2f639145f6b6bf5689ee54af1f40ab1245017",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/dialog.tsx",
+      "bytes": 4303,
+      "md5": "716542a167fb7bda2fea4df346c54075",
+      "sha256": "dce39c6adc47d997bd2567f8b7a72f466b0134715105cd42f9194007b8ecdb14",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/direction.tsx",
+      "bytes": 506,
+      "md5": "87b2e543828b0ac3444de56cfd0016d0",
+      "sha256": "84ae2ad658207f0e0f367978e5508cd8027cd00c29c41d3d13db21a708c3d1e6",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/drawer.tsx",
+      "bytes": 4255,
+      "md5": "ffd797b65456e7a20ec47a7f23c533d7",
+      "sha256": "cb6eaf58eb0757ca91af284e5d925b89a42ad7eb19cb3f44c575a3487aa9350f",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/dropdown-menu.tsx",
+      "bytes": 8418,
+      "md5": "687ccb0d62020e2e0f9c1d894a825bd4",
+      "sha256": "98f0dcdae38225b73734aceeb9213dd751fea2c72ea520df31003cd133deac8a",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/empty.tsx",
+      "bytes": 2396,
+      "md5": "389b7c49008cc028f232dbb88b823a3c",
+      "sha256": "ae95bdcf367a076ae02e7925f14522a148798f72d9651749c6d55497dba584c0",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/field.tsx",
+      "bytes": 6159,
+      "md5": "cfc948bd0acf77acf10861264abb5071",
+      "sha256": "ba67d76f017ac059fc86cf8c344e0b2991c4322d3619e125498c19b87f6eefbd",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/form.tsx",
+      "bytes": 3757,
+      "md5": "2259336ac40c442981e4f95f6d5e3d99",
+      "sha256": "315b46bb75ab7d1c6061b5d750aa4bedf6e7a455e15e2d7f9182f053d5972b1e",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/hover-card.tsx",
+      "bytes": 1526,
+      "md5": "109abe175a5765fb53cdf1c1506d3c99",
+      "sha256": "f5d8df42c59370ec14d61bcc54f7d68e9bb7dfa0d6a872b2f7cffc2aafbf23b8",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/input-group.tsx",
+      "bytes": 5065,
+      "md5": "bf1091cf6aa366f8911b67d2b2449502",
+      "sha256": "6afbd58fea4c438e6252dc4568bddc122e84ababead4ad5cee50ace01100c9a0",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/input-otp.tsx",
+      "bytes": 2254,
+      "md5": "b80b4c079f1092bb7a6b2707b3c45979",
+      "sha256": "161946daa89f0eda2575b9271c0494e35807c4ffb55598a49f67160c17fec299",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/input.tsx",
+      "bytes": 962,
+      "md5": "186052fef4d6a678824a3ac70ec3bdec",
+      "sha256": "8c4612a7c41319ac5049daa3b34b080f9784b6245c17780eb87c127e58e473db",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/item.tsx",
+      "bytes": 4486,
+      "md5": "16a60b2befc66ed13b70ff9f4c545ddb",
+      "sha256": "6e2144d6d87142dbbe56d568810bf546318c8aa661447ebb0d76ebbf382cb45f",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/kbd.tsx",
+      "bytes": 862,
+      "md5": "b202043155a7ab81c01211ce1d78b38f",
+      "sha256": "6088c3a5432338b1719c17e9b5d0e1fa74fd1f66060f248fc88909d33a82cd13",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/label.tsx",
+      "bytes": 606,
+      "md5": "e7e0c4ad98f3485ecd3c0ca516d0a8bf",
+      "sha256": "a476e41f08b9de5bd447de66a33d8bc2ad18f2fa6b96c064778bab4b6f439f4c",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/marker.tsx",
+      "bytes": 1864,
+      "md5": "0e0eb8e9d89ed95ac17ca828a410daf5",
+      "sha256": "3d798763f094b2bb5e7ade2d5cd1b9bab498bc8ca7fd4cfaf4e5835bdedc34a0",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/menubar.tsx",
+      "bytes": 8389,
+      "md5": "4d356e3b573e5f012a18cd72cdbd79a6",
+      "sha256": "9243af8afcea03703398ccd1c2a8c0a87ad6cbaf2bd272fb609f5b79fe46aebb",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/message-scroller.tsx",
+      "bytes": 3992,
+      "md5": "ba91a113119db9c4fbd25a7fe3f63d69",
+      "sha256": "bb7660a248e4e9589c3816c7c1c199ea1381a70d2c8476ae895b567a7a4d86cf",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/message.tsx",
+      "bytes": 2232,
+      "md5": "82874875af1e60b5cd14edee184640d4",
+      "sha256": "9d2952bf3b641081f09aa2739535e6bbd1be0a4946789752a2c20d8aaef43185",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/native-select.tsx",
+      "bytes": 1995,
+      "md5": "a786440fce2ab99cd6c2e2697a2e3566",
+      "sha256": "007516b111fca8c98a6c40c94ab91bb68cc5b52afce1ed1f5e510c3d86e7347c",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/navigation-menu.tsx",
+      "bytes": 6658,
+      "md5": "5b61da8c889471fe7b7483e44d95264c",
+      "sha256": "889d358a77de88e9cb6f39ea4895ea4c76eaf01d731b74e44f1c41e97a78a044",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/pagination.tsx",
+      "bytes": 2717,
+      "md5": "ba23d7233a420983feef894ee045234d",
+      "sha256": "374ad135c3d4ff3ec080a0009cd9745cdd0e12faa89d2b0e86074f11e5127fd1",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/popover.tsx",
+      "bytes": 2357,
+      "md5": "6fc46ad5d685bb0df4429f32e53522e2",
+      "sha256": "31c350309ff5d3034e6ecf1b0eda75ba8855bdbf987fc7ad6d71f0ef07c5a447",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/progress.tsx",
+      "bytes": 755,
+      "md5": "4f9ba82f24074fea1d923c6d2beb2242",
+      "sha256": "c8c26e8f5f041c3cdf4915347dc1d9c022f9448f149990fadcaf303e952fa57d",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/radio-group.tsx",
+      "bytes": 1460,
+      "md5": "017a01d9f4021d142d6df7d5df502ac5",
+      "sha256": "fe5ce39636d0818c2bf9c4eebddff893d1225fa2c81b5fa4bb8cbb39a8c913ce",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/resizable.tsx",
+      "bytes": 1815,
+      "md5": "f75c049eeab660aabf4b3ecb968a99f2",
+      "sha256": "bc63958467aa00557c551bb0d96a5ae4c965c1e1ba2380e595949d933b132f7c",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/scroll-area.tsx",
+      "bytes": 1639,
+      "md5": "8bf02de15eee0da6e5942ea2ff1c64c3",
+      "sha256": "8bd9d986b2844c9a87de825c6de4787b6739b36c3dc9a05ccf3eb107160e4043",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/select.tsx",
+      "bytes": 6353,
+      "md5": "8f59eda15860f917b57c8c427e6a6960",
+      "sha256": "0b796a108a4eb5ba52d9ad938b7aea36dc56ae66c703a6d0a23dbc24f96daff3",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/separator.tsx",
+      "bytes": 694,
+      "md5": "31309c8fad1e9a91db2a4bdfb4988b45",
+      "sha256": "6da346505c8629a4668420d2a5ca48891383bbe0b0ceb14163537c671879427e",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/sheet.tsx",
+      "bytes": 4188,
+      "md5": "70f191fcbd262095ddd6afbcc8bbf99d",
+      "sha256": "63863cf2df8f8973e52b3459ac9bdbf81be1262dbc70eb53d5271ffb03488e16",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/sidebar.tsx",
+      "bytes": 21526,
+      "md5": "12bccb854c54bc79faf6fef55736666a",
+      "sha256": "4a8d73e7730a2b1fcecfca31299ed26db65c2307b84197a59c6ec7c01c7ad28e",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/skeleton.tsx",
+      "bytes": 276,
+      "md5": "64033a08d89d382ad050d80cbb0cc98d",
+      "sha256": "ba48dd5be5a6a1378bd4e011028654b5bf419f1e7d20ee4b9f8330c1264e7239",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/slider.tsx",
+      "bytes": 1991,
+      "md5": "310455a3b7405ba1001dc00b6bfbc6f8",
+      "sha256": "0e37484f4b416e79ac18c655cac961aefacf6e67085cfc2b320ea8af545635a3",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/sonner.tsx",
+      "bytes": 1034,
+      "md5": "5dde0d04f3ecf6b5e812104aca12c546",
+      "sha256": "13ccc9b0fe4248e622f83a1d3b2f0566b72b5e04162d7d0c8db8945ecc71b55f",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/spinner.tsx",
+      "bytes": 331,
+      "md5": "28b695734ef3b6840b47d713ae3d31ce",
+      "sha256": "3e6e6e8d37fb4069f8e43e55318f8db06fbc36e6c8be0096da3c9337c1c798b9",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/switch.tsx",
+      "bytes": 1408,
+      "md5": "4c97d0833cc1f563ff893749a9a94154",
+      "sha256": "386d4d4deb39f34126f9700fe9bf5393d238485dd94018bba9d154dda84c62ae",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/table.tsx",
+      "bytes": 2478,
+      "md5": "908dde6e20d6ca61ef44ff007e66311f",
+      "sha256": "20e5a7f224959c6b75802995706a97e9da171f693d4b6b1b436388fcd9df96f3",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/tabs.tsx",
+      "bytes": 3782,
+      "md5": "3db2474e4c66b1e544bb514bf1024612",
+      "sha256": "865d0194331b9b2be36723fa79d3575dc83078b4cb941cafee87cb72fc2cff46",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/textarea.tsx",
+      "bytes": 759,
+      "md5": "b068d08e701aefd6216234a763e3a2ef",
+      "sha256": "253cdeb487c73beaaccdf47fc163e36e7d5b7ae6ddf09a4f64998a109a112979",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/toggle-group.tsx",
+      "bytes": 2308,
+      "md5": "bc36423177245af73467d7842a49a29f",
+      "sha256": "69f643e889e933f05c1439084480d8646f66a161c7d1cf0730ee926382ade35e",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/toggle.tsx",
+      "bytes": 1565,
+      "md5": "d21c665171abb398d823dc77bb10642d",
+      "sha256": "ba4d0b0a2b2fee75dc36dfc19e32082e721024b919050c97fd5dc70faa924e16",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/components/ui/tooltip.tsx",
+      "bytes": 1830,
+      "md5": "c5acc9dbc05002c04a86b807f72f9817",
+      "sha256": "a0784eb77831a799fad7991df4f1b666f876201565a80175e1aa68733574a2e4",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/db/index.ts",
+      "bytes": 423,
+      "md5": "870d3083bb3a54c1d0bdcbbe4ceec8d6",
+      "sha256": "dc7610b00b918e0ffff1360a63626f16655ced3064b2eaf96095a4101fb14bcd",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/db/schema.ts",
+      "bytes": 1611,
+      "md5": "739cc18668cb1e456db921aca1916344",
+      "sha256": "db2da1d032802adf2ac9d4862165d7c99f2a7458e7e7e41ed480653f110efdce",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/docs/connection-preview.jpg",
+      "bytes": 63840,
+      "md5": "85d09ea729176a8cc85e23d0b0f8eaad",
+      "sha256": "8c0e599397e56e07b6c6ca1cc85aa13f55d3e18a0d1fd9577edab5e661b9a84d",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/docs/connection-top-preview.jpg",
+      "bytes": 62150,
+      "md5": "7f22614813aa4de3b17f664ab481d129",
+      "sha256": "81135fbfe63b98bd223130d2c1151f45301e3859cc2dbec13652f530d7bae353",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/docs/repair-preview.jpg",
+      "bytes": 59091,
+      "md5": "dcfbddb50308ba0e4c84222ac15aff8a",
+      "sha256": "79ea572cb3495917b71893cd1bc00f8e760c37486a4ce6a3dd3b3c72be0d1898",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/docs/verification.md",
+      "bytes": 12624,
+      "md5": "7c932557f68a1461ba7e02d0c3cc1123",
+      "sha256": "e76c6fd913629ff6a1ed36ced128f1560e43cd7535aef0b76ff36b2d613c8941",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/docs/workbench-preview.jpg",
+      "bytes": 59444,
+      "md5": "189390eb15cf07c0ad8887e3612e652c",
+      "sha256": "01d706a01ada9a750f8727e8bb60d5dc79fcd7a165d85b8a66378d2f93e9361b",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/drizzle.config.ts",
+      "bytes": 148,
+      "md5": "a4048d3140637afcadca6526760827fb",
+      "sha256": "af081f7384aaeb0082cf422e29f139d137ca2f6a57c69b2c37b9fb1f8479867b",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/drizzle/0000_dusty_arachne.sql",
+      "bytes": 1338,
+      "md5": "0a61cf8086d856ab39799441663a2e29",
+      "sha256": "770aeefe6d7f67e544c67df27f9e79ad40172c43e15f1e4241eb4cb8a06fcdd3",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/drizzle/meta/0000_snapshot.json",
+      "bytes": 7362,
+      "md5": "95e11b8fab235d6354b9f1883f57a2ce",
+      "sha256": "7469db19e695741d6c7becdbca83f366fef854dc7690d6f5f098dcab03911bc5",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/drizzle/meta/_journal.json",
+      "bytes": 203,
+      "md5": "9ec08dffe3a1e973e9fc45dd2480ffb4",
+      "sha256": "04b4dec7540dfe719f9b620228719ff271ff02b9ab6497fc4f68fa1e3e808959",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/eslint.config.mjs",
+      "bytes": 846,
+      "md5": "6fccde72c62f9b793ce8897d65390201",
+      "sha256": "f22a254df7d934bbf9be499d3c969a13abb7f7f64c03f5967d0095cad81dfe06",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/examples/d1/app/api/notes/route.ts",
+      "bytes": 1700,
+      "md5": "53b3a9412f9a63240c469a3534aa1150",
+      "sha256": "a3d4a74fd53b7bf53e2df41f169d9d9d44a8b22aeb6d92f4e754956079af8909",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/examples/d1/db/schema.ts",
+      "bytes": 370,
+      "md5": "0c59b17771e02fc72bd1139ef6abd670",
+      "sha256": "d89eabd95716ce404f5f7ca2a254220435be8ddce7c899d7ef461ff22ec80454",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/hooks/use-mobile.ts",
+      "bytes": 565,
+      "md5": "209b5193af16624cdd89d3591480dd48",
+      "sha256": "ad0936f84f1df79d3697bfbff9c18f8ad58431c1cbaf2359c6a853b0fcc9f28b",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/archive-source.html",
+      "bytes": 110970,
+      "md5": "6c32b7f4306b08fdcbd0af58a1d23dab",
+      "sha256": "67a6527514b8462b89a8d86737751fa6a4299de8c90675df5e747677fd938b0a",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/archive/app.js",
+      "bytes": 63487,
+      "md5": "908a93d806b5eab195f79e35f00c7107",
+      "sha256": "69f0c7ef96c89132802026f867e175bb516bacb033d21e2fcd10572bc728cd58",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/archive/core.js",
+      "bytes": 11431,
+      "md5": "4c32140b080c8f0734a9efa332464029",
+      "sha256": "5d2edc4adf9137f5ee50ade4287de0dfd3e9d3ecbeedea7a7dc0f696a71deb31",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/archive/importer.js",
+      "bytes": 10431,
+      "md5": "fb594dc33114c6f0c04f6f1de6f9f372",
+      "sha256": "2f1c4132af143793f659deeb51d202902c48b54489202ce9121f61e58956cb99",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/archive/png.js",
+      "bytes": 5895,
+      "md5": "4c1c623c71e7fc158b22a6af8189cc9a",
+      "sha256": "08c68d65483bfc0871ea89ca57c293421824b65cef84fe228058d55272602459",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/archive/storage.js",
+      "bytes": 3757,
+      "md5": "0e792ff9812d5ebfba4b79fb6427ea4f",
+      "sha256": "d99139d4b657b9db1349c20f2c3e3f611cbc1070d117fcadf2bf7052a17246be",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/archive/style.css",
+      "bytes": 15648,
+      "md5": "891179c1dc848cd3998dfe825f394d55",
+      "sha256": "1c080868d078433705e3ccfb6d99453416af76a8317d701bb8185bbbad5bdd48",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/studio/app.js",
+      "bytes": 410481,
+      "md5": "6e58bca6f9e1140623547c55688241e9",
+      "sha256": "0dad362eda2169a7bc4ba0918c3e023ea85d0a3ce3e5f969f6194c6867a7c1cc",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/studio/glossary-bridge.js",
+      "bytes": 5577,
+      "md5": "722c7b57b1b987e8cbf897f1a7ea63da",
+      "sha256": "0c8b47c62eff997109892f9af5f27426e69be340b6978bbe449e0a143ea1dd91",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/studio/glossary-format.js",
+      "bytes": 4670,
+      "md5": "a60c901cf13445a439c684390574e2b6",
+      "sha256": "b219993574a39038af0ac5c0238d95f7956e4ff0d46de97eccce8a2ac8d497d9",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/studio/index.html",
+      "bytes": 69625,
+      "md5": "5619db00d6b92e64e3603d76af298353",
+      "sha256": "59beea7214e4b2061e29d50929000fb83854d3bf4606213934f262a3dc05013e",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/studio/public-repository.css",
+      "bytes": 3746,
+      "md5": "964569b39cef04993c468db1650a04fd",
+      "sha256": "d83427953c134d32eaba4a1cee51aa030390668f9bb81225884c66268dc57d0b",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/studio/public-repository.js",
+      "bytes": 24333,
+      "md5": "5f4829e104791e41dff43e7b2ba946a7",
+      "sha256": "521cfaabf7c996208e8b552182e81a24eb3ec0513c0c22eaa1329eacef36bdc5",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/studio/sample-cards.csv",
+      "bytes": 1038,
+      "md5": "85959d9d9721d898cb838eee65381b13",
+      "sha256": "4786df04759d7de9be316d5ca1baed1015b2e457d4ff1f303af0119054c8c52a",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/studio/styles.css",
+      "bytes": 146920,
+      "md5": "52a0b0ca941abb5f2bf9014fb874b1a1",
+      "sha256": "461d01f05351de8e7667a84afaeca93848bd9cc3dae4891a2a703c42635cd77c",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/studio/workspace-ui.css",
+      "bytes": 25500,
+      "md5": "86a964b86f4d0d87b361bedf549d47b1",
+      "sha256": "8682c5baba1224a34e40ff3a3dac9d5d89a3621d9251706a611aa04d143517b6",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/vendor/html-to-image.js",
+      "bytes": 20562,
+      "md5": "8c69fd08591f0c8b77996c381f40e5d3",
+      "sha256": "a90b42909d80964269ef6d5f3d1e4a5a7e2a4c263a5d2a76a9e7151901343262",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/vendor/jspdf.umd.min.js",
+      "bytes": 365730,
+      "md5": "e6c65801ec6c703f436cb7897afcbc44",
+      "sha256": "85ba2cc3ff858a20fa49fe6e457bec863ea40b55a9f3725e58a940e62f6f61a4",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/vendor/jszip.min.js",
+      "bytes": 97630,
+      "md5": "b5d02b3f0bf3ae026451909419df07bb",
+      "sha256": "acc7e41455a80765b5fd9c7ee1b8078a6d160bbbca455aeae854de65c947d59e",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/vendor/papaparse.min.js",
+      "bytes": 19469,
+      "md5": "b608b851d92c230acc7d7a8df6fb7995",
+      "sha256": "b8e870c5d2b29772f10c9fa9a693c8b896aac8540ed6701e3cc6304c683febdb",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/legacy/vendor/xlsx.full.min.js",
+      "bytes": 881727,
+      "md5": "31e9848e80e1ddf43c5aa31009cd2b7b",
+      "sha256": "c9506197caf809a075b6dee1da0d36fb19da7158ffe8a88e7b0c96c5d8623c99",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/lib/archive-core.mjs",
+      "bytes": 11431,
+      "md5": "4c32140b080c8f0734a9efa332464029",
+      "sha256": "5d2edc4adf9137f5ee50ade4287de0dfd3e9d3ecbeedea7a7dc0f696a71deb31",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/lib/compatible-export.mjs",
+      "bytes": 876,
+      "md5": "7d279dfbc027d98013fb5953a90e5968",
+      "sha256": "3578223f1b02c578a7c5b91362af7775a5ae8b01606c6bed9a9a877a58e56f7e",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/lib/connector-context.ts",
+      "bytes": 612,
+      "md5": "87e532663c942e9436736baacd496524",
+      "sha256": "bbddff68689cb0f6926fecd4b8b96f12f2054277c296e97b0df07d4ad5ece24e",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/lib/connector-contract.mts",
+      "bytes": 5362,
+      "md5": "2d9fbcae732c152fd27e6a5143315e9f",
+      "sha256": "e1a7b24a8793af34b595690d9b1300c897c7321c14f215cedf58ad95799d7c3e",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/lib/connector-errors.mts",
+      "bytes": 2717,
+      "md5": "4e085c49c2c4bf647b867a05bc396245",
+      "sha256": "a22edf13d6873ae832c4a2a0d579fc666c73ec996ef0722d39172649d38f0871",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/lib/connector-preview.d.ts",
+      "bytes": 433,
+      "md5": "a1e48e6c946b66c49ecf0fd57456b6b9",
+      "sha256": "abd69a94f7f61f1359063bb557574faae35e8ff5a028cc4c04b9ee248ef52642",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/lib/connectors.ts",
+      "bytes": 416,
+      "md5": "a07f6544fc187a74e7745f27249bbbd2",
+      "sha256": "1c93d747e384c8e17e3e3dd5361b24412babf5eba2a11d2ae7a75f4e0924112c",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/lib/mcp.ts",
+      "bytes": 7407,
+      "md5": "40e07b62199081d1a7c91ddd908b9e3b",
+      "sha256": "e69a274005c5ef63254262da03dbc9e8387ff323a5603680216ad5b232fb0345",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/lib/model.mjs",
+      "bytes": 15333,
+      "md5": "1773243e7f080bc2aba3afa4fd604365",
+      "sha256": "566cb16a565f52d4f4a631c9cd08ddfbc2f75331a41c50e8ba77f75f06688d89",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/lib/service.ts",
+      "bytes": 6622,
+      "md5": "4911280d16aba84be1076a146a3a4f63",
+      "sha256": "b2cfa426d3230556588a44a0655205be831211e588432e7fe054172b691731ed",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/lib/store.ts",
+      "bytes": 7182,
+      "md5": "1d3f9e31ed2e15d1188f6f9ce5363833",
+      "sha256": "5d755cb4a19ea96e4973b4ae31b21f4dd3e032fbfbbca5122511ab20a4e4795e",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/lib/studio-defaults.mjs",
+      "bytes": 7309,
+      "md5": "02e27b22446c05d63db07b658e199839",
+      "sha256": "d6c6b29f3c56479324c6f0534c80dabf3525f1387ef6335d778e276282eda064",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/lib/template-library.mjs",
+      "bytes": 5685,
+      "md5": "68ab28b55569a878781cdb5bcc051185",
+      "sha256": "a8f774ea729b6f40e68e8fb03bfbbe2a904f33a9d2ce081f9e2a25e9b7bce628",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/lib/ui-surface.mjs",
+      "bytes": 621,
+      "md5": "ca277c07fc4d329f02e36e610ca1ea94",
+      "sha256": "b7cc3fcb32e69ac7d22c6f71531b23800a85dee2fb1c333366988a5d0c25f125",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/lib/utils.ts",
+      "bytes": 177,
+      "md5": "a201fb9f1c5fefe41b771aa8d7f99957",
+      "sha256": "53f3d3d070f0a9082934da25b875f9499855c2b0693868dd28be8c23d8730f68",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/lib/workbench-html.mjs",
+      "bytes": 2256338,
+      "md5": "465bcd3f133d717bd1425ac1b4e8ffa7",
+      "sha256": "9e347dc7fd78490256da9d802bf4ee8eba6ba084440a3a943ca1dcbb057099d4",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/local/DELIVERY.json",
+      "bytes": 274,
+      "md5": "b7b963053efe45bfb36866221f578ccd",
+      "sha256": "3a560a43e30b5215130660b998958de96463dedf7da5297f7bc3d11d304eda4d",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/local/exchange-adapter.mjs",
+      "bytes": 3849,
+      "md5": "68dd8a3cbbaea4f8d155aa568984c675",
+      "sha256": "a13b56a9854dda0b7232962f4932ebd79c801d16151043aa792629199f549288",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/local/finish-local.mjs",
+      "bytes": 1044,
+      "md5": "6e99960eb0a90621fce8041f4be680e3",
+      "sha256": "f23831a25f422d5bc29086553df207f1e31e3594797d209bf248594debae0a55",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/local/index.html",
+      "bytes": 5759,
+      "md5": "6ea74d2b50a60fee03c0918dcbe04773",
+      "sha256": "323b10fb0a9343973b17fcbb22ece4f881a94e9041b496bae8667ba41b544488",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/local/local-service.mjs",
+      "bytes": 10133,
+      "md5": "6a75aabd32294090ef52ffbfcee14e58",
+      "sha256": "b5e12148ab2fd06896a226a793d0e98519fa0f2f802613148b2bc0b74729d2ae",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/local/main.mjs",
+      "bytes": 52623,
+      "md5": "53da59c55ed7a27bcdd545f16ce9a594",
+      "sha256": "71fd2df89f8c9f6b7d36e5819331a08229c604c955b51425af17ed37e9f5c188",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/local/prepare-local.py",
+      "bytes": 10582,
+      "md5": "3957c00c2e206aaa5b370dc5ae59e142",
+      "sha256": "3de34ebdeaa3048bd17908354d2d63370b753ad739aab81829f47bf5d4d17926",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/local/recovery-cache.mjs",
+      "bytes": 1058,
+      "md5": "089f2aa42875700abf1a86acd0469e6e",
+      "sha256": "634c39c400361d779bd0807698657bcb05020e538c04e2374e21137fb3ab1a81",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/local/self-check.mjs",
+      "bytes": 8995,
+      "md5": "2c60ae99bab403db082da29c6092eda9",
+      "sha256": "810994084c5821dbe1fbe5835468d43c598abfd7abdcbdbe3ecc41ebce13b540",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/local/sha256.mjs",
+      "bytes": 2256,
+      "md5": "fe87cfef674db546fd514f70b3c6438a",
+      "sha256": "2512733c67ae1b3c4076b98c3aad3ae63b1e5e5b91c9c363c4abb6afafc27fc6",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/local/style.css",
+      "bytes": 4487,
+      "md5": "b008120ce7ac4b8c59869146b50d9826",
+      "sha256": "b77b5f37fd6931b68a787405fb81c0229a9e95b26557e3e359dac86c780a95b1",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/local/templates-adapter.mjs",
+      "bytes": 8894,
+      "md5": "1f7910046288619d024c0532bc48cd03",
+      "sha256": "60cdbd35811eacd176561342f4e2c37d7cf1c03b42990df4bfa747f06bdce8bf",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/local/ui-extra.mjs",
+      "bytes": 3877,
+      "md5": "2dae171f7c8e583eb91e68dd4b3da57b",
+      "sha256": "c6c15b39b872e3a0f13c14a410871b79415b7d4b0aeeba609b26d6e529a01213",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/local/vite.config.mjs",
+      "bytes": 255,
+      "md5": "f277eeb511dfbc35545afe7377d91535",
+      "sha256": "8570eff0690e1bda038dd74938619fa1910fdb386434ec6ba6532c1ca431c497",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/local/vite.qa.config.mjs",
+      "bytes": 266,
+      "md5": "c8b5b4afbd342b7d043e87f195b4df6c",
+      "sha256": "ddcbea45b63ccc83c9bc257bd011350d21dd852c7c02b4f01ff0d36e7362b0cd",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/next.config.ts",
+      "bytes": 133,
+      "md5": "9b77af189a21a7a64e4bd7a426f64176",
+      "sha256": "614bce25b089c3f19b1e17a6346c74b858034040154c6621e7d35303004767cc",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/package.json",
+      "bytes": 2513,
+      "md5": "52bda56b8cc76f02405270771140a638",
+      "sha256": "d166acf500618ae8787154d06800c157cc099f59aa75944b15eaff7fc654eb65",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/pnpm-lock.yaml",
+      "bytes": 345021,
+      "md5": "973f04748d8a93c94c612f2f16eeead4",
+      "sha256": "095ba6f301ba3997da2c251dfc4b805c220624bdf0921d905eaceee0d1fb29c9",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/pnpm-workspace.yaml",
+      "bytes": 736,
+      "md5": "8185d3e36f5238eb70135347bd40729b",
+      "sha256": "4a69dc93a75ff4a33f54c2853d5317c8e7374faab592f3472b5164257bff8066",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/postcss.config.mjs",
+      "bytes": 94,
+      "md5": "239f3ebf717465dc636818a1a619398d",
+      "sha256": "dfac7ac2d86d326a0e5adb024e7943c181393ed17a5fcb8f0315b24c7da6ddde",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/public/favicon.svg",
+      "bytes": 330,
+      "md5": "fcf2bde3b4fb22a3414f43102a815d4d",
+      "sha256": "0ef84ad00d0f1dd037adea6bfbf18f084ec48687c4e7dd2bb61cc438b724fccd",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/public/file.svg",
+      "bytes": 392,
+      "md5": "5a7cf15203348f0915990406e4fe2fc2",
+      "sha256": "1e0ae4d1a1ddfa36752988647b731e4abf150c414d069ec83c96fb0aaeff0307",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/public/globe.svg",
+      "bytes": 1036,
+      "md5": "0666a56cc38cb6872fad06c182ef2660",
+      "sha256": "d051a8c47936990a9085693d307bb7cea1bc1b6d7ed956bcbaacf674f4ec96b9",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/public/window.svg",
+      "bytes": 386,
+      "md5": "f2d60ec0c2c0d62aac6a19dc14ea108d",
+      "sha256": "decf1cf7bb22b5c99c4857cfcd5718ce5465c4454166317589c83fc73df74b66",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/scripts/build-verified.sh",
+      "bytes": 661,
+      "md5": "343205865e1af255081e0a442695fb2c",
+      "sha256": "2ae5329ac860076070c9217a43106a15cb5ecf907a0f7baeb9ef903f76b53c68",
+      "gitMode": "100755"
+    },
+    {
+      "path": "cardstudio/scripts/connector-preview/connector-preview-session.mjs",
+      "bytes": 6855,
+      "md5": "450b7503abbf572da372fa720b192e04",
+      "sha256": "57224ad185a25115a14fccc68d3217e55b199260c3dd98a2c807beffec1a0a9b",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/scripts/connector-preview/host-binding.mjs",
+      "bytes": 7793,
+      "md5": "02e26e6a9e5fca0e734782b8a96ef971",
+      "sha256": "9e44ab6864133a5c82f834a5904ebb7d6104cb783c24efba3c0fe1a161182cea",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/scripts/connector-preview/protocol.mjs",
+      "bytes": 1781,
+      "md5": "52a29e51c6ae36c4da0f704d9e24de6c",
+      "sha256": "111e062ebf08d3f180130f5bc3dcb3c1414c1d7be3c032c9d675a61c0c7513a8",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/scripts/execution-profile.mjs",
+      "bytes": 624,
+      "md5": "841921874ed30db7b1d2c893dc0c3e3b",
+      "sha256": "2e71116f4d2b70cff8bb70436f8dd5c709ec7ff62893424530f404e0193d3630",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/scripts/install-ci.mjs",
+      "bytes": 1685,
+      "md5": "d01b521f6727b6253076db46d276430b",
+      "sha256": "4a5a92d60a08d0ba54effd8373da2da06284312c55b767287c68a0bec7200da7",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/scripts/install-ci.sh",
+      "bytes": 6783,
+      "md5": "cca16c397bfa7cb7b7d0fee4123086ca",
+      "sha256": "10d8764a61be50351dc3496e13588270de7956f0aa5f1189c49cabb2d89fe5c0",
+      "gitMode": "100755"
+    },
+    {
+      "path": "cardstudio/scripts/install-pnpm.sh",
+      "bytes": 9015,
+      "md5": "838019cba5906c7bafd9fe876f03e888",
+      "sha256": "a684c02c2b493dfbf262a66252a5cd36f81ca995a4024761728662ae63aa40c0",
+      "gitMode": "100755"
+    },
+    {
+      "path": "cardstudio/scripts/npm-install.mjs",
+      "bytes": 7025,
+      "md5": "1c840b6a8d5cea6a80ad956c8804e383",
+      "sha256": "9715c6a32d1d4a0289ef6376a0e819c3b6a6416b8a9877733d9fb4339ce626b6",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/scripts/pnpm-install.mjs",
+      "bytes": 10633,
+      "md5": "5a6cdc8f3d71898c44aaa55e965ed6e2",
+      "sha256": "a83164e344c1947053def83b546be8115deaa827314bbaead7afe6b6451c5cdf",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/scripts/prepare-engines.py",
+      "bytes": 10730,
+      "md5": "03a89f23ddaf48a34f061d6ede686cdf",
+      "sha256": "07856b0402150950adae5e24217bc149225583005064c2f32d9de3c016b9b7c0",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/scripts/prepare-ui.mjs",
+      "bytes": 606,
+      "md5": "4a2b4fa1b7265b240671e25c39c150b5",
+      "sha256": "bdbe6a797052a7c5f98647296f251015351bc6f5d64e4ff56e6f0b98a31bb0b4",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/scripts/run-framework.mjs",
+      "bytes": 993,
+      "md5": "2d0d6dfb305d642087c59c611130e910",
+      "sha256": "9bf9f41a29314cabe0238b8e9c540ec3f7b5a6adafc7c8fb6c3940722d061dca",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/scripts/sites-env.mjs",
+      "bytes": 906,
+      "md5": "2734e5454c5382401aa671cb247c8679",
+      "sha256": "5de99d6806b01f0ee0b941af3684d75dcf1afbbcff22cb95bfa2e584c5dafa88",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/scripts/sites-env.sh",
+      "bytes": 1530,
+      "md5": "6ac3da934f9e3cd3203e01844dba1e92",
+      "sha256": "df86ebfc27d2f00860036658e933ac0ddd7b5f6879aa5d51218f0863c7e1fb60",
+      "gitMode": "100755"
+    },
+    {
+      "path": "cardstudio/tests/compatible-export.test.mjs",
+      "bytes": 1733,
+      "md5": "de97ce2bfa398d6c8d18f2718c38f106",
+      "sha256": "d098d8acb734935796e773a726c1ba680357331776884d683a11661d8b8aedb3",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/tests/connection.test.mjs",
+      "bytes": 3655,
+      "md5": "298ac47155b2c267ff01094f9d8ddba1",
+      "sha256": "ac3bfb6e732e9ca5ce0cc87852eb68db413b5996662ece97ed56799b42acb699",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/tests/import-source.test.mjs",
+      "bytes": 3151,
+      "md5": "92fde43af0d4c2a036fac883bfad73c4",
+      "sha256": "a2ed26d047bbb67fb6b9905f32b2de7049faa3e0d32ba4b49745c323a5900522",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/tests/model.test.mjs",
+      "bytes": 8690,
+      "md5": "177a95a935ed0a1ee3081ae893b75e43",
+      "sha256": "db0609203c82005fada06ab3f1122ff332e10f988d00a70a88a41648d90df26a",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/tests/runtime-env.mjs",
+      "bytes": 1054,
+      "md5": "3df8d888b2ff92f2cf2f3bf5d572b106",
+      "sha256": "53de2e5927277bc231ef274cd62740bc4bfd74dec7ef9c5c4927fcb48aba63c4",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/tests/service-entry.ts",
+      "bytes": 143,
+      "md5": "005e6d503a47ae6c2007564ed01381ea",
+      "sha256": "af094b6c48525ebb3cd54daf6c147f50efffeedfa2acdc65e9fbd7d9e4051746",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/tests/service.test.mjs",
+      "bytes": 5035,
+      "md5": "5c650362df72128879eb1f5f840f78ea",
+      "sha256": "385b300d7fcbd35f6e2d7c44887d98707a473feb8d04e71dc25a7662fde84ddc",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/tsconfig.json",
+      "bytes": 800,
+      "md5": "107f3fd79057c6e38df3c43273491889",
+      "sha256": "7199c6e4e400921e8049729840165a39f1476fa97901bed00239e7697bfe8da4",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/tsconfig.tsbuildinfo",
+      "bytes": 600843,
+      "md5": "5c7bc8152cd52c89ac2225251e789a17",
+      "sha256": "2a5311db0c5e9df0540c8b99497b054da14ca5f14fe661022e9126cadc92bcca",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/ui/index.html",
+      "bytes": 5234,
+      "md5": "2b1846cde7b22f2cadab990d2fb24050",
+      "sha256": "06f0e103f1944a6f66823aad21e9c24b7459ec830a70dd50f9b153eed452fdbb",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/ui/main.mjs",
+      "bytes": 44102,
+      "md5": "cc0433de44aa118d0b9ad180c3e7d79a",
+      "sha256": "4d45e5f70a618a4171a34de877f20045f52999a13286245e33a71fbc1acbfee8",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/ui/style.css",
+      "bytes": 14819,
+      "md5": "c84f179b1fbdc60c5495f0389bf71f82",
+      "sha256": "98bc1bc840e1c40c0d9d8d4b1088a4c22773cedcd7785ab992ec4fcdf6ee4e46",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/vendor/shadcn-tailwind-4.13.0.LICENSE.md",
+      "bytes": 1063,
+      "md5": "9f105662f30667e1325f917cff4cfeb6",
+      "sha256": "1564074e13439397221ffd522e2e504d56561994a23d371aa5e3ad43e4f5423f",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/vendor/shadcn-tailwind-4.13.0.css",
+      "bytes": 16041,
+      "md5": "40b03fa3d365219cdf51f2511519bb26",
+      "sha256": "bc7d83425702955b4cb67cb14ede9d603f9d912376d57a2d81d661094d2a782a",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/vite.config.ts",
+      "bytes": 3115,
+      "md5": "52a72184cd33fc9b582bcf948f891c21",
+      "sha256": "6f6d890794fbe23f3e35cceb327f49d5977432a5aaf715e040a6408932da395b",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/vite.tests.config.mjs",
+      "bytes": 365,
+      "md5": "bb28630d56eaa59a9bd82f4ce59da70e",
+      "sha256": "a4be600fe1227dfd523bd947e81378a83720758179958ab3d73da3c078539b6c",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/vite.ui.config.mjs",
+      "bytes": 255,
+      "md5": "70398b48d8b2f57dad38a715f1cfceea",
+      "sha256": "b96284c40ed07b0fef2e1d13b8cdb8af500cafcc98c0aebb5616ee935c4a9a2a",
+      "gitMode": "100644"
+    },
+    {
+      "path": "cardstudio/先读我.txt",
+      "bytes": 209,
+      "md5": "a1d791292beb250796b79916142c0529",
+      "sha256": "c32de17e582537cc7acb5f7da08d38aa82449474af73228178f1e4dccdc8ad9b",
+      "gitMode": "100644"
+    },
+    {
+      "path": "docs/后续工作思路.md",
+      "bytes": 2378,
+      "md5": "8c9d076aaf0ddb9b232839315d887ab0",
+      "sha256": "06dd842baddd152d03af9a4e883d9bddefcb71c68730cd767eda19d6f05809f2",
+      "gitMode": "100644"
+    },
+    {
+      "path": "docs/实施记录.md",
+      "bytes": 2306,
+      "md5": "e372b5b45597f62f5de2816db870ec91",
+      "sha256": "7a46acbc6ecd2432ce276c364bbd01e82be7bf228cc446c7640430521aef2be8",
+      "gitMode": "100644"
+    },
+    {
+      "path": "docs/更新与自检报告.md",
+      "bytes": 7656,
+      "md5": "f3c140601d1dc20a85eb5fe4e740c348",
+      "sha256": "1b0e79cf7262f0218a5bb7c34e95e36814ccde14c9cb6d078eeb0cfce1b588cb",
+      "gitMode": "100644"
+    },
+    {
+      "path": "novel-archive/Novel-Archive.html",
+      "bytes": 202677,
+      "md5": "40d1ad66ce35dd8c05d780afdd3a2dc8",
+      "sha256": "2fa0dd9bb19786da7ec97e50df5cfffccec1268bfcf64cdfa82d0d7428f7dddc",
+      "gitMode": "100644"
+    },
+    {
+      "path": "novel-archive/build-local.mjs",
+      "bytes": 1943,
+      "md5": "2751bbc0b6df0182f4746cfa8f3d5144",
+      "sha256": "f004cb440b8dd92d514f7c9e91be170f9f3e0197891193516a4549b2cded8a1e",
+      "gitMode": "100644"
+    },
+    {
+      "path": "novel-archive/exchange-adapter.mjs",
+      "bytes": 4389,
+      "md5": "3f1573bc2c46073c90def9c9246940c0",
+      "sha256": "111db82d18f14efa46dcb52e21790c78bdf463104e3dfcc7552f9c5a946d8acb",
+      "gitMode": "100644"
+    },
+    {
+      "path": "novel-archive/plugin/.codex-plugin/plugin.json",
+      "bytes": 1919,
+      "md5": "518f7825e5b8c85829a0b876c2b6d0d5",
+      "sha256": "da89e6ecce3dd3e773433de31b059d8db1f938d2769a90266f50ba390124b9af",
+      "gitMode": "100644"
+    },
+    {
+      "path": "novel-archive/plugin/assets/icon.svg",
+      "bytes": 400,
+      "md5": "89884096e5671c7c6aba4a3589d30cc5",
+      "sha256": "50780781ca2d3ac9e2b17fceae8604ccee762159c13dba70ca9788376e86ee14",
+      "gitMode": "100644"
+    },
+    {
+      "path": "novel-archive/plugin/plugin.json",
+      "bytes": 2068,
+      "md5": "ae994b2c751020818e8699b66f9bc3a4",
+      "sha256": "8583661b30e6bb47e9aab70ab715e51fcbf0a9a9d18ff390c69d3e81a311e296",
+      "gitMode": "100644"
+    },
+    {
+      "path": "novel-archive/plugin/skills/novel-archive-gpt/SKILL.md",
+      "bytes": 3227,
+      "md5": "91990011ac47ab4c34ab4aca70087e6a",
+      "sha256": "a258a5fe3bf83a5a91a18247eccb280c9739833de121445dea961d850ddb9eaf",
+      "gitMode": "100644"
+    },
+    {
+      "path": "novel-archive/plugin/skills/novel-archive-gpt/agents/openai.yaml",
+      "bytes": 293,
+      "md5": "3f0164b9bd0c2ea307e9ee165d90cfb2",
+      "sha256": "eaba574ff7a065e38a5ec50535fa7d221be218131003796b5d4e9c899c4caed2",
+      "gitMode": "100644"
+    },
+    {
+      "path": "novel-archive/plugin/skills/novel-archive-gpt/assets/novel-archive.html",
+      "bytes": 110969,
+      "md5": "75bb7685c4608f2e442ff340656c6d02",
+      "sha256": "895d56ce90ba9e8b10e20501080db527bc866d814a9d739cb4bcb9c5d1637af1",
+      "gitMode": "100644"
+    },
+    {
+      "path": "novel-archive/plugin/skills/novel-archive-gpt/references/import-protocol.md",
+      "bytes": 1079,
+      "md5": "3f2c0f409837e2c7793c190ae4102f0d",
+      "sha256": "565400187e7936562c90501b7d529cac9f25c51160de82492b6a154f33e95ebb",
+      "gitMode": "100644"
+    },
+    {
+      "path": "novel-archive/plugin/skills/novel-archive-gpt/scripts/prepare_view.py",
+      "bytes": 973,
+      "md5": "9e0fe1a8dd0d4d2cc17da79c37e1662a",
+      "sha256": "0e7e2386f97d04b5a5137ec46236d6ab492c3276a1530c4d4d9d30331ca2bf4a",
+      "gitMode": "100644"
+    },
+    {
+      "path": "novel-archive/src/index.html",
+      "bytes": 115374,
+      "md5": "5d333f727bdbaa43d3d27694101aa8fa",
+      "sha256": "97c6a2ef5d55e9e0f11e27dd404be536b0a3c48be7c620433921ebb979fa4f63",
+      "gitMode": "100644"
+    },
+    {
+      "path": "scripts/build-self-check.mjs",
+      "bytes": 4584,
+      "md5": "66e7cbd9fb63e7b9df381f1dd16e2080",
+      "sha256": "1febfb7aaf81aa140da54375b6b164557b9ba4f84552beacbbd267c74302c2cd",
+      "gitMode": "100644"
+    },
+    {
+      "path": "scripts/build-workbenches.mjs",
+      "bytes": 617,
+      "md5": "e1b9d064444bcbecb905a08504246b74",
+      "sha256": "83ad94435a7d4dda3ed99bcefe3fdaa1bff289d6730340dd19eedbe8fcdc5a24",
+      "gitMode": "100644"
+    },
+    {
+      "path": "scripts/package-release.py",
+      "bytes": 1858,
+      "md5": "12af20ba18ac300c1b6fbdb170b14564",
+      "sha256": "5c238a0290994d432f86c6cea519e83621342e3e715d656eb353502591f32946",
+      "gitMode": "100644"
+    },
+    {
+      "path": "shared/card-envelope.mjs",
+      "bytes": 3811,
+      "md5": "08c7f421a96bc9d40c4eb894bdae39ae",
+      "sha256": "7ac36de033e055fcecbf57e2816bb567000f03e2918a1fb0c8131a0e44ad0856",
+      "gitMode": "100644"
+    },
+    {
+      "path": "shared/cards-and-templates.test.mjs",
+      "bytes": 5458,
+      "md5": "54901180b6b49afa48de2cd6ef888bd0",
+      "sha256": "43d84f865883d7ce7b41cd7bc4a2913e94e2196fffc4568122bef7073f14bdcf",
+      "gitMode": "100644"
+    },
+    {
+      "path": "shared/exchange-ui.mjs",
+      "bytes": 7254,
+      "md5": "6eb707f03769c350fcb1df72a7d61f05",
+      "sha256": "70662c9117f69d8f5b8565bf29402a276e68750c7eb91796f1e8842f59a5c9d5",
+      "gitMode": "100644"
+    },
+    {
+      "path": "shared/exchange.mjs",
+      "bytes": 10361,
+      "md5": "39375f48c3accb932dcabb1771745f69",
+      "sha256": "e1426d3103ba231cfd0dcfc55f6fa2acf5751d9652abbb7612fd7a57a0c439cf",
+      "gitMode": "100644"
+    },
+    {
+      "path": "shared/exchange.test.mjs",
+      "bytes": 7593,
+      "md5": "edf9ccfbc7db23f83c91aa634d1a9e9e",
+      "sha256": "5e9a8b8469f11aea8128a27a4b80b497252be5fa42ce4e8543713b0873a36c24",
+      "gitMode": "100644"
+    },
+    {
+      "path": "shared/glossary-ui.mjs",
+      "bytes": 9753,
+      "md5": "930cc5a4416a07ffdabb9e08808958ad",
+      "sha256": "59ab9a9df20d78d5c088e0c9869f2f403f311645d8bb4b3ac896a888f4ab811c",
+      "gitMode": "100644"
+    },
+    {
+      "path": "shared/glossary.mjs",
+      "bytes": 188,
+      "md5": "e59b303ae028094f6ba5c4d7e7e75db9",
+      "sha256": "19aaa00364bf8f170d0d9def8eae20bec5a1f928ec3f152ac256956ce4ca2f48",
+      "gitMode": "100644"
+    },
+    {
+      "path": "shared/peer.mjs",
+      "bytes": 2389,
+      "md5": "6f69dac07ea091a9591abea0c866533f",
+      "sha256": "aad52d7f05ea5c103573e107fcbce03ef89eca8d45b92a447e365477ea95f215",
+      "gitMode": "100644"
+    },
+    {
+      "path": "shared/peer.test.mjs",
+      "bytes": 2729,
+      "md5": "c7ed2315620c78fa75db02e09f1d3de8",
+      "sha256": "8c6c508f7c7b06a2978dbcf35d47176b6ce348ada25b5807e88eed8be4eeae15",
+      "gitMode": "100644"
+    },
+    {
+      "path": "先读我.txt",
+      "bytes": 1563,
+      "md5": "53c53a4689f752d265d2c6ce8d7c21e5",
+      "sha256": "cf3446e0de9f44ecc3f6465f5f5d6f699207737d364398106d5c67fb4f115c8d",
+      "gitMode": "100644"
+    },
+    {
+      "path": "卡递启动器.bat",
+      "bytes": 422,
+      "md5": "18162f1c9f8b4ebc5d639932971598e3",
+      "sha256": "f9c3a7bea5efdcd260a2c76fe5a6f983fa4c8c681a62c41028d90c578cb2a137",
+      "gitMode": "100644"
+    },
+    {
+      "path": "车卡机启动器.bat",
+      "bytes": 428,
+      "md5": "fca83b85a302d493d5c6e85eca279ad8",
+      "sha256": "0a8c7a81706c22157738f16044facb78f5a88ef06757ca552a9c9f6dafebc6ca",
+      "gitMode": "100644"
+    }
+  ]
+}

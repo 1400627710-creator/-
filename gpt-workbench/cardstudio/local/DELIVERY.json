@@ -1,0 +1,7 @@
+{
+  "version": "1.0.3-local.1",
+  "baseCommit": "d7b532f7cb266845723895a145e15396f787ef9f",
+  "htmlSha256": "e64cf90003c3967cc73add24f10ea430c50950c4ae63cc6bb31435125575f9f7",
+  "verification": "HTTP preview; file:// double-click not tested",
+  "indexedDbChecksPassed": 13
+}

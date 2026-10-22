@@ -1,0 +1,7 @@
+**/node_modules/
+**/.local-build/
+**/.local-qa-build/
+**/.wrangler/
+**/.env
+**/.env.local
+**/*.log

@@ -1,0 +1,4 @@
+卡递本地版 1.1
+
+本目录的 CardStudio-Local.html 可用 Chrome / Edge 打开。
+请优先查看上层目录的“先读我.txt”和“README.md”，其中包括两端互通、备份及验证边界。

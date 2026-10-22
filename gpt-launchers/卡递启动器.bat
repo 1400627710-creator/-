@@ -1,19 +1,17 @@
 @echo off
-setlocal
 chcp 65001 >nul
+setlocal
 title 卡递启动器
-set "CARDS_START_FILE=%~dp0..\gpt-baseline-1.0\cardstudio\CardStudio-Local.html"
-if not exist "%CARDS_START_FILE%" (
-  echo 未找到卡递页面。
-  echo 请先将完整下载包全部解压，再运行卡递启动器。
-  echo 启动器文件夹应与 gpt-baseline-1.0 文件夹放在同一目录。
+set "workbench_file=%~dp0..\gpt-workbench\cardstudio\CardStudio-Local.html"
+if not exist "%workbench_file%" (
+  echo 找不到卡递文件。请先完整解压，保留文件夹结构。
   pause
   exit /b 1
 )
-start "" "%CARDS_START_FILE%"
+start "" "%workbench_file%"
 if errorlevel 1 (
-  echo 无法打开卡递。请用 Edge 或 Chrome 打开对应的 HTML 文件。
+  echo 打开失败。请用 Chrome 或 Edge 手动打开对应 HTML 文件。
   pause
   exit /b 1
 )
-exit /b 0
+endlocal
