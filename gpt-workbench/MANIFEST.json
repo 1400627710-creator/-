@@ -27,8 +27,8 @@
     {
       "path": "VERSION.json",
       "bytes": 690,
-      "md5": "cc5a55e633dd85c1bcbdcbf184e6d47d",
-      "sha256": "5b2877cb832c38244d582bf3ba74232f0673f0fc032361b5d4c2417afe6a58c7",
+      "md5": "35e372239277eefdaf4a20c20c17e159",
+      "sha256": "8a9d35c5f68948835975cde88c672359a2624baa600a49a53c4196edce5e9fbd",
       "gitMode": "100644"
     },
     {
@@ -47,9 +47,9 @@
     },
     {
       "path": "cardstudio/CardStudio-Local.html",
-      "bytes": 3054129,
-      "md5": "eb4ee22dfbc52d158c8432d8b78c0e7b",
-      "sha256": "1464e75989a09f9d1a64c383cfbf2d186f0c2049090901dc54866d1268b0a0e8",
+      "bytes": 3053777,
+      "md5": "84d329a7f621428fb8b478acad3eeea6",
+      "sha256": "77527e0146509f1a6c910f755345db8c44aad7f3655f5a5631873856d8e99a79",
       "gitMode": "100644"
     },
     {
@@ -1209,9 +1209,9 @@
     },
     {
       "path": "cardstudio/scripts/prepare-engines.py",
-      "bytes": 10730,
-      "md5": "03a89f23ddaf48a34f061d6ede686cdf",
-      "sha256": "07856b0402150950adae5e24217bc149225583005064c2f32d9de3c016b9b7c0",
+      "bytes": 10815,
+      "md5": "bea099f7c2af32924aa6342c1130a1dd",
+      "sha256": "a8a09b0e176ebc5f244f6aecdd951b62759b21d5597485c03db4960a3259c9e6",
       "gitMode": "100644"
     },
     {
@@ -1384,9 +1384,9 @@
     },
     {
       "path": "docs/更新与自检报告.md",
-      "bytes": 7656,
-      "md5": "f3c140601d1dc20a85eb5fe4e740c348",
-      "sha256": "1b0e79cf7262f0218a5bb7c34e95e36814ccde14c9cb6d078eeb0cfce1b588cb",
+      "bytes": 7980,
+      "md5": "b21773a47d455def71444f1ba9a2a4dd",
+      "sha256": "efc919a3ccb18b4b892bf9dcec7ffecf4d80a24238c8773236285ea8f417228a",
       "gitMode": "100644"
     },
     {

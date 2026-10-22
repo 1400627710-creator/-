@@ -1,10 +1,10 @@
 d3d04ac1b5897688b0d97abfd135aefa  .gitattributes
 7ef839ddd3d2342dc6ccde0af3338aae  .gitignore
 9c397b815802cef25a5711cd6db4e77c  README.md
-cc5a55e633dd85c1bcbdcbf184e6d47d  VERSION.json
+35e372239277eefdaf4a20c20c17e159  VERSION.json
 2f35489df1058f4ad57e1d334347a44b  cardstudio/.gitignore
 ae90aa756117270685bf5c62465a62fa  cardstudio/.npmrc
-eb4ee22dfbc52d158c8432d8b78c0e7b  cardstudio/CardStudio-Local.html
+84d329a7f621428fb8b478acad3eeea6  cardstudio/CardStudio-Local.html
 34195fc9cb901d4c9ba2d44e22161102  cardstudio/LOCAL-README.md
 b94bfd51437ab7029803eb75ca48425d  cardstudio/README.md
 794ce392e119128e4f12e5bfa69006f1  cardstudio/app/api/health/route.ts
@@ -170,7 +170,7 @@ cca16c397bfa7cb7b7d0fee4123086ca  cardstudio/scripts/install-ci.sh
 838019cba5906c7bafd9fe876f03e888  cardstudio/scripts/install-pnpm.sh
 1c840b6a8d5cea6a80ad956c8804e383  cardstudio/scripts/npm-install.mjs
 5a6cdc8f3d71898c44aaa55e965ed6e2  cardstudio/scripts/pnpm-install.mjs
-03a89f23ddaf48a34f061d6ede686cdf  cardstudio/scripts/prepare-engines.py
+bea099f7c2af32924aa6342c1130a1dd  cardstudio/scripts/prepare-engines.py
 4a2b4fa1b7265b240671e25c39c150b5  cardstudio/scripts/prepare-ui.mjs
 2d0d6dfb305d642087c59c611130e910  cardstudio/scripts/run-framework.mjs
 2734e5454c5382401aa671cb247c8679  cardstudio/scripts/sites-env.mjs
@@ -195,7 +195,7 @@ bb28630d56eaa59a9bd82f4ce59da70e  cardstudio/vite.tests.config.mjs
 a1d791292beb250796b79916142c0529  cardstudio/先读我.txt
 8c9d076aaf0ddb9b232839315d887ab0  docs/后续工作思路.md
 e372b5b45597f62f5de2816db870ec91  docs/实施记录.md
-f3c140601d1dc20a85eb5fe4e740c348  docs/更新与自检报告.md
+b21773a47d455def71444f1ba9a2a4dd  docs/更新与自检报告.md
 40d1ad66ce35dd8c05d780afdd3a2dc8  novel-archive/Novel-Archive.html
 2751bbc0b6df0182f4746cfa8f3d5144  novel-archive/build-local.mjs
 3f1573bc2c46073c90def9c9246940c0  novel-archive/exchange-adapter.mjs
@@ -223,4 +223,4 @@ c7ed2315620c78fa75db02e09f1d3de8  shared/peer.test.mjs
 53c53a4689f752d265d2c6ce8d7c21e5  先读我.txt
 18162f1c9f8b4ebc5d639932971598e3  卡递启动器.bat
 fca83b85a302d493d5c6e85eca279ad8  车卡机启动器.bat
-e05a6071b58438c0b8b45af31812f247  MANIFEST.json
+855bd54599b1dc9334a7442639320511  MANIFEST.json
