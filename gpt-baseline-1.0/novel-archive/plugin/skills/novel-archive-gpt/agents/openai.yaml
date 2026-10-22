@@ -1,0 +1,4 @@
+interface:
+  display_name: "小说档案（车卡）"
+  short_description: "在GPT内整理小说档案、故事版本、关键词与可确认的文本导入"
+  default_prompt: "使用 $novel-archive-gpt 在GPT内打开小说档案工作台，从空白创建可自由删改的角色档案。"

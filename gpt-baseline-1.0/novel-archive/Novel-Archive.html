@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="纯前端小说档案工具，自由编辑、对照、故事时间版本、文本导入和图片导出。"><title>小说档案｜角色与故事时间</title><style>
+:root{color-scheme:light dark;--bg:light-dark(#f6f5f0,#181d20);--paper:light-dark(#fffefa,#252c30);--ink:light-dark(#263d48,#e4ebe9);--muted:light-dark(#6c7b80,#a7b7b8);--line:light-dark(#dde4dd,#3b484c);--soft:light-dark(#eef2ea,#303b38);--primary:light-dark(#365d50,#9fcab3);--on-primary:light-dark(#fffefa,#172b22);--danger:light-dark(#a54d46,#efaaa0);--shadow:0 9px 30px #182f2710;font-family:Inter,"Microsoft YaHei","PingFang SC",system-ui,sans-serif;font-size:14px;color:var(--ink);background:var(--bg)}
+*{box-sizing:border-box}body{margin:0}button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer}button,input,select,textarea{border:1px solid var(--line);border-radius:7px;background:var(--paper)}button{padding:7px 11px;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}button:hover{background:var(--soft)}button:disabled{opacity:.45;cursor:default}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--primary);outline-offset:2px}input,textarea,select{padding:8px 10px}input[type=checkbox]{accent-color:var(--primary);width:16px;height:16px;padding:0}textarea{line-height:1.7;resize:vertical}input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}.primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}.primary:hover{filter:brightness(.95);background:var(--primary)}.ghost{border-color:transparent;background:transparent}.danger{color:var(--danger)}.icon{width:32px;height:32px;padding:6px;flex:none}.icon svg,.btn-icon svg{width:18px;height:18px;flex:none}svg{stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}.muted{color:var(--muted)}.small{font-size:12px}.hidden{display:none!important}.topbar{height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--line);background:var(--paper);gap:14px}.brand{display:flex;align-items:center;gap:11px}.brand-mark{width:39px;height:39px;color:var(--primary);display:grid;place-items:center;border:1px solid var(--line);border-radius:11px;background:var(--soft)}.brand-mark svg{width:23px;height:23px}.brand-name{font-size:19px;font-weight:600;letter-spacing:.08em}.brand-sub{font-size:12px;color:var(--muted);margin-top:4px}.top-actions{display:flex;align-items:center;gap:8px}.save-status{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--muted)}.save-status.unsaved{color:var(--danger)}.app-shell{display:grid;grid-template-columns:270px minmax(0,1fr);height:calc(100vh - 76px);min-height:500px}.sidebar{background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;padding:22px 15px 14px}.side-heading{display:flex;align-items:center;justify-content:space-between;padding:0 4px 16px;font-size:15px}.search-box{position:relative}.search-box input{width:100%;padding-left:33px}.search-box svg{position:absolute;left:10px;top:11px;width:16px;height:16px;color:var(--muted)}.filters{display:flex;gap:7px;margin:10px 0 15px}.filters select{width:100%;font-size:13px}.library-list{overflow:auto;flex:1;display:flex;flex-direction:column;gap:8px;padding-right:3px}.library-item{border:1px solid transparent;border-radius:10px;background:var(--bg);position:relative}.library-item.active{border-color:var(--primary);background:var(--soft)}.library-open{background:transparent;border:0;display:block;text-align:left;width:100%;padding:14px 39px 13px 12px;white-space:normal}.library-name{font-size:14px;line-height:1.45;overflow-wrap:anywhere}.library-meta{margin-top:7px;display:flex;gap:7px;color:var(--muted);font-size:12px;flex-wrap:wrap}.library-extra{position:absolute;right:5px;top:8px;background:transparent}.library-words{font-size:11px;color:var(--muted);padding-top:7px;line-height:1.5;overflow-wrap:anywhere}.side-footer{border-top:1px solid var(--line);padding-top:14px;margin-top:15px;display:flex;align-items:center;justify-content:space-between}.side-empty{padding:28px 10px;color:var(--muted);line-height:1.8;font-size:13px}.main{display:flex;flex-direction:column;min-width:0;min-height:0}.work-header{height:62px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 23px;border-bottom:1px solid var(--line);gap:14px}.view-tabs{display:flex;border-radius:8px;background:var(--soft);padding:3px;gap:3px}.view-tabs button{border:0;background:transparent;padding:7px 13px}.view-tabs button.active{background:var(--paper);box-shadow:0 1px 4px #172b2210}.work-hint{font-size:12px;color:var(--muted)}.workspace{padding:23px;display:flex;align-items:flex-start;gap:18px;overflow:auto;flex:1;min-height:0;scroll-behavior:smooth}.archive-panel{width:570px;height:650px;flex:0 0 auto;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);display:flex;flex-direction:column;position:relative;overflow:hidden}.archive-panel.focused{border-color:var(--primary)}.panel-top{padding:16px 16px 10px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex:none}.panel-title{font-size:18px;font-weight:600;overflow-wrap:anywhere}.type-badge{font-size:11px;display:inline-flex;align-items:center;padding:3px 7px;border-radius:5px;background:var(--soft);color:var(--primary);margin-bottom:6px}.panel-title-input{width:100%;border:0;border-bottom:1px solid transparent;border-radius:0;background:transparent;padding:2px 0;font-size:18px;font-weight:600;min-width:0}.panel-title-input:hover,.panel-title-input:focus{border-bottom-color:var(--line)}.panel-actions{display:flex;gap:2px;flex:none}.version-bar{display:flex;align-items:center;gap:6px;padding:0 16px 12px;border-bottom:1px solid var(--line);flex:none;flex-wrap:wrap}.version-bar select{max-width:180px;min-width:90px;flex:1;font-size:12px;padding:6px}.version-bar button{font-size:12px;padding:6px 9px}.panel-scroll{overflow:auto;padding:15px 16px;flex:1;min-height:0}.metadata{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:14px}.metadata label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px;overflow-wrap:anywhere}.metadata input{width:100%;font-size:13px}.meta-wide{grid-column:1/-1}.time-inputs{display:flex;gap:6px}.time-inputs input:first-child{width:65%}.time-inputs input:last-child{width:35%}.keyword-wrap{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.keyword-chip{border:0;background:var(--soft);font-size:11px;padding:3px 7px;color:var(--primary);border-radius:5px;max-width:100%;white-space:normal;overflow-wrap:anywhere}.table-tools{display:flex;align-items:center;gap:7px;margin-bottom:11px;flex-wrap:wrap}.table-tools button{font-size:12px;padding:6px 8px}.table-tools .spacer{flex:1}.table-container{position:relative;min-height:68px;padding-bottom:12px;width:max-content;max-width:none}.sheet{border-collapse:separate;border-spacing:0;table-layout:fixed;border:1px solid var(--line);border-radius:7px;overflow:visible;background:var(--paper)}.sheet th,.sheet td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:0;vertical-align:top;position:relative}.sheet th:last-child,.sheet td:last-child{border-right:0}.sheet tbody tr:last-child td{border-bottom:0}.sheet th{background:var(--soft);font-weight:400;text-align:left}.field-heading{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:10px 9px;min-height:43px;overflow-wrap:anywhere}.field-heading .icon{width:24px;height:24px;padding:4px;opacity:.7}.cell-text{display:block;resize:none;width:100%;border:0;border-radius:0;padding:12px;min-height:70px;height:100%;background:transparent;outline-offset:-2px!important;font-size:14px;overflow:auto}.form-sheet .field-heading{font-size:13px;color:var(--muted)}.row-tools{display:flex;align-items:center;justify-content:space-between;padding:11px 0 8px;gap:8px}.row-tools button{font-size:12px;padding:5px 8px}.row-keywords{padding:10px;border-top:1px solid var(--line);display:flex;gap:7px;align-items:center}.row-keywords input{min-width:0;flex:1;font-size:12px}.table-empty{width:460px;border:1px dashed var(--line);border-radius:8px;padding:25px 20px;color:var(--muted);line-height:1.9;font-size:13px;background:var(--bg)}.table-resize{position:absolute;right:0;bottom:0;width:22px;height:16px;cursor:ew-resize;touch-action:none;color:var(--muted);display:grid;place-items:center}.table-resize svg{width:16px;height:16px}.col-resize{position:absolute;right:-4px;top:0;bottom:0;width:9px;cursor:col-resize;z-index:2;touch-action:none}.row-resize{position:absolute;bottom:-3px;left:0;right:0;height:7px;cursor:row-resize;z-index:2;touch-action:none}.panel-bottom{padding:9px 18px 10px;border-top:1px solid var(--line);display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11px;flex:none;min-height:37px}.panel-resize{position:absolute;bottom:4px;right:4px;width:24px;height:24px;cursor:nwse-resize;touch-action:none;display:grid;place-items:center}.panel-resize svg{width:17px;height:17px}.empty-workspace{width:100%;height:100%;min-height:330px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:13px;color:var(--muted)}.empty-workspace .book-art{width:88px;height:88px;color:var(--primary);opacity:.75;margin-bottom:5px}.empty-workspace h1{color:var(--ink);font-size:22px;font-weight:500;margin:0}.empty-workspace p{line-height:1.9;margin:0;font-size:13px}.empty-workspace .empty-actions{display:flex;gap:9px;margin-top:8px}.timeline-view{overflow:auto;flex:1;padding:23px;min-height:0}.timeline-help{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.timeline-board{position:relative;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:16px;min-width:800px}.timeline-axis{height:48px;margin-left:160px;position:relative;border-bottom:1px solid var(--line)}.axis-tick{position:absolute;top:12px;transform:translateX(-50%);font-size:11px;color:var(--muted);white-space:nowrap}.axis-tick:after{content:'';position:absolute;height:7px;width:1px;background:var(--line);left:50%;top:24px}.timeline-track{position:relative;border-bottom:1px solid var(--line);display:flex;min-height:74px}.timeline-track:last-child{border-bottom:0}.timeline-label{width:160px;flex:none;padding:20px 15px 16px 0;font-size:13px;overflow-wrap:anywhere}.timeline-lane{flex:1;position:relative;min-width:0}.timeline-node{position:absolute;transform:translateX(-50%);max-width:160px;font-size:12px;padding:6px 10px;background:var(--soft);border-color:var(--line);z-index:1;display:block;overflow:hidden;text-overflow:ellipsis}.timeline-node.current{border-color:var(--primary);color:var(--primary)}.timeline-node:before{content:'';display:block;width:5px;height:5px;border-radius:50%;background:var(--primary);margin:0 auto 4px}.undated{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}.undated button{font-size:12px}.overlay{position:fixed;inset:0;background:#101d2670;z-index:30;display:flex;align-items:center;justify-content:center;padding:20px}.dialog{background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 70px #0f1f2640;width:520px;max-width:100%;max-height:calc(100vh - 40px);display:flex;flex-direction:column;overflow:hidden}.dialog.wide{width:860px}.dialog-head{padding:19px 22px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}.dialog-head h2{font-size:17px;font-weight:500;margin:0}.dialog-body{padding:20px 22px;overflow:auto;min-height:0;line-height:1.6}.dialog-foot{padding:14px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;flex:none}.form-group{display:block;margin-bottom:15px}.form-group>span{display:block;margin-bottom:6px;font-size:13px}.form-group input,.form-group select,.form-group textarea{width:100%}.form-group textarea{min-height:130px}.check-line{display:flex;align-items:center;gap:8px;font-size:13px;margin:10px 0}.inline-form{display:flex;gap:9px;align-items:end}.inline-form>*{min-width:0;flex:1}.help-text{font-size:12px;color:var(--muted);line-height:1.8}.callout{border:1px solid var(--line);background:var(--soft);border-radius:8px;padding:11px 13px;font-size:13px;margin-bottom:14px;line-height:1.7}.dialog-error{color:var(--danger);font-size:13px;line-height:1.7;margin:8px 0;white-space:pre-wrap}.meta-setting{display:flex;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}.meta-setting input[type=text]{flex:1;min-width:0}.meta-setting .small{width:62px;flex:none}.type-card{border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:11px}.type-top{display:flex;gap:8px;align-items:center}.type-top input{min-width:0;flex:1}.type-fields{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.type-field-chip{display:flex;align-items:center;gap:3px;border:1px solid var(--line);border-radius:7px;padding:3px;background:var(--soft)}.type-field-chip input{width:115px;padding:4px 6px;border:0;background:transparent;font-size:12px}.type-field-chip button{padding:3px;border:0;background:transparent}.type-field-chip button svg{width:13px;height:13px}.import-input{min-height:210px!important;width:100%;white-space:pre-wrap}.import-segment{border:1px solid var(--line);border-radius:9px;padding:12px;margin:11px 0;background:var(--bg)}.import-segment-head{display:flex;align-items:center;gap:10px;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:8px}.import-mapping{display:flex;gap:7px;margin-bottom:8px;flex-wrap:wrap}.import-mapping select{font-size:12px;max-width:210px;min-width:100px}.import-mapping input{flex:1;min-width:130px;font-size:12px}.import-segment textarea{width:100%;min-height:75px;background:var(--paper)}.import-source{font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7;color:var(--muted)}.image-preview{max-width:100%;height:auto;border:1px solid var(--line);border-radius:6px}.toast{position:fixed;left:50%;bottom:25px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:11px 18px;box-shadow:var(--shadow);border-radius:9px;font-size:13px;max-width:min(90vw,650px);z-index:60;line-height:1.6}.toast.error{background:var(--danger);color:#fff}.mobile-menu{display:none}.type-name-note{margin:10px 0}.backup-buttons{display:flex;gap:9px;flex-wrap:wrap}.resize-active{user-select:none;cursor:nwse-resize}.resize-active textarea{pointer-events:none}
+@media(max-width:850px){.topbar{padding:0 15px}.brand-sub{display:none}.top-actions{gap:4px}.top-actions .secondary-action{display:none}.save-status{max-width:110px}.app-shell{grid-template-columns:220px minmax(0,1fr)}.sidebar{padding:17px 11px}.work-header{padding:0 14px}.work-hint{display:none}.workspace{padding:16px}.archive-panel{width:500px}.brand-name{font-size:17px}}
+@media(max-width:600px){.app-shell{grid-template-columns:minmax(0,1fr)}.sidebar{display:none}.app-shell.show-sidebar .sidebar{display:flex;position:fixed;top:76px;bottom:0;left:0;width:270px;z-index:20;box-shadow:10px 0 40px #101d2620}.mobile-menu{display:inline-flex}.brand-mark{display:none}.brand-name{font-size:16px}.top-actions button{font-size:12px;padding:6px 8px}.save-status{max-width:82px;font-size:10px}.work-header{height:57px}.workspace{padding:12px;gap:12px}.dialog-body{padding:16px}.dialog-head{padding:15px 16px}.dialog-foot{padding:13px 16px}.overlay{padding:10px}.metadata{grid-template-columns:minmax(0,1fr)}.meta-wide{grid-column:auto}}
+
+</style></head><body><div id="novel-archive-app"></div><script>
+const ArchiveCore = (() => {
+  const copy = value => JSON.parse(JSON.stringify(value));
+  let serial = 0;
+  const uid = prefix => `${prefix}_${globalThis.crypto?.randomUUID?.().replaceAll('-', '') || `${Date.now().toString(36)}${(++serial).toString(36)}${Math.random().toString(36).slice(2)}`}`;
+  const error = (code, message) => Object.assign(new Error(message), { code });
+  const normalize = s => String(s ?? '').normalize('NFKC').trim().toLocaleLowerCase();
+  const keywords = text => Array.isArray(text) ? [...new Set(text.map(String).map(s => s.trim()).filter(Boolean))] : [...new Set(String(text).split(/[,，、;；\n]+/).map(s => s.trim()).filter(Boolean))];
+  const field = (name = '', aliases = []) => ({ id: uid('f'), name, aliases: keywords(aliases), width: 220 });
+  const row = () => ({ id: uid('r'), values: {}, keywords: [] });
+  const type = (name, names = [], mode = 'form', copyOnClick = false) => ({ id: uid('t'), name, fields: names.map(n => field(n)), mode, copyOnClick });
+  function blankState() {
+    return { schemaVersion: 1, revision: 0, types: [type('角色', ['姓名', '身份', '外貌', '性格', '背景', '目标']), type('物品', ['名称', '描述', '用途', '来历']), type('事件', ['事件', '参与者', '经过', '影响']), type('技能', ['技能名称', '效果', '限制'], 'grid', true)], archives: [], panels: [], activePanelId: null, clockName: '故事时间', clockUnit: '' };
+  }
+  const archive = (state, id) => {
+    const a = state.archives.find(a => a.id === id);
+    if (!a) throw error('INVALID_REF', '找不到这份档案。');
+    return a;
+  };
+  const version = (state, archiveId, versionId) => {
+    const a = archive(state, archiveId);
+    const v = a.versions.find(v => v.id === versionId);
+    if (!v) throw error('INVALID_REF', '找不到这个时间版本。');
+    return v;
+  };
+  function makeVersion(title = '', fields = [], mode = 'form') {
+    return { id: uid('v'), title, number: '', timeLabel: '', timeOrder: null, keywords: [], fields: copy(fields), rows: [row()], layout: { mode, tableWidth: 480, rowHeights: {} }, metaLabels: { title: '档案名称', number: '编号', time: '故事时间', keywords: '关键词', rowKeywords: '条目关键词' }, visibleMeta: { title: true, number: true, time: true, keywords: true, rowKeywords: true } };
+  }
+  function createArchive(state, { title = '', typeId = null, useTemplate = false } = {}) {
+    const t = typeId === null ? null : state.types.find(t => t.id === typeId);
+    if (typeId !== null && !t) throw error('INVALID_REF', '该档案类型已删除。');
+    const v = makeVersion(title, useTemplate ? t?.fields || [] : [], t?.mode || 'form');
+    const a = { id: uid('a'), typeId, versions: [v], activeVersionId: v.id, copyOnClick: !!t?.copyOnClick };
+    state.archives.push(a);
+    openPanel(state, a.id, v.id, true);
+    return a;
+  }
+  function openPanel(state, archiveId, versionId, duplicate = false) {
+    const a = archive(state, archiveId);
+    const v = version(state, archiveId, versionId || a.activeVersionId);
+    let p = duplicate ? null : state.panels.find(p => p.archiveId === archiveId && p.versionId === v.id);
+    if (!p) {
+      p = { id: uid('p'), archiveId, versionId: v.id, width: 570, height: 650 };
+      state.panels.push(p);
+    }
+    state.activePanelId = p.id;
+    a.activeVersionId = v.id;
+    return p;
+  }
+  function addField(v, name = '') {
+    const f = field(name);
+    v.fields.push(f);
+    return f;
+  }
+  function removeField(v, fieldId) {
+    v.fields = v.fields.filter(f => f.id !== fieldId);
+    for (const r of v.rows) delete r.values[fieldId];
+  }
+  function removeMeta(v, key) {
+    if (!(key in v.visibleMeta)) throw error('INVALID_FIELD', '未知档案信息。');
+    v.visibleMeta[key] = false;
+    if (key === 'time') { v.timeLabel = ''; v.timeOrder = null; }
+    else if (key === 'keywords') v.keywords = [];
+    else if (key === 'rowKeywords') for (const r of v.rows) r.keywords = [];
+    else v[key] = '';
+  }
+  function deleteType(state, typeId, deleteArchives = false) {
+    state.types = state.types.filter(t => t.id !== typeId);
+    for (const a of [...state.archives]) if (a.typeId === typeId) {
+      if (deleteArchives) deleteArchive(state, a.id);
+      else a.typeId = null;
+    }
+  }
+  function deleteArchive(state, id) {
+    archive(state, id);
+    state.archives = state.archives.filter(a => a.id !== id);
+    state.panels = state.panels.filter(p => p.archiveId !== id);
+    if (!state.panels.some(p => p.id === state.activePanelId)) state.activePanelId = state.panels.at(-1)?.id || null;
+  }
+  function createVersion(state, archiveId, parentId, { timeLabel = '', timeOrder = null, blank = false } = {}) {
+    const a = archive(state, archiveId);
+    const parent = version(state, archiveId, parentId);
+    if (timeOrder !== null && !Number.isFinite(timeOrder)) throw error('INVALID_TIME', '排序坐标应为数字，或留空。');
+    const v = blank ? makeVersion(parent.title, parent.fields, parent.layout.mode) : copy(parent);
+    v.id = uid('v'); v.timeLabel = timeLabel; v.timeOrder = timeOrder;
+    a.versions.push(v); a.activeVersionId = v.id;
+    return v;
+  }
+  function deleteVersion(state, archiveId, versionId) {
+    const a = archive(state, archiveId);
+    version(state, archiveId, versionId);
+    if (a.versions.length === 1) { deleteArchive(state, archiveId); return; }
+    a.versions = a.versions.filter(v => v.id !== versionId);
+    if (a.activeVersionId === versionId) a.activeVersionId = a.versions[0].id;
+    for (const p of state.panels) if (p.archiveId === archiveId && p.versionId === versionId) p.versionId = a.activeVersionId;
+  }
+  const orderedVersions = a => a.versions.map((v, index) => ({ v, index })).filter(x => x.v.timeOrder !== null).sort((x, y) => x.v.timeOrder - y.v.timeOrder || x.index - y.index).map(x => x.v);
+  function futureVersion(a, versionId) {
+    const current = a.versions.find(v => v.id === versionId);
+    if (!current || current.timeOrder === null) return null;
+    return orderedVersions(a).find(v => v.timeOrder > current.timeOrder) || null;
+  }
+  const titleOf = v => v.title.trim() || '未命名档案';
+  const timeOf = v => v.timeLabel.trim() || (v.timeOrder === null ? '未标时间' : `坐标 ${v.timeOrder}`);
+  function search(state, query = '', typeId = '') {
+    const q = normalize(query).split(/\s+/).filter(Boolean);
+    return state.archives.filter(a => (!typeId || a.typeId === typeId || (typeId === '__none' && a.typeId === null)) && q.every(term => a.versions.some(v => normalize([v.title, v.number, v.timeLabel, ...v.keywords, ...v.fields.map(f => f.name), ...v.rows.flatMap(r => [...r.keywords, ...Object.values(r.values)])].join(' ')).includes(term))));
+  }
+  function applyTemplate(v, t, replace = false) {
+    if (replace) { v.fields = []; v.rows = [row()]; }
+    for (const tf of t.fields) if (!v.fields.some(f => normalize(f.name) === normalize(tf.name))) {
+      const f = copy(tf); f.id = uid('f'); v.fields.push(f);
+    }
+    v.layout.mode = t.mode;
+  }
+  function validateState(input) {
+    const fail = message => { throw error('INVALID_BACKUP', message); };
+    const obj = x => x && typeof x === 'object' && !Array.isArray(x);
+    const str = x => typeof x === 'string';
+    const id = x => str(x) && /^[A-Za-z0-9_-]{1,120}$/.test(x) && !['__proto__', 'constructor', 'prototype'].includes(x);
+    const list = (xs, what) => { if (!Array.isArray(xs) || xs.some(x => !str(x))) fail(`${what}应为文字列表。`); };
+    const unique = (xs, what) => { if (new Set(xs).size !== xs.length) fail(`${what}编号重复。`); };
+    const fields = fs => {
+      if (!Array.isArray(fs)) fail('字段格式不正确。');
+      for (const f of fs) { if (!obj(f) || !id(f.id) || !str(f.name)) fail('字段格式不正确。'); list(f.aliases, '字段别名'); if (!Number.isFinite(f.width) || f.width <= 0) fail('列宽应大于零。'); }
+      unique(fs.map(f => f.id), '字段');
+    };
+    if (!obj(input) || input.schemaVersion !== 1) throw error('UNSUPPORTED_FORMAT', '请选择本工具导出的档案备份。');
+    if (!Array.isArray(input.archives) || !Array.isArray(input.types) || !Array.isArray(input.panels)) fail('档案备份结构不完整。');
+    if (!Number.isSafeInteger(input.revision) || input.revision < 0 || !str(input.clockName) || !str(input.clockUnit)) fail('备份版本或时间轴名称不正确。');
+    for (const t of input.types) { if (!obj(t) || !id(t.id) || !str(t.name) || !['form', 'grid'].includes(t.mode) || typeof t.copyOnClick !== 'boolean') fail('类型格式不正确。'); fields(t.fields); }
+    unique(input.types.map(t => t.id), '类型');
+    const allVersions = [];
+    for (const a of input.archives) {
+      if (!obj(a) || !id(a.id) || !Array.isArray(a.versions) || !a.versions.length || typeof a.copyOnClick !== 'boolean' || !(a.typeId === null || input.types.some(t => t.id === a.typeId))) fail('档案格式或所属类型不正确。');
+      for (const v of a.versions) {
+        if (!obj(v) || !id(v.id) || !str(v.title) || !str(v.number) || !str(v.timeLabel) || !(v.timeOrder === null || Number.isFinite(v.timeOrder))) fail('时间版本格式不正确。');
+        list(v.keywords, '关键词'); fields(v.fields);
+        if (!Array.isArray(v.rows) || !obj(v.layout) || !['form', 'grid'].includes(v.layout.mode) || !Number.isFinite(v.layout.tableWidth) || v.layout.tableWidth <= 0 || !obj(v.layout.rowHeights)) fail('表格布局格式不正确。');
+        if (!obj(v.metaLabels) || !obj(v.visibleMeta)) fail('档案信息格式不正确。');
+        for (const k of ['title', 'number', 'time', 'keywords', 'rowKeywords']) if (!str(v.metaLabels[k]) || typeof v.visibleMeta[k] !== 'boolean') fail('档案信息格式不正确。');
+        for (const [k, height] of Object.entries(v.layout.rowHeights)) if (!id(k) || !Number.isFinite(height) || height <= 0) fail('行高格式不正确。');
+        for (const r of v.rows) {
+          if (!obj(r) || !id(r.id) || !obj(r.values)) fail('表格行格式不正确。');
+          list(r.keywords, '条目关键词');
+          for (const [k, value] of Object.entries(r.values)) if (!id(k) || !str(value) || !v.fields.some(f => f.id === k)) fail('单元格引用了不存在的字段。');
+        }
+        unique(v.rows.map(r => r.id), '表格行');
+        allVersions.push(v.id);
+      }
+      if (!a.versions.some(v => v.id === a.activeVersionId)) fail('当前版本引用不正确。');
+    }
+    unique(input.archives.map(a => a.id), '档案'); unique(allVersions, '时间版本');
+    for (const p of input.panels) {
+      if (!obj(p) || !id(p.id) || !Number.isFinite(p.width) || !Number.isFinite(p.height) || p.width <= 0 || p.height <= 0 || !input.archives.some(a => a.id === p.archiveId && a.versions.some(v => v.id === p.versionId))) fail('分屏窗口格式不正确。');
+    }
+    unique(input.panels.map(p => p.id), '分屏');
+    if (!(input.activePanelId === null || input.panels.some(p => p.id === input.activePanelId))) fail('当前窗口引用不正确。');
+    return copy(input);
+  }
+  return { copy, uid, error, normalize, keywords, field, row, type, blankState, archive, version, makeVersion, createArchive, openPanel, addField, removeField, removeMeta, deleteType, deleteArchive, createVersion, deleteVersion, orderedVersions, futureVersion, titleOf, timeOf, search, applyTemplate, validateState };
+})();
+
+
+
+const TextImporter = (() => {
+  const C = ArchiveCore;
+  function preview(text, fields = []) {
+    if (!String(text).trim()) throw C.error('EMPTY_TEXT', '请先粘贴需要导入的文字。');
+    const raw = String(text);
+    const cleaned = raw.trim().replace(/^```(?:json|text|markdown)?\s*\n?/i, '').replace(/\n?```\s*$/, '');
+    const segments = [];
+    let isTable = false;
+    function add(label, value, source, rowIndex = 0, forced = '') {
+      const matches = label ? fields.filter(f => [f.name, ...f.aliases].some(s => C.normalize(s) === C.normalize(label))) : [];
+      const target = forced || (matches.length === 1 ? `field:${matches[0].id}` : matches.length === 0 && label ? 'new' : 'unassigned');
+      segments.push({ id: `segment_${segments.length}`, label: String(label || ''), value: String(value ?? ''), source: String(source ?? value ?? ''), rowIndex, target, newName: String(label || ''), mode: 'append', candidates: matches.map(f => f.id), issue: matches.length > 1 ? '多个字段同名，请选择归属' : !label ? '未识别到字段，请指定归属' : target === 'new' ? '将创建新字段，可修改名称' : '' });
+    }
+    if (/^[{[]/.test(cleaned)) {
+      let parsed;
+      try { parsed = JSON.parse(cleaned); } catch { parsed = null; }
+      if (parsed?.schemaVersion && parsed?.archives) throw C.error('BACKUP_IN_TEXT', '这是整库备份，请使用“备份与恢复”中的恢复功能。');
+      if (parsed && parsed.format === 'novel-archive-import') {
+        if (parsed.fields !== undefined && !Array.isArray(parsed.fields)) throw C.error('INVALID_IMPORT', '字段列表应为数组。');
+        if (parsed.metadata !== undefined && (!parsed.metadata || typeof parsed.metadata !== 'object' || Array.isArray(parsed.metadata))) throw C.error('INVALID_IMPORT', '档案信息应为对象。');
+        if (!Array.isArray(parsed.fields) && !Array.isArray(parsed.rows) && !parsed.metadata) throw C.error('INVALID_IMPORT', '结构化导入缺少字段或内容。');
+        const metadata = parsed.metadata || {};
+        for (const key of ['title', 'number', 'timeLabel', 'timeOrder', 'keywords']) if (metadata[key] !== undefined) {
+          if (key === 'keywords' && (!Array.isArray(metadata[key]) || metadata[key].some(k => typeof k !== 'string'))) throw C.error('INVALID_IMPORT', '关键词应为文字数组。');
+          if (key !== 'keywords' && metadata[key] !== null && !['string','number'].includes(typeof metadata[key])) throw C.error('INVALID_IMPORT', '档案信息应为文字或数字。');
+          const value = key === 'keywords' ? C.keywords(metadata[key]).join('、') : String(metadata[key] ?? '');
+          add(({ title: '档案名称', number: '编号', timeLabel: '故事时间', timeOrder: '排序坐标', keywords: '档案关键词' })[key], value, value, 0, `meta:${key}`);
+        }
+        for (const f of parsed.fields || []) {
+          if (!f || typeof f.name !== 'string' || !['string', 'number', 'boolean'].includes(typeof f.value)) throw C.error('INVALID_IMPORT', '每个导入字段都需要名称和文字内容。');
+          add(f.name, f.value, `${f.name}：${f.value}`);
+        }
+        if (parsed.rows) {
+          if (!Array.isArray(parsed.rows)) throw C.error('INVALID_IMPORT', '条目列表格式不正确。');
+          isTable = true;
+          parsed.rows.forEach((r, index) => {
+            if (!r || typeof r.values !== 'object' || !r.values || Array.isArray(r.values)) throw C.error('INVALID_IMPORT', '条目应包含values字段名与内容。');
+            for (const [name, value] of Object.entries(r.values)) {
+              if (!['string', 'number', 'boolean'].includes(typeof value)) throw C.error('INVALID_IMPORT', '单元格应为文字内容。');
+              add(name, value, `${name}：${value}`, index);
+            }
+            if (r.keywords !== undefined) {
+              if (!Array.isArray(r.keywords) || r.keywords.some(k => typeof k !== 'string')) throw C.error('INVALID_IMPORT', '条目关键词应为文字数组。');
+              add('条目关键词', C.keywords(r.keywords).join('、'), JSON.stringify(r.keywords), index, 'rowKeywords');
+            }
+          });
+        }
+        if (!segments.length) throw C.error('EMPTY_TEXT', '没有可导入的内容。');
+        return annotate();
+      }
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        for (const [name, value] of Object.entries(parsed)) add(name, typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value ?? ''), `${name}：${typeof value === 'object' ? JSON.stringify(value) : value}`);
+        return annotate();
+      }
+    }
+    const lines = cleaned.split(/\r?\n/);
+    const markdownSeparator = line => /^\s*\|?\s*:?-{2,}:?\s*(?:\|\s*:?-{2,}:?\s*)+\|?\s*$/.test(line);
+    const parsePipe = line => line.trim().replace(/^\|/, '').replace(/\|$/, '').split(/(?<!\\)\|/).map(s => s.trim().replace(/\\\|/g, '|'));
+    const tableStart = lines.findIndex((line, i) => line.includes('|') && i + 1 < lines.length && markdownSeparator(lines[i + 1]));
+    if (tableStart >= 0) {
+      const headers = parsePipe(lines[tableStart]);
+      let end = tableStart + 2, rowIndex = 0;
+      while (end < lines.length && lines[end].includes('|') && lines[end].trim()) {
+        const cells = parsePipe(lines[end]);
+        if (cells.length > headers.length) { add('', lines[end], lines[end], rowIndex); }
+        else headers.forEach((header, col) => add(header, cells[col] || '', lines[end], rowIndex, ['关键词', '关键字', '_keywords'].includes(C.normalize(header)) ? 'rowKeywords' : ''));
+        end++; rowIndex++;
+      }
+      isTable = true;
+      const outside = [...lines.slice(0, tableStart), ...lines.slice(end)].join('\n').trim();
+      if (outside) add('', outside, outside);
+      return annotate();
+    }
+    if (lines[0].includes('\t') && lines.length > 1) {
+      const headers = lines[0].split('\t'); isTable = true;
+      lines.slice(1).filter(line => line.trim()).forEach((line, index) => {
+        const cells = line.split('\t');
+        if (cells.length > headers.length) add('', line, line, index);
+        else headers.forEach((header, col) => add(header, cells[col] || '', line, index, ['关键词', '关键字', '_keywords'].includes(C.normalize(header)) ? 'rowKeywords' : ''));
+      });
+      return annotate();
+    }
+    let current = null;
+    function flush() {
+      if (!current) return;
+      add(current.label, current.value.join('\n').trim(), current.source.join('\n'));
+      current = null;
+    }
+    for (const line of lines) {
+      const heading = line.match(/^\s*#{1,6}\s+(.+?)\s*#*\s*$/);
+      const pair = line.match(/^\s*(?:[-*•]\s*)?([^:：\n]{1,100})\s*[:：]\s*(.*)$/);
+      if (heading) { flush(); current = { label: heading[1].trim(), value: [], source: [line] }; }
+      else if (pair && !/^\d+$/.test(pair[1].trim())) {
+        flush(); current = { label: pair[1].trim().replace(/^\*\*|\*\*$/g, ''), value: [pair[2]], source: [line] };
+      } else {
+        if (!current) current = { label: '', value: [], source: [] };
+        current.value.push(line); current.source.push(line);
+      }
+    }
+    flush();
+    return annotate();
+    function annotate() {
+      const seen = new Map();
+      for (const segment of segments) {
+        const key = `${segment.rowIndex}|${segment.target === 'new' ? C.normalize(segment.newName) : segment.target}`;
+        if (!['ignore','unassigned'].includes(segment.target) && seen.has(key)) segment.issue = '同一条目内重复字段，默认追加；可选择替换';
+        seen.set(key, true);
+      }
+      return { raw, segments, isTable };
+    }
+  }
+  function apply(version, preview, { startRow = 0 } = {}) {
+    const v = C.copy(version);
+    let written = 0;
+    if (!Number.isSafeInteger(startRow) || startRow < 0) throw C.error('INVALID_ROW', '条目位置不正确。');
+    for (const s of preview.segments) {
+      if (s.target === 'ignore') continue;
+      if (s.target === 'unassigned') throw C.error('UNRESOLVED_IMPORT', '还有未指定归属的段落。请选择字段或明确选择“不导入这段”。');
+      if (!Number.isSafeInteger(s.rowIndex) || s.rowIndex < 0) throw C.error('INVALID_ROW', '条目位置不正确。');
+      const value = String(s.value);
+      if (s.target.startsWith('meta:')) {
+        const key = s.target.slice(5);
+        if (!['title', 'number', 'timeLabel', 'timeOrder', 'keywords'].includes(key)) throw C.error('INVALID_FIELD', '未知档案信息。');
+        if (key === 'timeOrder') {
+          if (value.trim() && !Number.isFinite(Number(value))) throw C.error('INVALID_TIME', '排序坐标需为数字或留空。');
+          v.timeOrder = value.trim() ? Number(value) : null; v.visibleMeta.time = true;
+        } else if (key === 'keywords') { v.keywords = s.mode === 'replace' ? C.keywords(value) : [...new Set([...v.keywords, ...C.keywords(value)])]; v.visibleMeta.keywords = true; }
+        else {
+          v[key] = s.mode === 'replace' || !v[key] ? value : `${v[key]}\n${value}`;
+          v.visibleMeta[key === 'timeLabel' ? 'time' : key] = true;
+        }
+        written++; continue;
+      }
+      const index = startRow + s.rowIndex;
+      while (v.rows.length <= index) v.rows.push(C.row());
+      const r = v.rows[index];
+      if (s.target === 'rowKeywords') {
+        r.keywords = s.mode === 'replace' ? C.keywords(value) : [...new Set([...r.keywords, ...C.keywords(value)])];
+        v.visibleMeta.rowKeywords = true;
+      } else {
+        let f;
+        if (s.target === 'new') {
+          const name = s.newName.trim();
+          if (!name) throw C.error('EMPTY_FIELD_NAME', '请为新字段填写名称，或选择“不导入”。');
+          f = v.fields.find(f => C.normalize(f.name) === C.normalize(name));
+          if (!f) f = C.addField(v, name);
+        } else if (s.target.startsWith('field:')) f = v.fields.find(f => f.id === s.target.slice(6));
+        if (!f) throw C.error('INVALID_REF', '归属字段已不存在，请重新预览。');
+        r.values[f.id] = s.mode === 'replace' || !r.values[f.id] ? value : `${r.values[f.id]}\n${value}`;
+      }
+      written++;
+    }
+    if (!written) throw C.error('NOTHING_SELECTED', '请至少为一段内容指定归属。');
+    return { version: v, written };
+  }
+  return { preview, apply };
+})();
+
+
+
+const ArchiveStorage = (() => {
+  const DB_NAME = 'novel-archive-studio-v1';
+  const KEY = 'novel-archive-studio-workspace-v1';
+  class Store {
+    constructor() { this.db = null; this.mode = 'memory'; this.lastSavedRevision = null; this.memory = null; }
+    async open() {
+      try {
+        this.db = await new Promise((resolve, reject) => {
+          if (!globalThis.indexedDB) { reject(new Error('IndexedDB unavailable')); return; }
+          const request = indexedDB.open(DB_NAME, 1);
+          request.onupgradeneeded = () => { if (!request.result.objectStoreNames.contains('workspace')) request.result.createObjectStore('workspace'); };
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+          request.onblocked = () => reject(new Error('存储升级被其他窗口占用。'));
+        });
+        this.mode = 'indexedDB';
+        this.db.onversionchange = () => { this.db.close(); this.mode = 'memory'; };
+      } catch {
+        try { localStorage.setItem(`${KEY}-probe`, '1'); localStorage.removeItem(`${KEY}-probe`); this.mode = 'localStorage'; } catch { this.mode = 'memory'; }
+      }
+      return this.mode;
+    }
+    async load() {
+      let value = null;
+      if (this.mode === 'indexedDB') {
+        value = await new Promise((resolve, reject) => {
+          const tx = this.db.transaction('workspace', 'readonly');
+          const req = tx.objectStore('workspace').get('main');
+          req.onsuccess = () => resolve(req.result || null); req.onerror = () => reject(req.error);
+        });
+        if (!value) {
+          try {
+            const legacy = localStorage.getItem(KEY);
+            if (legacy) { value = JSON.parse(legacy); this.db.close(); this.db = null; this.mode = 'localStorage'; }
+          } catch (e) { if (e instanceof SyntaxError) throw e; }
+        }
+      } else if (this.mode === 'localStorage') {
+        const raw = localStorage.getItem(KEY); value = raw ? JSON.parse(raw) : null;
+      } else value = this.memory;
+      this.lastSavedRevision = value?.revision ?? null;
+      return value;
+    }
+    async save(value) {
+      if (this.mode === 'memory') { this.memory = ArchiveCore.copy(value); throw ArchiveCore.error('STORAGE_UNAVAILABLE', '此环境无法持久保存，请下载备份。'); }
+      const expected = this.lastSavedRevision;
+      if (this.mode === 'indexedDB') {
+        await new Promise((resolve, reject) => {
+          const tx = this.db.transaction('workspace', 'readwrite');
+          const store = tx.objectStore('workspace'); let problem = null;
+          const req = store.get('main');
+          req.onsuccess = () => {
+            if ((req.result?.revision ?? null) !== expected) { problem = ArchiveCore.error('REVISION_CONFLICT', '另一窗口已更新档案，请先备份当前内容再重新载入。'); tx.abort(); return; }
+            store.put(value, 'main');
+          };
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(problem || tx.error || ArchiveCore.error('STORAGE_UNAVAILABLE', '保存失败。'));
+          tx.onabort = () => reject(problem || tx.error || ArchiveCore.error('STORAGE_UNAVAILABLE', '保存失败。'));
+        });
+      } else {
+        const current = localStorage.getItem(KEY);
+        if ((current ? JSON.parse(current).revision : null) !== expected) throw ArchiveCore.error('REVISION_CONFLICT', '另一窗口已更新档案，请先备份当前内容再重新载入。');
+        localStorage.setItem(KEY, JSON.stringify(value));
+      }
+      this.lastSavedRevision = value.revision;
+      return { saved: true, revision: value.revision };
+    }
+  }
+  return { Store, DB_NAME, KEY };
+})();
+
+
+const PngExporter = (() => {
+  const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif';
+  function wrap(ctx, text, width) {
+    const blocks = String(text ?? '').split('\n');
+    const result = [];
+    for (const block of blocks) {
+      const chars = typeof Intl.Segmenter === 'function' ? [...new Intl.Segmenter('zh', { granularity: 'grapheme' }).segment(block)].map(s => s.segment) : Array.from(block);
+      let line = '';
+      for (const char of chars) {
+        if (line && ctx.measureText(line + char).width > width) { result.push(line); line = char; }
+        else line += char;
+      }
+      result.push(line);
+    }
+    return result;
+  }
+  function plan(ctx, version) {
+    const v = version;
+    const pad = 34, textPad = 15, lineHeight = 25;
+    const tableWidth = v.layout.mode === 'grid' ? Math.max(180, v.fields.reduce((sum, f) => sum + f.width, 0) + (v.visibleMeta.rowKeywords ? 230 : 0)) : Math.max(180, v.layout.tableWidth);
+    const width = Math.ceil(tableWidth + pad * 2);
+    const blocks = [];
+    let y = pad;
+    function textBlock(text, size, color = '#3c444b', gap = 12) {
+      ctx.font = `${size}px ${FONT}`;
+      const lines = wrap(ctx, text, width - pad * 2);
+      blocks.push({ kind: 'text', x: pad, y, lines, font: ctx.font, color, lineHeight: size + 9 });
+      y += lines.length * (size + 9) + gap;
+    }
+    if (v.visibleMeta.title && v.title) textBlock(v.title, 25, '#283a44', 18);
+    if (v.visibleMeta.number && v.number) textBlock(`${v.metaLabels.number}：${v.number}`, 14);
+    if (v.visibleMeta.time && (v.timeLabel || v.timeOrder !== null)) textBlock(`${v.metaLabels.time}：${v.timeLabel}${v.timeOrder === null ? '' : `  [${v.timeOrder}]`}`, 14);
+    if (v.visibleMeta.keywords && v.keywords.length) textBlock(`${v.metaLabels.keywords}：${v.keywords.join('、')}`, 14, '#5b686f', 20);
+    const cells = [];
+    const rowBlock = (rowCells, forcedHeight = 0, header = false) => {
+      ctx.font = `${header ? 14 : 16}px ${FONT}`;
+      const data = rowCells.map(c => ({ ...c, lines: wrap(ctx, c.text, Math.max(1, c.width - textPad * 2)) }));
+      const height = Math.max(46, forcedHeight, ...data.map(c => c.lines.length * lineHeight + textPad * 2));
+      let x = pad;
+      for (const c of data) { cells.push({ ...c, x, y, height, header, font: ctx.font }); x += c.width; }
+      y += height;
+    };
+    if (v.layout.mode === 'grid' && v.fields.length) {
+      rowBlock([...v.fields.map(f => ({ text: f.name, width: f.width })), ...(v.visibleMeta.rowKeywords ? [{ text: v.metaLabels.rowKeywords, width: 230 }] : [])], 0, true);
+      for (const r of v.rows) rowBlock([...v.fields.map(f => ({ text: r.values[f.id] || '', width: f.width })), ...(v.visibleMeta.rowKeywords ? [{ text: r.keywords.join('、'), width: 230 }] : [])], v.layout.rowHeights[r.id] || 0);
+    } else {
+      for (const [index, r] of v.rows.entries()) {
+        if (v.rows.length > 1) { y += 12; textBlock(`条目 ${index + 1}`, 15, '#5b686f', 8); }
+        for (const f of v.fields) rowBlock([{ text: f.name, width: Math.min(155, tableWidth * .34) }, { text: r.values[f.id] || '', width: tableWidth - Math.min(155, tableWidth * .34) }], v.layout.rowHeights[`${r.id}_${f.id}`] || 0);
+        if (v.visibleMeta.rowKeywords && r.keywords.length) { y += 10; textBlock(`${v.metaLabels.rowKeywords}：${r.keywords.join('、')}`, 14); }
+      }
+    }
+    return { width, height: Math.ceil(Math.max(140, y + pad)), blocks, cells, textPad, lineHeight };
+  }
+  async function exportPng(snapshot) {
+    if (document.fonts?.ready) await document.fonts.ready;
+    const canvas = document.createElement('canvas');
+    let ctx = canvas.getContext('2d');
+    if (!ctx) throw Object.assign(new Error('当前环境不支持图片绘制，请在网页版导出。'), { code: 'CANVAS_UNAVAILABLE' });
+    const layout = plan(ctx, snapshot);
+    const renderedText = [...layout.blocks.flatMap(b => b.lines), ...layout.cells.map(c => c.text)].join('');
+    if (/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\u3001-\u303f\uff01-\uff60]/u.test(renderedText)) {
+      ctx.font = `16px ${FONT}`;
+      const sample = ctx.measureText('中文');
+      if (sample.actualBoundingBoxAscent === 0 && sample.actualBoundingBoxDescent === 0) throw Object.assign(new Error('当前绘图环境缺少中文字形。请使用支持中文的浏览器打开网页版导出；未生成空白图片。'), { code: 'FONT_UNAVAILABLE' });
+    }
+    if (layout.width > 16384 || layout.height > 32760 || layout.width * layout.height > 40000000) throw Object.assign(new Error('完整档案超出浏览器单张图片能力。请减少表格宽度或按条目拆分后导出；原档案仍保留。'), { code: 'EXPORT_TOO_LARGE' });
+    canvas.width = layout.width; canvas.height = layout.height;
+    ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#faf8f3'; ctx.fillRect(0, 0, layout.width, layout.height);
+    ctx.textBaseline = 'top';
+    for (const b of layout.blocks) { ctx.font = b.font; ctx.fillStyle = b.color; b.lines.forEach((line, index) => ctx.fillText(line, b.x, b.y + index * b.lineHeight)); }
+    for (const c of layout.cells) {
+      ctx.fillStyle = c.header ? '#edf1ed' : '#ffffff'; ctx.fillRect(c.x, c.y, c.width, c.height);
+      ctx.strokeStyle = '#d8dfda'; ctx.lineWidth = 1; ctx.strokeRect(c.x + .5, c.y + .5, c.width, c.height);
+      ctx.fillStyle = '#394951'; ctx.font = c.font;
+      c.lines.forEach((line, index) => ctx.fillText(line, c.x + layout.textPad, c.y + layout.textPad + index * layout.lineHeight));
+    }
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) throw Object.assign(new Error('图片生成失败，请缩小宽度后重试。'), { code: 'EXPORT_FAILED' });
+    return { blob, width: layout.width, height: layout.height };
+  }
+  return { wrap, plan, exportPng };
+})();
+
+
+(() => {
+  'use strict';
+  const C = ArchiveCore;
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+  const H = value => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+  const icons = {
+    book: '<path d="M3 4c4-1 7 0 9 2 2-2 5-3 9-2v15c-4-1-7 0-9 2-2-2-5-3-9-2z"/><path d="M12 6v15M6 8l3 1M15 9l3-1M6 12l3 1M15 13l3-1"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>', close: '<path d="m6 6 12 12M18 6 6 18"/>', search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
+    edit: '<path d="m15 4 5 5M4 20l5-1L20 8a2 2 0 0 0-5-5L4 14z"/>', sliders: '<path d="M4 7h16M4 17h16M9 4v6M15 14v6"/>', copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/>',
+    download: '<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>', trash: '<path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7M14 10v7"/>',
+    arrow: '<path d="M4 12h16m-6-6 6 6-6 6"/>', undo: '<path d="M8 5 3 10l5 5M3 10h10a7 7 0 0 1 7 7"/>', redo: '<path d="m16 5 5 5-5 5M21 10H11a7 7 0 0 0-7 7"/>',
+    split: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/>', timeline: '<path d="M3 12h18"/><circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18" cy="12" r="2"/>',
+    resize: '<path d="m8 20 12-12M14 20l6-6M19 20l1-1"/>', horizontal: '<path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4"/>', menu: '<path d="M4 6h16M4 12h16M4 18h16"/>', info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/>'
+  };
+  const I = name => `<svg viewBox="0 0 24 24" aria-hidden="true">${icons[name] || icons.info}</svg>`;
+  const button = (action, label, icon = '', classes = '', attrs = '') => `<button type="button" data-action="${action}" class="${classes}" ${attrs}>${icon ? I(icon) : ''}${label ? H(label) : ''}</button>`;
+  const iconButton = (action, label, icon, attrs = '') => button(action, '', icon, 'icon ghost', `title="${H(label)}" aria-label="${H(label)}" ${attrs}`);
+  let state = C.blankState();
+  const storage = new ArchiveStorage.Store();
+  const undoStack = [], redoStack = [];
+  let coalesceKey = '', lastChangeAt = 0, query = '', typeFilter = '', view = 'workspace', timelineZoom = 1;
+  let loaded = false, dirty = false, saveTimer, savePromise = null, toastTimer, modal = null, importPreview = null, currentImageUrl = null;
+  let lastSaveError = null;
+  let broadcast;
+  const host = { embedded: window.parent !== window, webmcp: typeof document.modelContext?.registerTool === 'function', clipboard: typeof navigator.clipboard?.writeText === 'function', download: 'download' in document.createElement('a') };
+  const root = document.getElementById('novel-archive-app');
+  root.innerHTML = `<header class="topbar"><div class="brand"><button class="icon ghost mobile-menu" data-action="sidebar" aria-label="档案库">${I('menu')}</button><div class="brand-mark">${I('book')}</div><div><div class="brand-name">小说档案</div><div class="brand-sub">人物、设定与故事时间</div></div></div><div class="top-actions"><button data-action="save-details" class="ghost save-status" id="save-status">正在读取…</button>${button('undo','','undo','icon ghost secondary-action','aria-label="撤销" title="撤销" id="undo-button" disabled')}${button('redo','','redo','icon ghost secondary-action','aria-label="重做" title="重做" id="redo-button" disabled')}${button('import','导入文本','','secondary-action')}${button('backup','备份','','')}${button('new','新建档案','plus','primary')}</div></header><div class="app-shell" id="app-shell"><aside class="sidebar"><div class="side-heading"><span>档案库</span>${iconButton('types','管理档案类型','sliders')}</div><div class="search-box">${I('search')}<input id="library-search" type="search" placeholder="搜索名称、关键词或内容" aria-label="搜索档案"></div><div class="filters"><select id="type-filter" aria-label="按类型筛选"><option value="">全部类型</option></select></div><div id="library-list" class="library-list"></div><div class="side-footer"><span id="library-count" class="small muted"></span>${button('help','使用说明','info','ghost small')}</div></aside><main class="main"><div class="work-header"><div class="view-tabs">${button('workspace','对照工作台','split','active','id="workspace-tab"')}${button('timeline','故事时间轴','timeline','','id="timeline-tab"')}</div><span class="work-hint">拖动右下角调整窗口 · 表格行列可独立拉伸</span></div><div id="workspace" class="workspace"></div><div id="timeline-view" class="timeline-view hidden"></div></main></div><div id="modal-layer"></div><div id="toast" class="toast hidden" role="status" aria-live="polite"></div>`;
+  function toast(message, danger = false) {
+    const el = $('#toast'); el.textContent = message; el.className = `toast${danger ? ' error' : ''}`;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.add('hidden'), danger ? 6000 : 3500);
+  }
+  function saveStatus(message, danger = false) {
+    const el = $('#save-status'); el.textContent = message; el.title = message; el.classList.toggle('unsaved', danger);
+  }
+  function scheduleSave() {
+    dirty = true; saveStatus(storage.mode === 'memory' ? '未持久保存 · 请备份' : '待保存', storage.mode === 'memory');
+    clearTimeout(saveTimer); saveTimer = setTimeout(flushSave, 350);
+  }
+  async function flushSave() {
+    clearTimeout(saveTimer);
+    if (savePromise) return savePromise;
+    if (!dirty) return;
+    const snapshot = C.copy(state);
+    savePromise = (async () => {
+      try {
+        await storage.save(snapshot); lastSaveError = null;
+        dirty = state.revision !== snapshot.revision;
+        saveStatus(dirty ? '待保存' : '已保存到此浏览器');
+        broadcast?.postMessage({ revision: snapshot.revision });
+        if (dirty) saveTimer = setTimeout(flushSave, 50);
+      } catch (e) { dirty = true; lastSaveError = e; saveStatus(e.code === 'REVISION_CONFLICT' ? '其他窗口已更新 · 请处理' : '未保存 · 请备份', true); }
+      finally { savePromise = null; }
+    })();
+    return savePromise;
+  }
+  function commit(change, { render = true, group = '' } = {}) {
+    if (!loaded) throw C.error('NOT_READY', '档案尚未读取完成。');
+    const next = C.copy(state);
+    const result = change(next);
+    const now = Date.now();
+    if (!group || group !== coalesceKey || now - lastChangeAt > 1200) undoStack.push(C.copy(state));
+    if (undoStack.length > 30) undoStack.shift();
+    redoStack.length = 0; coalesceKey = group; lastChangeAt = now;
+    next.revision = state.revision + 1; state = next;
+    scheduleSave();
+    $('#undo-button').disabled = !undoStack.length; $('#redo-button').disabled = true;
+    if (render) renderAll();
+    return result;
+  }
+  function undo(redo = false) {
+    const from = redo ? redoStack : undoStack, to = redo ? undoStack : redoStack;
+    if (!from.length) return;
+    const next = from.pop(); to.push(C.copy(state)); next.revision = state.revision + 1; state = next;
+    coalesceKey = ''; scheduleSave(); renderAll(); toast(redo ? '已重做' : '已撤销');
+  }
+  const activePanel = () => state.panels.find(p => p.id === state.activePanelId) || state.panels[0];
+  const panelVersion = p => C.version(state, p.archiveId, p.versionId);
+  function focusPanel(id) {
+    if (state.activePanelId === id) return;
+    commit(s => { s.activePanelId = id; }, { render: false });
+    $$('.archive-panel').forEach(el => el.classList.toggle('focused', el.dataset.panel === id));
+    renderLibrary();
+  }
+  function renderAll() {
+    $('#undo-button').disabled = !undoStack.length; $('#redo-button').disabled = !redoStack.length;
+    const filter = $('#type-filter');
+    filter.innerHTML = `<option value="">全部类型</option><option value="__none">未分类</option>${state.types.map(t => `<option value="${t.id}">${H(t.name || '未命名类型')}</option>`).join('')}`;
+    if (typeFilter && ![...filter.options].some(o => o.value === typeFilter)) typeFilter = '';
+    filter.value = typeFilter;
+    renderLibrary(); renderWorkspace(); renderTimeline();
+    $('#workspace').classList.toggle('hidden', view !== 'workspace'); $('#timeline-view').classList.toggle('hidden', view !== 'timeline');
+    $('#workspace-tab').classList.toggle('active', view === 'workspace'); $('#timeline-tab').classList.toggle('active', view === 'timeline');
+  }
+  function renderLibrary() {
+    const matches = C.search(state, query, typeFilter);
+    const focused = activePanel()?.archiveId;
+    $('#library-count').textContent = query || typeFilter ? `${matches.length} / ${state.archives.length} 份档案` : `${state.archives.length} 份档案`;
+    $('#library-list').innerHTML = matches.length ? matches.map(a => {
+      const v = a.versions.find(v => v.id === a.activeVersionId) || a.versions[0];
+      const t = state.types.find(t => t.id === a.typeId);
+      return `<div class="library-item${a.id === focused ? ' active' : ''}"><button type="button" class="library-open" data-action="open" data-archive="${a.id}"><div class="library-name">${H(C.titleOf(v))}</div><div class="library-meta"><span>${H(t?.name || '未分类')}</span><span>${H(C.timeOf(v))}</span><span>${a.versions.length} 个版本</span></div>${v.keywords.length ? `<div class="library-words">${H(v.keywords.join(' · '))}</div>` : ''}</button>${button('compare','','plus','icon ghost library-extra',`data-archive="${a.id}" title="并排打开" aria-label="并排打开"`)}</div>`;
+    }).join('') : `<div class="side-empty">${state.archives.length ? '没有找到匹配档案。<br>可修改关键词或清除筛选。' : '这里会收纳你的档案。<br>先新建一份，从空白开始。'}</div>`;
+  }
+  function panelHtml(p) {
+    const a = C.archive(state, p.archiveId), v = panelVersion(p), t = state.types.find(t => t.id === a.typeId);
+    const meta = [];
+    if (v.visibleMeta.number) meta.push(`<div><label for="number-${p.id}">${H(v.metaLabels.number)}</label><input id="number-${p.id}" data-bind="number" value="${H(v.number)}" placeholder="可留空，也可自行编号"></div>`);
+    if (v.visibleMeta.time) meta.push(`<div><label for="time-${p.id}">${H(v.metaLabels.time)}</label><div class="time-inputs"><input id="time-${p.id}" data-bind="timeLabel" value="${H(v.timeLabel)}" placeholder="小说内的时间"><input data-bind="timeOrder" inputmode="decimal" value="${v.timeOrder ?? ''}" aria-label="故事排序坐标" title="时间轴排序坐标，允许负数和小数" placeholder="排序坐标"></div></div>`);
+    if (v.visibleMeta.keywords) meta.push(`<div class="meta-wide"><label for="keywords-${p.id}">${H(v.metaLabels.keywords)}</label><input id="keywords-${p.id}" data-bind="keywords" value="${H(v.keywords.join('、'))}" placeholder="用顿号、逗号或换行分隔"><div class="keyword-wrap">${v.keywords.map(word => button('copy-word',word,'','keyword-chip',`data-word="${H(word)}"`)).join('')}</div></div>`);
+    return `<section class="archive-panel${p.id === state.activePanelId ? ' focused' : ''}" data-panel="${p.id}" style="width:${p.width}px;height:${p.height}px" aria-label="${H(C.titleOf(v))}"><div class="panel-top"><div style="min-width:0;flex:1"><span class="type-badge">${H(t?.name || '未分类')}</span>${v.visibleMeta.title ? `<input class="panel-title-input" data-bind="title" value="${H(v.title)}" placeholder="未命名档案" aria-label="${H(v.metaLabels.title)}">` : '<div class="panel-title">档案</div>'}</div><div class="panel-actions">${iconButton('meta','修改、移除档案信息','sliders')}${iconButton('export','导出图片','download')}${iconButton('archive-menu','档案操作','menu')}${iconButton('close-panel','关闭此窗口','close')}</div></div><div class="version-bar"><select data-bind="version" aria-label="选择时间版本">${a.versions.map(x => `<option value="${x.id}"${x.id === v.id ? ' selected' : ''}>${H(C.timeOf(x))}${x.id === a.activeVersionId ? ' · 当前' : ''}</option>`).join('')}</select>${button('future','未来版本','arrow')}${button('new-version','添加版本','plus')}${button('compare-version','并排看此版本','split')}</div><div class="panel-scroll"><div class="metadata">${meta.join('')}</div><div class="table-tools">${button('add-field','添加字段','plus')}${button('add-row','添加条目','plus')}${button('panel-import','导入文本','','')}${button('layout',v.layout.mode === 'form' ? '切换表格' : '切换档案','','')}${button('template','模板','','')}${iconButton('copy-mode',a.copyOnClick ? '已启用条目关键词复制' : '启用条目关键词复制','copy',`aria-pressed="${a.copyOnClick}"`)}</div>${sheetHtml(p, v, a)}</div><div class="panel-bottom"><span>${v.fields.length} 个字段 · ${v.rows.length} 个条目</span><span style="margin-left:auto;margin-right:18px">${Math.round(p.width)} × ${Math.round(p.height)}</span></div><div class="panel-resize" data-resize="panel" role="separator" aria-label="调整窗口宽高" tabindex="0">${I('resize')}</div></section>`;
+  }
+  function sheetHtml(p, v, a) {
+    if (!v.fields.length) return `<div class="table-container"><div class="table-empty">档案内容完全由你填写。<br>点击“添加字段”设置名称，或粘贴文字并确认导入。</div>${v.rows.map((r,i)=>`<div class="row-tools">${button('copy-row',`条目 ${i+1}`,'copy','ghost small',`data-row="${r.id}"`)}${iconButton('delete-row','删除此条目','trash',`data-row="${r.id}"`)}</div>${v.visibleMeta.rowKeywords?`<div class="row-keywords"><span class="small muted">${H(v.metaLabels.rowKeywords)}</span><input data-bind="rowKeywords" data-row="${r.id}" value="${H(r.keywords.join('、'))}" aria-label="条目关键词" placeholder="可填写，也可在档案信息中删除此栏"></div>`:''}`).join('')}</div>`;
+    if (!v.rows.length) return `<div class="table-empty">所有条目已删除。<br>点击“添加条目”重新录入；字段仍保留。</div>`;
+    const heading = f => `<div class="field-heading"><span>${H(f.name || '未命名字段')}</span>${iconButton('edit-field','修改或删除此字段','edit',`data-field="${f.id}"`)}</div>`;
+    const cell = (r, f, height = 86) => `<textarea class="cell-text" data-bind="cell" data-row="${r.id}" data-field="${f.id}" style="height:${height}px;min-height:0" aria-label="${H(f.name || '字段')}，第${v.rows.indexOf(r)+1}条" placeholder="自行填写">${H(r.values[f.id] || '')}</textarea>`;
+    if (v.layout.mode === 'grid') {
+      const keywordWidth = v.visibleMeta.rowKeywords ? 230 : 110;
+      const width = v.fields.reduce((sum, f) => sum + f.width, 0) + keywordWidth;
+      const rows = v.rows.map((r, i) => {
+        const controls = `<div class="row-tools" style="padding:7px 5px">${button('copy-row',`${i+1}`,'copy','ghost small',`data-row="${r.id}" title="单击复制本条关键词"`)}${iconButton('delete-row','删除此条目','trash',`data-row="${r.id}"`)}</div>`;
+        const keywordCell = v.visibleMeta.rowKeywords ? `<input data-bind="rowKeywords" data-row="${r.id}" value="${H(r.keywords.join('、'))}" placeholder="为此条目填写关键词" aria-label="第${i+1}条${H(v.metaLabels.rowKeywords)}" style="width:calc(100% - 16px);margin:0 8px;font-size:12px"><div class="keyword-wrap" style="padding:0 8px 8px">${r.keywords.map(word => button('copy-word',word,'','keyword-chip',`data-word="${H(word)}"`)).join('')}</div>` : '';
+        return `<tr data-copy-row="${r.id}">${v.fields.map((f, j) => `<td>${cell(r,f,v.layout.rowHeights[r.id] || 100)}${j === 0 ? `<div class="row-resize" data-resize="row" data-row="${r.id}" role="separator" aria-label="调整第${i+1}条行高" tabindex="0"></div>` : ''}</td>`).join('')}<td>${controls}${keywordCell}</td></tr>`;
+      }).join('');
+      return `<div class="table-container"><table class="sheet grid-sheet" style="width:${width}px"><colgroup>${v.fields.map(f => `<col style="width:${f.width}px">`).join('')}<col style="width:${keywordWidth}px"></colgroup><thead><tr>${v.fields.map(f => `<th>${heading(f)}<div class="col-resize" data-resize="column" data-field="${f.id}" role="separator" aria-label="调整${H(f.name)}列宽" tabindex="0"></div></th>`).join('')}<th><div class="field-heading"><span>${v.visibleMeta.rowKeywords ? H(v.metaLabels.rowKeywords) : '条目操作'}</span></div></th></tr></thead><tbody>${rows}</tbody></table><div class="table-resize" data-resize="table" role="separator" aria-label="调整整个表格宽度" tabindex="0">${I('horizontal')}</div></div>`;
+    }
+    return `<div class="table-container" style="width:${v.layout.tableWidth}px">${v.rows.map((r,i) => `<div class="row-tools">${button('copy-row',`条目 ${i+1}`,'copy','ghost small',`data-row="${r.id}"`)}${iconButton('delete-row','删除此条目','trash',`data-row="${r.id}"`)}</div><table class="sheet form-sheet" style="width:${v.layout.tableWidth}px"><colgroup><col style="width:${Math.min(155,v.layout.tableWidth*.34)}px"><col></colgroup><tbody>${v.fields.map(f => `<tr><th>${heading(f)}</th><td>${cell(r,f,v.layout.rowHeights[`${r.id}_${f.id}`] || 86)}<div class="row-resize" data-resize="row" data-row="${r.id}" data-field="${f.id}" role="separator" aria-label="调整${H(f.name)}行高" tabindex="0"></div></td></tr>`).join('')}</tbody></table>${v.visibleMeta.rowKeywords ? `<div class="row-keywords"><span class="small muted">${H(v.metaLabels.rowKeywords)}</span><input data-bind="rowKeywords" data-row="${r.id}" value="${H(r.keywords.join('、'))}" aria-label="第${i+1}条关键词" placeholder="单击条目标题可复制"></div>` : ''}`).join('')}<div class="table-resize" data-resize="table" role="separator" aria-label="调整表格宽度" tabindex="0">${I('horizontal')}</div></div>`;
+  }
+  function renderWorkspace() {
+    const work = $('#workspace'), scroll = [work.scrollLeft, work.scrollTop];
+    const positions = new Map($$('.archive-panel').map(el => [el.dataset.panel, [$('.panel-scroll',el).scrollLeft, $('.panel-scroll',el).scrollTop]]));
+    work.innerHTML = state.panels.length ? state.panels.map(panelHtml).join('') : `<div class="empty-workspace"><svg class="book-art" viewBox="0 0 24 24" aria-hidden="true">${icons.book}</svg><h1>${state.archives.length ? '打开档案，开始对照' : '给故事留一份档案'}</h1><p>${state.archives.length ? '在左侧档案库打开已有档案。<br>点击旁边的“＋”可以并排查看。' : '从空白开始，或选择可修改的类型模板。<br>名字、字段、内容和时间，都由你决定。'}</p><div class="empty-actions">${button('new','新建档案','plus','primary')}${state.archives.length ? '' : button('backup','恢复已有备份','','')}</div></div>`;
+    work.scrollLeft = scroll[0]; work.scrollTop = scroll[1];
+    $$('.archive-panel').forEach(el => { const pos = positions.get(el.dataset.panel); if (pos) { const area = $('.panel-scroll',el); area.scrollLeft = pos[0]; area.scrollTop = pos[1]; } });
+  }
+  function revealPanel(id) {
+    const el = $(`[data-panel="${id}"]`);
+    el?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+  }
+  function renderTimeline() {
+    const container = $('#timeline-view');
+    const archives = C.search(state, query, typeFilter);
+    const dated = archives.flatMap(a => a.versions.filter(v => v.timeOrder !== null));
+    const values = dated.map(v => v.timeOrder);
+    const low = values.length ? Math.min(...values) : 0, high = values.length ? Math.max(...values) : 1;
+    const range = high - low || 1;
+    const width = Math.max(800, Math.min(12000, dated.length * 90 + 220)) * timelineZoom;
+    const percent = value => 8 + ((value - low) / range) * 84;
+    const ticks = low === high ? [low] : Array.from({length:5},(_,i)=>low+(high-low)*i/4);
+    container.innerHTML = `<div class="timeline-help"><div><span>${H(state.clockName || '故事时间')}</span>${state.clockUnit ? `<span class="small muted"> · ${H(state.clockUnit)}</span>` : ''}<div class="help-text">按故事坐标排序；点击节点打开该版本。</div></div><div style="display:flex;gap:7px">${button('timeline-clock','设置时间轴','','small')}<select id="timeline-zoom" aria-label="时间轴缩放"><option value="1"${timelineZoom===1?' selected':''}>标准</option><option value="1.5"${timelineZoom===1.5?' selected':''}>展开</option><option value="2"${timelineZoom===2?' selected':''}>展开两倍</option></select></div></div>${archives.length ? `<div class="timeline-board" style="width:${width}px"><div class="timeline-axis">${ticks.map(n => `<span class="axis-tick" style="left:${low===high?50:percent(n)}%">${H(Number(n.toPrecision(8)))}</span>`).join('')}</div>${archives.map(a => {
+      const current = a.versions.find(v => v.id === a.activeVersionId) || a.versions[0];
+      const nodes = C.orderedVersions(a);
+      const stacks = new Map();
+      const positionData = nodes.map(v => { const count = stacks.get(v.timeOrder)||0; stacks.set(v.timeOrder,count+1); return {v,count}; });
+      const height = Math.max(75, ...[...stacks.values()].map(count => count*56+15));
+      return `<div class="timeline-track" style="min-height:${height}px"><div class="timeline-label">${H(C.titleOf(current))}<div class="small muted">${H(state.types.find(t=>t.id===a.typeId)?.name||'未分类')}</div></div><div class="timeline-lane">${positionData.map(({v,count})=>button('open-time',C.timeOf(v),'',`timeline-node${v.id===a.activeVersionId?' current':''}`,`data-archive="${a.id}" data-version="${v.id}" style="left:${low===high?50:percent(v.timeOrder)}%;top:${10+count*56}px" title="${H(`${C.titleOf(v)} · ${C.timeOf(v)} · 坐标 ${v.timeOrder}`)}"`)).join('')}</div></div>`;
+    }).join('')}</div><div class="undated"><span class="small muted">未标排序坐标</span>${archives.flatMap(a=>a.versions.filter(v=>v.timeOrder===null).map(v=>button('open-time',`${C.titleOf(v)} · ${C.timeOf(v)}`,'','',`data-archive="${a.id}" data-version="${v.id}"`))).join('')}</div>` : '<div class="empty-workspace"><h1>时间轴还没有档案</h1><p>创建档案后，填写故事时间与排序坐标。<br>可使用自己的历法和任意时间标签。</p></div>'}`;
+  }
+  function openDialog(title, body, footer = '', wide = false) {
+    closeDialog();
+    modal = { previous: document.activeElement, nonce: C.uid('modal') };
+    $('#modal-layer').innerHTML = `<div class="overlay"><section class="dialog${wide?' wide':''}" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><div class="dialog-head"><h2 id="dialog-title">${H(title)}</h2>${iconButton('dialog-close','关闭','close')}</div><div class="dialog-body">${body}<div id="dialog-error" class="dialog-error" role="alert"></div></div>${footer ? `<div class="dialog-foot">${footer}</div>` : ''}</section></div>`;
+    setTimeout(()=>$('.dialog input:not([type=checkbox]),.dialog textarea,.dialog select,.dialog button')?.focus(),0);
+    return modal.nonce;
+  }
+  function closeDialog() {
+    if (currentImageUrl) { URL.revokeObjectURL(currentImageUrl); currentImageUrl = null; }
+    const previous = modal?.previous; modal = null; importPreview = null; $('#modal-layer').innerHTML = ''; previous?.focus?.();
+  }
+  function dialogError(message) { const el = $('#dialog-error'); if (el) el.textContent = message; else toast(message,true); }
+  const cancel = () => button('dialog-close','取消');
+  function newDialog() {
+    openDialog('新建档案',`<label class="form-group"><span>档案名称（可留空）</span><input id="new-title" placeholder="由你命名"></label><label class="form-group"><span>档案类型</span><select id="new-type"><option value="">空白 · 未分类</option>${state.types.map(t=>`<option value="${t.id}">${H(t.name||'未命名类型')}</option>`).join('')}</select></label><label class="check-line"><input id="new-template" type="checkbox" checked>载入所选类型的字段模板</label><p class="help-text">空白档案没有预填内容。类型模板只提供可删改的字段名称，不填入人物或背景。</p>`,`${cancel()}${button('confirm-new','创建档案','','primary')}`);
+  }
+  function fieldDialog(p, fieldId = '') {
+    const v = panelVersion(p), f = v.fields.find(f=>f.id===fieldId);
+    openDialog(f ? '修改字段' : '添加字段',`<label class="form-group"><span>字段名称</span><input id="field-name" value="${H(f?.name||'')}" placeholder="例如：身份、动机，或你自己的名称"></label><label class="form-group"><span>导入识别别名（可留空）</span><input id="field-aliases" value="${H(f?.aliases.join('、')||'')}" placeholder="用顿号分隔，帮助识别粘贴文字"></label><p class="help-text">名称允许留空、重复，也可删除这个字段。别名仅辅助导入，不改写正文。</p>`,`${f?button('confirm-delete-field','删除字段','trash','danger',`data-panel-id="${p.id}" data-field="${f.id}"`):''}${cancel()}${button('confirm-field','保存','','primary',`data-panel-id="${p.id}" data-field="${fieldId}"`)}`);
+  }
+  function metaDialog(p) {
+    const v = panelVersion(p);
+    const names = {title:'名称',number:'编号',time:'时间',keywords:'关键词',rowKeywords:'条目词'};
+    openDialog('档案信息也可修改',`<p class="help-text">修改显示名称；取消勾选会移除该信息和对应内容，可通过撤销恢复。</p>${Object.keys(names).map(key=>`<div class="meta-setting"><input type="checkbox" id="meta-visible-${key}"${v.visibleMeta[key]?' checked':''} aria-label="保留${names[key]}"><span class="small muted">${names[key]}</span><input type="text" id="meta-label-${key}" value="${H(v.metaLabels[key])}" aria-label="${names[key]}的显示名称"></div>`).join('')}`,`${cancel()}${button('confirm-meta','应用','','primary',`data-panel-id="${p.id}"`)}`);
+  }
+  function versionDialog(p) {
+    const v = panelVersion(p);
+    openDialog('添加故事时间版本',`<p class="callout">新版本由你录入。修改新版本，不会改动原来的档案。</p><label class="form-group"><span>故事时间标签</span><input id="version-time" placeholder="例如：第三章，或你的小说历法"></label><label class="form-group"><span>排序坐标（可留空）</span><input id="version-order" inputmode="decimal" placeholder="越大的坐标越靠未来"></label><label class="check-line"><input id="version-copy" type="checkbox" checked>复制当前版本的内容作为起点</label><p class="help-text">不勾选时创建空白内容版本，保留可修改的字段结构。当前时间：${H(C.timeOf(v))}。</p>`,`${cancel()}${button('confirm-version','创建版本','','primary',`data-panel-id="${p.id}"`)}`);
+  }
+  function archiveMenu(p) {
+    const a=C.archive(state,p.archiveId),v=panelVersion(p);
+    openDialog('档案操作',`<label class="form-group"><span>所属类型</span><select id="archive-type"><option value="">未分类</option>${state.types.map(t=>`<option value="${t.id}"${t.id===a.typeId?' selected':''}>${H(t.name||'未命名类型')}</option>`).join('')}</select></label><p class="help-text">改变类型不覆盖当前字段或内容。每个时间版本仍可以独立编辑。</p><div class="backup-buttons">${button('delete-version','删除这个时间版本','trash','danger',`data-panel-id="${p.id}"`)}${button('delete-archive','删除整份档案','trash','danger',`data-panel-id="${p.id}"`)}</div><p class="help-text">这份档案有 ${a.versions.length} 个版本，当前查看 ${H(C.timeOf(v))}。删除后可撤销。</p>`,`${cancel()}${button('confirm-archive-type','保存类型','','primary',`data-panel-id="${p.id}"`)}`);
+  }
+  function typesDialog() {
+    openDialog('档案类型与字段模板',`<p class="help-text">所有类型和模板字段均可改名、增删。这里修改的是新档案模板，不会追改已有档案。</p><div id="types-editor">${state.types.map(t=>`<div class="type-card" data-type="${t.id}"><div class="type-top"><input data-type-bind="name" value="${H(t.name)}" aria-label="类型名称">${iconButton('delete-type','删除这个类型','trash',`data-type="${t.id}"`)}</div><div class="type-fields">${t.fields.map(f=>`<div class="type-field-chip"><input data-type-bind="field" data-field="${f.id}" value="${H(f.name)}" aria-label="模板字段名称">${iconButton('delete-type-field','删除模板字段','close',`data-type="${t.id}" data-field="${f.id}"`)}</div>`).join('')}${button('add-type-field','字段','plus','small',`data-type="${t.id}"`)}</div><div style="display:flex;align-items:center;gap:12px;margin-top:10px"><select data-type-bind="mode" aria-label="默认布局"><option value="form"${t.mode==='form'?' selected':''}>档案布局</option><option value="grid"${t.mode==='grid'?' selected':''}>条目表格</option></select><label class="check-line"><input data-type-bind="copyOnClick" type="checkbox"${t.copyOnClick?' checked':''}>单击条目复制关键词</label></div></div>`).join('')}</div><div class="inline-form"><label class="form-group"><span>新类型名称</span><input id="new-type-name" placeholder="自定义档案类型"></label>${button('add-type','添加类型','plus')}</div>`,button('dialog-close','完成','','primary'),true);
+  }
+  function templateDialog(p) {
+    openDialog('使用或保存字段模板',`<label class="form-group"><span>使用已有类型模板</span><select id="template-type">${state.types.map(t=>`<option value="${t.id}">${H(t.name||'未命名类型')}</option>`).join('')}</select></label><label class="check-line"><input id="template-replace" type="checkbox">替换当前字段及内容（不勾选则只补充缺少的字段）</label><div class="backup-buttons">${button('apply-template','载入模板','','',`data-panel-id="${p.id}"`)}</div><hr style="border:0;border-top:1px solid var(--line);margin:20px 0"><label class="form-group"><span>把当前字段结构保存为新类型</span><input id="template-save-name" placeholder="由你命名"></label><p class="help-text">仅保存字段结构、别名和布局，不把这份档案的正文设为默认内容。</p>`,`${cancel()}${button('save-template','保存为类型','','primary',`data-panel-id="${p.id}"`)}`);
+  }
+  function importDialog(p = activePanel()) {
+    if (!p) { toast('请先新建或打开一份档案。'); newDialog(); return; }
+    openDialog('粘贴文字，先确认归属',`<div class="callout">可粘贴“字段名：内容”、Markdown表格、带标题的段落或GPT整理的导入JSON。无法判断的段落会留给你指定。</div><textarea id="import-text" class="import-input" aria-label="需要导入的文本" placeholder="粘贴你的文字；预览之前不会写入档案"></textarea><details class="help-text" style="margin-top:12px"><summary>怎样让GPT协助整理？</summary>在同一对话告诉GPT需要导入的原文和字段。它可以整理成“字段名：内容”供你粘贴；不需要额外AI接口。仍由你在这里确认。</details>`,`${cancel()}${button('preview-import','预览归属','','primary',`data-panel-id="${p.id}"`)}`,true);
+  }
+  function showImportPreview(p, parsed) {
+    const v=panelVersion(p),baseRevision=state.revision;
+    const options=selected=>`<option value="unassigned"${selected==='unassigned'?' selected':''}>待指定归属</option><option value="ignore"${selected==='ignore'?' selected':''}>不导入这段</option><option value="new"${selected==='new'?' selected':''}>新建字段</option>${v.fields.map(f=>`<option value="field:${f.id}"${selected===`field:${f.id}`?' selected':''}>${H(f.name||'未命名字段')}</option>`).join('')}<option value="rowKeywords"${selected==='rowKeywords'?' selected':''}>条目关键词</option>${[['title','档案名称'],['number','编号'],['timeLabel','故事时间标签'],['timeOrder','故事排序坐标'],['keywords','档案关键词']].map(([k,n])=>`<option value="meta:${k}"${selected===`meta:${k}`?' selected':''}>${H(n)}</option>`).join('')}`;
+    openDialog('确认字段归属后导入',`<div class="callout">共 ${parsed.segments.length} 段。每段可改内容、调整归属或不导入；已有内容默认追加，选择“替换”才覆盖。</div>${parsed.isTable?'<label class="check-line"><input id="import-new-rows" type="checkbox" checked>作为新条目追加（空白档案会使用已有空条目）</label>':''}<details class="help-text"><summary>查看完整原文</summary><pre class="import-source">${H(parsed.raw)}</pre></details><div id="import-preview-list">${parsed.segments.map(s=>`<div class="import-segment" data-segment="${s.id}"><div class="import-segment-head"><span>${H(s.label||'未标注段落')} · 条目 ${s.rowIndex+1}</span><span>${H(s.issue)}</span></div><div class="import-mapping"><select data-import-bind="target" aria-label="这段内容归属">${options(s.target)}</select><input data-import-bind="newName" value="${H(s.newName)}" placeholder="新字段名称" aria-label="新字段名称"${s.target==='new'?'':' class="hidden"'}><select data-import-bind="mode" aria-label="写入方式"><option value="append">追加</option><option value="replace">替换</option></select></div><textarea data-import-bind="value" aria-label="待导入内容">${H(s.value)}</textarea></div>`).join('')}</div>`,`${button('back-import','返回修改原文','','',`data-panel-id="${p.id}"`)}${cancel()}${button('confirm-import','确认并导入','','primary',`data-panel-id="${p.id}"`)}`,true);
+    importPreview={parsed,panelId:p.id,baseRevision};
+  }
+  function download(blob, name) {
+    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.style.display='none';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+  }
+  const safeName=s=>String(s||'档案').replace(/[\\/:*?"<>|\u0000-\u001f]/g,'-').slice(0,100);
+  async function exportImage(p) {
+    if(!p) return toast('请先打开一份档案。');
+    const snapshot=C.copy(panelVersion(p));
+    const nonce=openDialog('正在生成完整档案图片','<p class="help-text">正在绘制所有字段和正文，滚动区外的内容也会包含在内。</p>');
+    try {
+      const result=await PngExporter.exportPng(snapshot);
+      if(modal?.nonce!==nonce) return;
+      download(result.blob,`${safeName(snapshot.title)}-${safeName(C.timeOf(snapshot))}.png`);
+      openDialog('图片已生成',`<p class="help-text">${result.width} × ${result.height} 像素。已尝试下载；如GPT视图限制下载，可打开下图保存。</p><img id="export-image" class="image-preview" alt="完整档案导出图片">`,`${button('image-download','再次下载','download')}${button('dialog-close','完成','','primary')}`,true);
+      currentImageUrl=URL.createObjectURL(result.blob);$('#export-image').src=currentImageUrl;
+      modal.image=result.blob;modal.imageName=`${safeName(snapshot.title)}-${safeName(C.timeOf(snapshot))}.png`;
+    }catch(e){if(modal?.nonce===nonce)dialogError(e.message);}
+  }
+  function backupDialog() {
+    openDialog('备份与恢复',`<div class="callout">档案保存在当前浏览器。更换设备、清理浏览器数据或进入不同的GPT预览时，请使用JSON备份恢复。</div><div class="backup-buttons">${button('backup-download','下载完整档案备份','download','primary')}${button('restore-file','选择JSON备份恢复','','')}</div><input type="file" id="backup-file" accept=".json,application/json" class="hidden"><p class="help-text">备份包含所有类型、时间版本、关键词和窗口布局。恢复会先检查格式，并在你确认后替换当前档案库；可撤销。</p>${lastSaveError ? `<p class="dialog-error">${H(lastSaveError.message)}</p>`:''}`,button('dialog-close','关闭'));
+  }
+  function saveDetails() {
+    openDialog('保存状态',`<div class="callout">${H($('#save-status').textContent)}</div><p class="help-text">${storage.mode==='memory'?'当前视图不提供持久存储；关闭后可能丢失未备份内容。':'已保存的数据仅属于当前浏览器和当前来源，不代表跨设备或跨GPT预览同步。'}</p>${lastSaveError?`<p class="dialog-error">${H(lastSaveError.message)}</p>`:''}<div class="backup-buttons">${button('backup-download','先下载当前备份','download')}${button('retry-save','重试保存')}${button('reload-data','载入浏览器已保存档案')}</div>`,button('dialog-close','关闭'));
+  }
+  function helpDialog() {
+    openDialog('从空白开始',`<div class="callout">新建档案 → 添加字段 → 输入内容。没有公式，也不需要模型Key。</div><p><strong>并排查看</strong><br>档案库右侧“＋”打开另一个窗口。窗口、表格宽度、行高和列宽可分别调整，空间不足时滚动查看。</p><p><strong>故事版本</strong><br>时间标签由你填写；排序坐标决定横轴先后。添加版本后，原版与新版本独立编辑。“未来版本”选择最近已保存的未来坐标，不会自动编造剧情。</p><p><strong>技能关键词</strong><br>为每个条目填写关键词，单击条目标题或行号复制；点击输入框编辑时不会复制。字段和条目可自由删除。</p><p><strong>导入与保存</strong><br>导入一定先预览，你可以修改内容和归属。浏览器自动保存失败时会显示提醒；建议定期下载JSON备份。</p><p class="help-text">工具业务完全在前端运行，不请求外部AI接口。GPT内的预览和持久存储能力由宿主决定。</p>`,button('dialog-close','开始使用','','primary'));
+  }
+  async function copyText(text) {
+    if(!String(text).trim()) return toast('此条目还没有关键词。');
+    try {
+      if(!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(String(text));toast('关键词已复制');
+    }catch{
+      const temp=document.createElement('textarea');temp.value=String(text);temp.style.cssText='position:fixed;left:-9999px;top:0';document.body.append(temp);temp.select();let copied=false;
+      try{copied=!!document.execCommand?.('copy');}catch{}temp.remove();
+      if(copied)toast('关键词已复制');
+      else { openDialog('请手动复制关键词',`<p class="help-text">此GPT视图或浏览器未允许自动写入剪贴板。选中下方文字后按 Ctrl+C，或使用系统复制。</p><textarea id="manual-copy" readonly style="width:100%;min-height:100px">${H(text)}</textarea>`,button('dialog-close','完成'));setTimeout(()=>$('#manual-copy')?.select(),20); }
+    }
+  }
+  root.addEventListener('pointerdown',event=>{
+    const handle=event.target.closest('[data-resize]');
+    if(handle){startResize(event,handle);return;}
+    const panel=event.target.closest('[data-panel]');if(panel)focusPanel(panel.dataset.panel);
+  });
+  function startResize(event,handle) {
+    if(event.button!==0) return;
+    const el=handle.closest('[data-panel]'),p=state.panels.find(p=>p.id===el.dataset.panel),v=panelVersion(p),kind=handle.dataset.resize;
+    const startX=event.clientX,startY=event.clientY;
+    const fieldId=handle.dataset.field,rowId=handle.dataset.row;
+    const rowKey=fieldId&&kind==='row'?`${rowId}_${fieldId}`:rowId;
+    const field=v.fields.find(f=>f.id===fieldId);
+    const start={width:p.width,height:p.height,tableWidth:v.layout.mode==='grid'?v.fields.reduce((n,f)=>n+f.width,0)+(v.visibleMeta.rowKeywords?230:110):v.layout.tableWidth,colWidth:field?.width||220,rowHeight:v.layout.rowHeights[rowKey]||(v.layout.mode==='grid'?100:86)};
+    let final={...start}; event.preventDefault();document.body.classList.add('resize-active');
+    try{handle.setPointerCapture?.(event.pointerId);}catch{}
+    function move(e){
+      const dx=e.clientX-startX,dy=e.clientY-startY;
+      if(kind==='panel'){final.width=Math.max(320,start.width+dx);final.height=Math.max(250,start.height+dy);el.style.width=`${final.width}px`;el.style.height=`${final.height}px`;$('.panel-bottom span:last-child',el).textContent=`${Math.round(final.width)} × ${Math.round(final.height)}`;}
+      else if(kind==='table'){if(v.layout.mode==='grid'){const extra=v.visibleMeta.rowKeywords?230:110;const sum=v.fields.reduce((n,f)=>n+f.width,0);const factor=Math.max(v.fields.length*80,start.tableWidth+dx-extra)/sum;final.columns=v.fields.map(f=>Math.max(80,f.width*factor));final.tableWidth=final.columns.reduce((n,x)=>n+x,0)+extra;$$('col',el).slice(0,v.fields.length).forEach((c,i)=>c.style.width=`${final.columns[i]}px`);$('.grid-sheet',el).style.width=`${final.tableWidth}px`;}else{final.tableWidth=Math.max(180,start.tableWidth+dx);$('.table-container',el).style.width=`${final.tableWidth}px`;$$('.form-sheet',el).forEach(t=>t.style.width=`${final.tableWidth}px`);}}
+      else if(kind==='column'){final.colWidth=Math.max(80,start.colWidth+dx);const index=v.fields.findIndex(f=>f.id===fieldId);const cols=$$('col',el);if(cols[index])cols[index].style.width=`${final.colWidth}px`;$('.grid-sheet',el).style.width=`${v.fields.reduce((n,f)=>n+(f.id===fieldId?final.colWidth:f.width),0)+(v.visibleMeta.rowKeywords?230:110)}px`;}
+      else if(kind==='row'){final.rowHeight=Math.max(44,start.rowHeight+dy);const targets=fieldId?$$(`textarea[data-row="${rowId}"][data-field="${fieldId}"]`,el):$$(`textarea[data-row="${rowId}"]`,el);targets.forEach(t=>t.style.height=`${final.rowHeight}px`);}
+    }
+    function finish(e){
+      document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',finish);document.removeEventListener('pointercancel',abort);handle.removeEventListener('lostpointercapture',abort);document.body.classList.remove('resize-active');
+      try{if(handle.hasPointerCapture?.(event.pointerId))handle.releasePointerCapture(event.pointerId);}catch{}
+      if(e.type==='pointercancel'||e.type==='lostpointercapture'){renderWorkspace();return;}
+      commit(s=>{const panel=s.panels.find(x=>x.id===p.id),version=C.version(s,p.archiveId,p.versionId);if(kind==='panel'){panel.width=final.width;panel.height=final.height;}else if(kind==='table'){if(version.layout.mode==='grid'&&final.columns)version.fields.forEach((f,i)=>f.width=final.columns[i]);else version.layout.tableWidth=final.tableWidth;}else if(kind==='column')version.fields.find(f=>f.id===fieldId).width=final.colWidth;else version.layout.rowHeights[rowKey]=final.rowHeight;});
+    }
+    function abort(e){finish(e);}
+    document.addEventListener('pointermove',move);document.addEventListener('pointerup',finish);document.addEventListener('pointercancel',abort);handle.addEventListener('lostpointercapture',abort);
+  }
+  root.addEventListener('keydown',event=>{
+    const handle=event.target.closest('[data-resize]');if(!handle||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;
+    event.preventDefault();const p=state.panels.find(p=>p.id===handle.closest('[data-panel]').dataset.panel),amount=event.shiftKey?50:10,dx=event.key==='ArrowRight'?amount:event.key==='ArrowLeft'?-amount:0,dy=event.key==='ArrowDown'?amount:event.key==='ArrowUp'?-amount:0;
+    const kind=handle.dataset.resize;
+    commit(s=>{const panel=s.panels.find(x=>x.id===p.id),v=C.version(s,p.archiveId,p.versionId);if(kind==='panel'){panel.width=Math.max(320,panel.width+dx);panel.height=Math.max(250,panel.height+dy);}else if(kind==='table'){if(v.layout.mode==='grid')v.fields.forEach(f=>f.width=Math.max(80,f.width+dx/v.fields.length));else v.layout.tableWidth=Math.max(180,v.layout.tableWidth+dx);}else if(kind==='column'){const f=v.fields.find(f=>f.id===handle.dataset.field);f.width=Math.max(80,f.width+dx);}else{const key=handle.dataset.field?`${handle.dataset.row}_${handle.dataset.field}`:handle.dataset.row;v.layout.rowHeights[key]=Math.max(44,(v.layout.rowHeights[key]||86)+dy);}});
+  });
+  root.addEventListener('input',event=>{
+    const el=event.target;
+    if(el.id==='library-search'){query=el.value;renderLibrary();if(view==='timeline')renderTimeline();return;}
+    if(el.dataset.importBind&&importPreview){const segment=importPreview.parsed.segments.find(s=>s.id===el.closest('[data-segment]').dataset.segment);segment[el.dataset.importBind]=el.value;return;}
+    if(el.dataset.typeBind){const typeId=el.closest('[data-type]').dataset.type;commit(s=>{const t=s.types.find(t=>t.id===typeId);if(el.dataset.typeBind==='name')t.name=el.value;else if(el.dataset.typeBind==='field')t.fields.find(f=>f.id===el.dataset.field).name=el.value;},{render:false,group:`type:${typeId}:${el.dataset.field||'name'}`});renderLibrary();return;}
+    const bind=el.dataset.bind,pel=el.closest('[data-panel]');if(!bind||!pel||bind==='version')return;
+    const p=state.panels.find(p=>p.id===pel.dataset.panel);
+    if(bind==='timeOrder'&&el.value.trim()&&!Number.isFinite(Number(el.value))){el.setAttribute('aria-invalid','true');return;}
+    el.removeAttribute('aria-invalid');
+    try{commit(s=>{const v=C.version(s,p.archiveId,p.versionId);if(bind==='cell')v.rows.find(r=>r.id===el.dataset.row).values[el.dataset.field]=el.value;else if(bind==='rowKeywords')v.rows.find(r=>r.id===el.dataset.row).keywords=C.keywords(el.value);else if(bind==='keywords')v.keywords=C.keywords(el.value);else if(bind==='timeOrder')v.timeOrder=el.value.trim()?Number(el.value):null;else v[bind]=el.value;},{render:false,group:`input:${p.id}:${bind}:${el.dataset.row||''}:${el.dataset.field||''}`});renderLibrary();if(bind==='keywords'||bind==='rowKeywords'){const holder=el.closest('.meta-wide,td');const wrap=holder&&$('.keyword-wrap',holder);if(wrap)wrap.innerHTML=C.keywords(el.value).map(word=>button('copy-word',word,'','keyword-chip',`data-word="${H(word)}"`)).join('');}}catch(e){toast(e.message,true);}
+  });
+  root.addEventListener('focusout',event=>{
+    if(event.target.matches('[data-bind="timeOrder"][aria-invalid]')){toast('排序坐标需要数字，或留空。此项未修改。',true);renderWorkspace();}
+  });
+  root.addEventListener('change',event=>{
+    const el=event.target;
+    if(el.id==='type-filter'){typeFilter=el.value;renderLibrary();renderTimeline();return;}
+    if(el.id==='timeline-zoom'){timelineZoom=Number(el.value);renderTimeline();return;}
+    if(el.dataset.importBind&&importPreview){const s=importPreview.parsed.segments.find(s=>s.id===el.closest('[data-segment]').dataset.segment);s[el.dataset.importBind]=el.value;if(el.dataset.importBind==='target')$('[data-import-bind="newName"]',el.closest('[data-segment]')).classList.toggle('hidden',el.value!=='new');return;}
+    if(el.dataset.typeBind&&['mode','copyOnClick'].includes(el.dataset.typeBind)){const id=el.closest('[data-type]').dataset.type;commit(s=>{const t=s.types.find(t=>t.id===id);t[el.dataset.typeBind]=el.dataset.typeBind==='copyOnClick'?el.checked:el.value;},{render:false});return;}
+    if(el.dataset.bind==='version'){const p=state.panels.find(p=>p.id===el.closest('[data-panel]').dataset.panel);commit(s=>{const pp=s.panels.find(x=>x.id===p.id);pp.versionId=el.value;C.archive(s,p.archiveId).activeVersionId=el.value;});return;}
+    if(el.id==='backup-file'&&el.files[0])restoreFile(el.files[0]);
+  });
+  async function restoreFile(file) {
+    try{
+      const text=await file.text();const candidate=C.validateState(JSON.parse(text));
+      openDialog('确认恢复备份',`<div class="callout">备份包含 ${candidate.archives.length} 份档案、${candidate.types.length} 个类型。恢复后替换当前档案库；你仍可撤销。</div><p class="help-text">建议先下载当前备份。文件：${H(file.name)}</p>`,`${button('backup-download','先备份当前档案','download')}${cancel()}${button('confirm-restore','确认恢复','','primary')}`);
+      modal.restore=candidate;
+    }catch(e){dialogError(e instanceof SyntaxError?'文件不是有效JSON，当前档案未改变。':e.message);}
+  }
+  function getPanelFromButton(btn){return state.panels.find(p=>p.id===(btn.dataset.panelId||btn.closest('[data-panel]')?.dataset.panel));}
+  root.addEventListener('click',async event=>{
+    const btn=event.target.closest('button[data-action]');
+    if(!btn){const tr=event.target.closest('[data-copy-row]');if(tr&&!event.target.closest('input,textarea,select,button,[data-resize]')){const p=state.panels.find(p=>p.id===tr.closest('[data-panel]').dataset.panel);if(C.archive(state,p.archiveId).copyOnClick){const r=panelVersion(p).rows.find(r=>r.id===tr.dataset.copyRow);await copyText(r.keywords.join('、'));}}return;}
+    const action=btn.dataset.action,p=getPanelFromButton(btn);
+    try{
+      if(action==='new')newDialog();
+      else if(action==='confirm-new'){const title=$('#new-title').value,typeId=$('#new-type').value||null,useTemplate=$('#new-template').checked;const a=commit(s=>C.createArchive(s,{title,typeId,useTemplate}));view='workspace';closeDialog();renderAll();revealPanel(state.activePanelId);toast('档案已创建，可自由增删字段。');}
+      else if(action==='open'||action==='compare'||action==='open-time'){const a=C.archive(state,btn.dataset.archive);const pp=commit(s=>C.openPanel(s,a.id,btn.dataset.version||a.activeVersionId,action==='compare'));view='workspace';renderAll();revealPanel(pp.id);$('#app-shell').classList.remove('show-sidebar');}
+      else if(action==='sidebar')$('#app-shell').classList.toggle('show-sidebar');
+      else if(action==='workspace'||action==='timeline'){view=action;renderAll();}
+      else if(action==='dialog-close'){closeDialog();renderAll();}
+      else if(action==='undo'||action==='redo')undo(action==='redo');
+      else if(action==='close-panel'){commit(s=>{s.panels=s.panels.filter(x=>x.id!==p.id);s.activePanelId=s.panels.at(-1)?.id||null;});}
+      else if(action==='meta')metaDialog(p);
+      else if(action==='confirm-meta'){const labels={},visible={};for(const key of ['title','number','time','keywords','rowKeywords']){labels[key]=$(`#meta-label-${key}`).value;visible[key]=$(`#meta-visible-${key}`).checked;}commit(s=>{const v=C.version(s,p.archiveId,p.versionId);for(const key of Object.keys(labels)){v.metaLabels[key]=labels[key];if(!visible[key])C.removeMeta(v,key);else v.visibleMeta[key]=true;}});closeDialog();}
+      else if(action==='add-field'||action==='edit-field')fieldDialog(p,btn.dataset.field||'');
+      else if(action==='confirm-field'){const name=$('#field-name').value,aliases=C.keywords($('#field-aliases').value),fid=btn.dataset.field;commit(s=>{const v=C.version(s,p.archiveId,p.versionId);const f=fid?v.fields.find(f=>f.id===fid):C.addField(v,name);if(!f)throw C.error('INVALID_REF','字段已不存在。');f.name=name;f.aliases=aliases;});closeDialog();}
+      else if(action==='confirm-delete-field'){commit(s=>C.removeField(C.version(s,p.archiveId,p.versionId),btn.dataset.field));closeDialog();toast('字段及对应内容已删除，可撤销。');}
+      else if(action==='add-row'){commit(s=>C.version(s,p.archiveId,p.versionId).rows.push(C.row()));}
+      else if(action==='delete-row'){commit(s=>{const v=C.version(s,p.archiveId,p.versionId);v.rows=v.rows.filter(r=>r.id!==btn.dataset.row);});toast('条目已删除，可撤销。');}
+      else if(action==='layout')commit(s=>{const v=C.version(s,p.archiveId,p.versionId);v.layout.mode=v.layout.mode==='form'?'grid':'form';});
+      else if(action==='copy-mode'){commit(s=>{const a=C.archive(s,p.archiveId);a.copyOnClick=!a.copyOnClick;});toast(C.archive(state,p.archiveId).copyOnClick?'已启用单击条目复制关键词':'已关闭整行复制；仍可点击条目标题复制');}
+      else if(action==='copy-row'){const r=panelVersion(p).rows.find(r=>r.id===btn.dataset.row);await copyText(r?.keywords.join('、')||'');}
+      else if(action==='copy-word')await copyText(btn.dataset.word);
+      else if(action==='new-version')versionDialog(p);
+      else if(action==='confirm-version'){const label=$('#version-time').value,raw=$('#version-order').value.trim(),blank=!$('#version-copy').checked;if(raw&&!Number.isFinite(Number(raw)))throw C.error('INVALID_TIME','排序坐标应为数字，或留空。');commit(s=>{const v=C.createVersion(s,p.archiveId,p.versionId,{timeLabel:label,timeOrder:raw?Number(raw):null,blank});s.panels.find(x=>x.id===p.id).versionId=v.id;});closeDialog();toast('新版本已创建，原版本保留。');}
+      else if(action==='future'){const a=C.archive(state,p.archiveId),v=panelVersion(p),future=C.futureVersion(a,v.id);if(v.timeOrder===null)toast('当前版本还没有排序坐标，请先设置故事时间。');else if(!future)toast('还没有已保存的未来版本，可点击“添加版本”录入。');else commit(s=>{s.panels.find(x=>x.id===p.id).versionId=future.id;C.archive(s,p.archiveId).activeVersionId=future.id;});}
+      else if(action==='compare-version'){const pp=commit(s=>C.openPanel(s,p.archiveId,p.versionId,true));revealPanel(pp.id);}
+      else if(action==='archive-menu')archiveMenu(p);
+      else if(action==='confirm-archive-type'){const typeId=$('#archive-type').value||null;commit(s=>{C.archive(s,p.archiveId).typeId=typeId;});closeDialog();}
+      else if(action==='delete-archive'||action==='delete-version'){const archiveId=p.archiveId,versionId=p.versionId;openDialog(action==='delete-archive'?'删除整份档案？':'删除这个版本？','<p class="help-text">删除后可使用顶部撤销按钮恢复。</p>',`${cancel()}${button(action==='delete-archive'?'confirm-delete-archive':'confirm-delete-version','确认删除','','danger',`data-archive="${archiveId}" data-version="${versionId}"`)}`);}
+      else if(action==='confirm-delete-archive'||action==='confirm-delete-version'){commit(s=>action==='confirm-delete-archive'?C.deleteArchive(s,btn.dataset.archive):C.deleteVersion(s,btn.dataset.archive,btn.dataset.version));closeDialog();toast('已删除，可撤销。');}
+      else if(action==='types')typesDialog();
+      else if(action==='add-type'){const name=$('#new-type-name').value;commit(s=>s.types.push(C.type(name)));typesDialog();}
+      else if(action==='delete-type'){const t=state.types.find(t=>t.id===btn.dataset.type),count=state.archives.filter(a=>a.typeId===t.id).length;openDialog('删除类型',`<p>将删除“${H(t.name||'未命名类型')}”及模板字段。</p><p class="help-text">已有 ${count} 份档案，默认保留内容并改为未分类。</p><label class="check-line"><input id="delete-type-archives" type="checkbox">连同这些档案一起删除</label>`,`${cancel()}${button('confirm-delete-type','确认删除','','danger',`data-type="${t.id}"`)}`);}
+      else if(action==='confirm-delete-type'){const all=$('#delete-type-archives').checked;commit(s=>C.deleteType(s,btn.dataset.type,all));typesDialog();}
+      else if(action==='add-type-field'){commit(s=>s.types.find(t=>t.id===btn.dataset.type).fields.push(C.field('')));typesDialog();}
+      else if(action==='delete-type-field'){commit(s=>{const t=s.types.find(t=>t.id===btn.dataset.type);t.fields=t.fields.filter(f=>f.id!==btn.dataset.field);});typesDialog();}
+      else if(action==='template')templateDialog(p);
+      else if(action==='apply-template'){const t=state.types.find(t=>t.id===$('#template-type').value),replace=$('#template-replace').checked;if(!t)throw C.error('NO_TEMPLATE','请先创建一个档案类型。');commit(s=>C.applyTemplate(C.version(s,p.archiveId,p.versionId),t,replace));closeDialog();toast(replace?'已替换当前字段和内容，可撤销':'已补充模板字段，现有内容保留');}
+      else if(action==='save-template'){const name=$('#template-save-name').value,v=panelVersion(p);commit(s=>{const t=C.type(name);t.fields=C.copy(v.fields).map(f=>({...f,id:C.uid('f')}));t.mode=v.layout.mode;t.copyOnClick=C.archive(s,p.archiveId).copyOnClick;s.types.push(t);});closeDialog();toast('字段结构已保存为可修改的类型模板');}
+      else if(action==='timeline-clock')openDialog('自定义时间轴',`<label class="form-group"><span>时间轴名称</span><input id="clock-name" value="${H(state.clockName)}"></label><label class="form-group"><span>坐标单位（可留空）</span><input id="clock-unit" value="${H(state.clockUnit)}" placeholder="例如：章、天，或自己的单位"></label><p class="help-text">不要求现实日期。每个版本的数字坐标仅决定先后，标签由你填写。</p>`,`${cancel()}${button('confirm-clock','保存','','primary')}`);
+      else if(action==='confirm-clock'){const name=$('#clock-name').value,unit=$('#clock-unit').value;commit(s=>{s.clockName=name;s.clockUnit=unit;});closeDialog();}
+      else if(action==='import'||action==='panel-import')importDialog(p||activePanel());
+      else if(action==='preview-import'){const parsed=TextImporter.preview($('#import-text').value,panelVersion(p).fields);showImportPreview(p,parsed);}
+      else if(action==='back-import'){const raw=importPreview.parsed.raw;importDialog(p);$('#import-text').value=raw;}
+      else if(action==='confirm-import'){if(state.revision!==importPreview.baseRevision)throw C.error('REVISION_CONFLICT','档案在预览期间已更新，请返回并重新预览。');const parsed=importPreview.parsed,v=panelVersion(p),appendRows=$('#import-new-rows')?.checked;const empty=v.rows.length===1&&!Object.values(v.rows[0].values).some(Boolean)&&!v.rows[0].keywords.length;const startRow=appendRows&&!empty?v.rows.length:0;const result=TextImporter.apply(v,parsed,{startRow});commit(s=>{const a=C.archive(s,p.archiveId),index=a.versions.findIndex(v=>v.id===p.versionId);a.versions[index]=result.version;});closeDialog();toast(`已导入 ${result.written} 段，可继续编辑或撤销。`);}
+      else if(action==='export')await exportImage(p);
+      else if(action==='image-download')download(modal.image,modal.imageName);
+      else if(action==='backup')backupDialog();
+      else if(action==='backup-download'){const blob=new Blob([JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});download(blob,`小说档案备份-${new Date().toISOString().slice(0,10)}.json`);toast('备份已生成，已尝试下载。');}
+      else if(action==='restore-file')$('#backup-file').click();
+      else if(action==='confirm-restore'){const candidate=modal.restore;commit(s=>{const revision=s.revision;Object.keys(s).forEach(k=>delete s[k]);Object.assign(s,C.copy(candidate));s.revision=revision;});closeDialog();view='workspace';renderAll();toast('备份已恢复，可撤销。');}
+      else if(action==='save-details')saveDetails();
+      else if(action==='retry-save'){await flushSave();if(!lastSaveError){closeDialog();toast('已保存到此浏览器');}else dialogError(lastSaveError.message);}
+      else if(action==='reload-data')openDialog('重新载入已保存档案？','<p class="help-text">这会放弃当前未保存的修改。可先下载备份。</p>',`${button('backup-download','先备份当前档案','download')}${cancel()}${button('confirm-reload','载入已保存档案','','primary')}`);
+      else if(action==='confirm-reload'){clearTimeout(saveTimer);if(savePromise)await savePromise;const saved=await storage.load();if(!saved)throw C.error('NO_SAVED_DATA','此浏览器还没有已保存的档案。');state=C.validateState(saved);undoStack.length=0;redoStack.length=0;dirty=false;lastSaveError=null;saveStatus('已载入浏览器档案');closeDialog();renderAll();}
+      else if(action==='help')helpDialog();
+    }catch(e){dialogError(e.message||'操作未完成，请重试。');}
+  });
+  document.addEventListener('keydown',event=>{
+    if(modal){if(event.key==='Escape'){closeDialog();return;}if(event.key==='Tab'){const controls=$$('.dialog button:not([disabled]),.dialog input:not([disabled]),.dialog textarea:not([disabled]),.dialog select:not([disabled])').filter(el=>!el.classList.contains('hidden'));const first=controls[0],last=controls.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}}return;}
+    if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='z'&&!event.target.matches('input,textarea')){event.preventDefault();undo(event.shiftKey);}
+  });
+  window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
+  async function registerHostTools() {
+    const registry=document.modelContext;
+    if(typeof registry?.registerTool!=='function')return;
+    const schema={type:'object',properties:{},additionalProperties:false};
+    const readonly={readOnlyHint:true,untrustedContentHint:true};
+    const tools=[
+      {name:'read_novel_archives',description:'读取当前浏览器小说档案的类型、字段和时间版本，不修改数据。',inputSchema:schema,annotations:readonly,execute:()=>({revision:state.revision,archives:C.copy(state.archives),types:C.copy(state.types)})},
+      {name:'open_novel_archive',description:'在对照工作台打开指定档案或已有时间版本，不修改正文。',inputSchema:{type:'object',properties:{archiveId:{type:'string'},versionId:{type:'string'},compare:{type:'boolean'}},required:['archiveId'],additionalProperties:false},execute:input=>{if(!input||typeof input.archiveId!=='string'||(input.versionId!==undefined&&typeof input.versionId!=='string')||(input.compare!==undefined&&typeof input.compare!=='boolean'))throw C.error('INVALID_INPUT','档案引用格式不正确。');const p=commit(s=>C.openPanel(s,input.archiveId,input.versionId,!!input.compare));view='workspace';renderAll();return {opened:true,panelId:p.id};}},
+      {name:'preview_novel_archive_import',description:'把文字放入当前档案的导入预览，等待作者确认归属；不写入档案正文。',inputSchema:{type:'object',properties:{text:{type:'string'}},required:['text'],additionalProperties:false},execute:input=>{if(!input||typeof input.text!=='string')throw C.error('INVALID_INPUT','请输入文本。');const p=activePanel();if(!p)throw C.error('NO_ACTIVE_ARCHIVE','请先打开档案。');const parsed=TextImporter.preview(input.text,panelVersion(p).fields);showImportPreview(p,parsed);return {previewOpened:true,segments:parsed.segments.length,requiresAuthorConfirmation:true};}}
+    ];
+    for(const tool of tools)try{await registry.registerTool(tool);}catch{}
+  }
+  window.NovelArchive={getState:()=>C.copy(state),getHostStatus:()=>({...host,storage:storage.mode,saved:!dirty}),previewImport:text=>{const p=activePanel();if(!p)throw C.error('NO_ACTIVE_ARCHIVE','请先打开档案。');showImportPreview(p,TextImporter.preview(text,panelVersion(p).fields));return {previewOpened:true};},flushSave};
+  async function init(){
+    renderAll();
+    try{await storage.open();const saved=await storage.load();if(saved)state=C.validateState(saved);loaded=true;renderAll();saveStatus(storage.mode==='memory'?'未持久保存 · 请备份':'已准备 · 此浏览器保存',storage.mode==='memory');}
+    catch(e){loaded=true;storage.mode='memory';lastSaveError=e;saveStatus('原存储读取失败 · 请处理',true);toast(`${e.message} 原数据未覆盖，请先导出或恢复有效备份。`,true);}
+    try{broadcast=new BroadcastChannel('novel-archive-studio');broadcast.onmessage=event=>{if(event.data?.revision>state.revision||event.data?.revision>storage.lastSavedRevision){lastSaveError=C.error('REVISION_CONFLICT','另一个窗口已更新档案，请先备份当前内容，再载入已保存档案。');saveStatus('其他窗口已更新 · 请处理',true);}};}catch{}
+    await registerHostTools();
+  }
+  init();
+})();
+
+</script></body></html>
