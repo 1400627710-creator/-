@@ -1,4 +1,5 @@
-import {available,BASIC_ID} from './layout-core.mjs';
+import {available,BASIC_ID,creationDefault} from './layout-core.mjs';
+export {creationDefault,defaultTemplateId} from './layout-core.mjs';
 import {copy,uid} from './model.mjs';
 const builtins=new Set(['basic-unit','unit','spell','building','event']);
 const assert=(ok,message)=>{if(!ok)throw new Error(message);};
@@ -30,6 +31,7 @@ export function copyTemplate(studio,catalog,id,name){
 }
 export function retireTemplate(studio,catalog,id,retired=true){
   assert(catalog[id],'模板已不存在');assert(!['unit',BASIC_ID].includes(id)||!retired,'标准单位模板作为空白起点保留');
+  assert(!retired||creationDefault(studio,catalog)?.templateId!==id,'这是当前唯一默认，请先将另一张卡片设为默认');
   studio.projectDesign||={};const hidden=new Set(studio.projectDesign.hiddenTemplates||[]);
   if(retired)hidden.add(id);else hidden.delete(id);studio.projectDesign.hiddenTemplates=[...hidden];
   // Definitions and existing cards remain intact, including locked cards.

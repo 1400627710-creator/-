@@ -39,7 +39,7 @@ html=(root/'legacy/studio/index.html').read_text()
 body=re.search(r'<body[^>]*>([\s\S]*?)</body>',html).group(1)
 body=re.sub(r'<script[\s\S]*?</script>','',body)
 body=body.replace('特殊效果的统一定义、颜色与检索仓库 · 与 Community 共用 cardstudio-glossary-v1','词条定义、颜色和检索 · 与车卡机共用词条格式')
-body=body.replace('<b>CardStudio</b>','<b>卡递</b>').replace('Card design workspace','卡牌工作台').replace('Beta 10','本地 1.2')
+body=body.replace('<b>CardStudio</b>','<b>卡递</b>').replace('Card design workspace','卡牌工作台').replace('Beta 10','本地 1.2.1')
 css='\n'.join((root/'legacy/studio'/name).read_text() for name in ['styles.css','workspace-ui.css','public-repository.css'])
 css=css.replace(':root',':host');css=re.sub(r'(?<![\w.#-])body(?![\w-])','.legacy-body',css);css=re.sub(r'(^|[},\s])html(?=[\s,{.#:])',r'\1.legacy-body',css)
 css+='\n:host{display:block;height:100%;min-width:0}.legacy-body{height:100%;overflow:hidden}.legacy-body.workspace-v9{height:100%;min-height:0}#publishSharedGlossary,#receiveCommunityTerms,#openCommunityEdition,#downloadCommunityEdition,#openPublicTerms,#openPublicAssets,#openAiSettings,#openAiWorkbench,#openRecovery,#projectImport,#importBtn,.ai-bridge{display:none!important}.app-header .version-badge{font-size:11px}.project-name{pointer-events:none}.top-menu{z-index:160}.canvas-viewport{min-height:240px}'
@@ -84,7 +84,7 @@ replaceUnifiedStudio(initial);
 window.UnifiedStudio={getState:function(){return projectPayload(true)},replaceState:replaceUnifiedStudio,openCard:function(id){selected=id;layoutEditing=false;renderAll();},exportProject:buildProjectArchive,thumbnail:function(id){var c=cards.find(function(c){return c.id===id});if(!c)return '';renderExport(c);return $('#exportCard').innerHTML;},flush:function(){if(preflightRepairBusy)throw new Error('项目检查修复正在进行，请完成后再切换项目');if(persistTimer)flushLocalPersist();},css:STUDIO_CSS};
 })();
 '''
-s=s.replace('window.UnifiedStudio={getState:', 'window.UnifiedStudio={getTemplates:function(){return clone(TEMPLATES)},createCard:function(tid,name){if(!TEMPLATES[tid])throw Error("找不到这份模板");recordHistory();var c=normalizeCard(makeCard(tid));if(name)c.name=name;cards.push(c);selected=c.id;renderAll();persist();return c.id;},getState:')
+s=s.replace('window.UnifiedStudio={getState:', 'window.UnifiedStudio={getTemplates:function(){return clone(TEMPLATES)},createCard:function(tid,name){tid=tid||KadiLayout.defaultTemplateId({projectDesign:projectDesign},TEMPLATES);if(!TEMPLATES[tid])throw Error("找不到这份模板");recordHistory();var c=normalizeCard(makeCard(tid));if(name)c.name=name;cards.push(c);selected=c.id;renderAll();persist();return c.id;},getState:')
 s=s.replace('css:STUDIO_CSS','css:'+J(css))
 out+=s+'\nreturn {...window.UnifiedStudio,shadow,zip:window.JSZip,xlsx:XLSX,papa:window.Papa};\n}\n'
 (root/'ui/engines.mjs').write_text(out)

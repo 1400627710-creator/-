@@ -235,13 +235,14 @@ function applyTemplateMaster(templateId){
 }
 
 var makeCard=function(templateId,name){
-  var t=TEMPLATES[templateId]||TEMPLATES[KadiLayout.BASIC_ID],basic=t.cardRules==="seven-v1";
-  return {
+  var t=TEMPLATES[templateId||KadiLayout.defaultTemplateId({projectDesign:projectDesign},TEMPLATES)]||TEMPLATES[KadiLayout.BASIC_ID],basic=t.cardRules==="seven-v1";
+  var card={
     id:uid(),templateId:t.id,cardKind:"unit",name:name||("新"+t.short+"卡"),cost:basic?0:1,faction:basic?"":"中立",
     description:basic?"":"在这里填写卡牌效果。可使用 {费用}、{攻击} 等变量。",
     attack:t.id==="event"?0:1,health:t.id==="event"?0:1,move:t.id==="unit"?2:0,range:t.id==="unit"?1:0,
     unitType:basic?"":t.short,rarity:basic?"":"普通",workflowStatus:"设计中",tags:"",rulesKeywords:"",cardNumber:"",setName:"",setId:"",familyId:"",variantKind:"标准",variantOf:"",releaseLocked:false,year:String(new Date().getFullYear()),credit:"",art:"",artAssetId:"",artPrompt:"",customFields:{},appearance:Object.assign(clone(DEFAULT_APPEARANCE),basic?{statsColor:"#111827"}:{}),layout:makeLayout(t.id),layoutOverrides:{},extraElements:[]
   };
+  return KadiLayout.applyCreationDefault(card,{projectDesign:projectDesign},uid);
 };
 var sample=[makeCard(KadiLayout.BASIC_ID,"新单位卡")];
 
@@ -447,7 +448,7 @@ function findAssetByDataUrl(dataUrl){return userAssets.find(function(a){return a
 function registerAsset(dataUrl,name,category,meta){if(!dataUrl)return null;meta=meta||{};var existing=findAssetByDataUrl(dataUrl);if(existing){existing.roles=assetRoles(existing);if(category&&existing.roles.indexOf(category)<0)existing.roles.push(category);["width","height","source","aiProvider","aiModel","aiQuality","generatedAt"].forEach(function(k){if((existing[k]==null||existing[k]==="")&&meta[k]!=null&&meta[k]!=="")existing[k]=meta[k]});cacheAssetBinary(existing);return existing}var a=Object.assign({id:uid(),name:name||"未命名素材",category:category||"custom",roles:[category||"custom"],dataUrl:dataUrl,createdAt:new Date().toISOString()},meta);userAssets.push(a);cacheAssetBinary(a);return a}
 function assignCardArt(card,dataUrl,name,meta){if(!card)return null;if(!dataUrl){card.art="";card.artAssetId="";return null}var a=registerAsset(dataUrl,name||((card.name||"卡牌")+" · 插画"),"art",meta||{});card.artAssetId=a.id;card.art="";return a}
 function migrateLegacyArtAssets(){cards.forEach(function(c){if(c.art&&String(c.art).indexOf("data:image/")===0)assignCardArt(c,c.art,(c.name||"卡牌")+" · 插画")});cacheAllAssetBinaries()}
-function assetReferenceCount(id){var n=0;if(projectDesign.cardBackAssetId===id)n++;Object.keys(cardBackProfiles.byTemplate||{}).forEach(function(k){if(cardBackProfiles.byTemplate[k]===id)n++});Object.keys(cardBackProfiles.bySet||{}).forEach(function(k){if(cardBackProfiles.bySet[k]===id)n++});cards.forEach(function(c){if(c.artAssetId===id)n++;var a=c.appearance||{};["iconAssetId","frameImageAssetId","textureImageAssetId"].forEach(function(k){if(a[k]===id)n++});(c.extraElements||[]).forEach(function(el){if(el.assetId===id)n++})});return n}
+function assetReferenceCount(id){var n=KadiLayout.defaultReferencesAsset({projectDesign:projectDesign},id)?1:0;if(projectDesign.cardBackAssetId===id)n++;Object.keys(cardBackProfiles.byTemplate||{}).forEach(function(k){if(cardBackProfiles.byTemplate[k]===id)n++});Object.keys(cardBackProfiles.bySet||{}).forEach(function(k){if(cardBackProfiles.bySet[k]===id)n++});cards.forEach(function(c){if(c.artAssetId===id)n++;var a=c.appearance||{};["iconAssetId","frameImageAssetId","textureImageAssetId"].forEach(function(k){if(a[k]===id)n++});(c.extraElements||[]).forEach(function(el){if(el.assetId===id)n++})});return n}
 function assetSizeBytes(a){var d=a&&a.dataUrl||assetBinaryCache[a&&a.id]||"";if(!d)return 0;var comma=d.indexOf(","),b64=comma>=0?d.slice(comma+1):d;return Math.max(0,Math.floor(b64.length*3/4))}
 function formatBytes(n){if(n<1024)return n+" B";if(n<1024*1024)return (n/1024).toFixed(1)+" KB";return (n/1024/1024).toFixed(1)+" MB"}
 
@@ -1001,7 +1002,10 @@ var renderPreviewOnly=function(){
   if(inlineCanvasSession)finishInlineCanvasText(false);
   if(inlineFieldSession)finishInlineCardField(false,false);
   enforceTitleAxis(c.layout);$("#preview").innerHTML=cardHtml(c,!isCardLocked(c));setArt($("#preview"),c);fitTitleToBox($("#preview"),c);fitEffectToBox($("#preview"),c);$("#preview").classList.toggle("layout-editing",layoutEditing);applySelectionClasses();renderLayerPanel();
-  $("#templateName").textContent=t.name;renderNavigatorOverview();scheduleLiveQa();scheduleWorkspaceFit();
+  $("#templateName").textContent=t.name;
+  var savedDefault=KadiLayout.creationDefault({projectDesign:projectDesign},TEMPLATES),defaultButton=$("#setDefaultCard");
+  if(defaultButton){defaultButton.textContent=savedDefault&&savedDefault.sourceCardId===c.id?"更新唯一默认":"设为唯一默认";defaultButton.title=savedDefault?"当前默认："+savedDefault.templateName+" · "+savedDefault.sourceName+"。点击保存当前卡的完整格式。":"将当前卡的卡框、图层、字体与位置用于以后新建卡片";}
+  renderNavigatorOverview();scheduleLiveQa();scheduleWorkspaceFit();
 };
 function textControlTargets(){
   var c=current(),raw=$("#textTarget")?$("#textTarget").value:"title";
@@ -1487,7 +1491,8 @@ $("#applyTextAll").onclick=function(){
 $("#templateCards").addEventListener("click",function(e){var b=e.target.closest("[data-template]");if(b)setTemplate(b.getAttribute("data-template"))});
 $("#presetShowcase").onclick=function(){recordHistory();applyCompositionPreset("showcase")};
 $("#presetClassicFrame").onclick=function(){recordHistory();applyCompositionPreset("classic")};
-$("#newCard").onclick=function(){recordHistory();var source=current(),c=makeCard(source.templateId);c.cardKind=source.cardKind||"unit";c.appearance=clone(source.appearance);Object.keys(IMAGE_ROLE_FIELDS).forEach(function(k){if(c.appearance[IMAGE_ROLE_FIELDS[k]]&&source.layout[k]){c.layout[k]=clone(source.layout[k]);c.layoutOverrides[k]=true}});c.imageLayerDefaults=clone(source.imageLayerDefaults||{});c.setId=source.setId||"";c.setName=setDisplayName(source);cards.push(c);selected=c.id;renderAll();setStatus("已创建"+TEMPLATES[c.templateId].name)};
+$("#setDefaultCard").onclick=function(){var c=current();if(!c)return;recordHistory();KadiLayout.captureDefault({cards:cards,projectDesign:projectDesign,templateBadgeStyles:templateBadgeStyles},c,TEMPLATES);renderAll();persist();setStatus("已设为唯一默认："+TEMPLATES[c.templateId].name+" · "+c.name+"。以后新建沿用此格式；修改后可点“更新唯一默认”。")};
+$("#newCard").onclick=function(){recordHistory();var saved=KadiLayout.creationDefault({projectDesign:projectDesign},TEMPLATES),source=current(),c=makeCard(saved?undefined:source.templateId);if(!saved){c.cardKind=source.cardKind||"unit";c.appearance=clone(source.appearance);Object.keys(IMAGE_ROLE_FIELDS).forEach(function(k){if(c.appearance[IMAGE_ROLE_FIELDS[k]]&&source.layout[k]){c.layout[k]=clone(source.layout[k]);c.layoutOverrides[k]=true}});c.imageLayerDefaults=clone(source.imageLayerDefaults||{});c.setId=source.setId||"";c.setName=setDisplayName(source)}c=normalizeCard(c);cards.push(c);selected=c.id;renderAll();persist();setStatus(saved?"已按默认格式创建"+TEMPLATES[c.templateId].name:"已创建"+TEMPLATES[c.templateId].name)};
 $("#duplicate").onclick=function(){recordHistory();var c=clone(current());c.id=uid();c.name=current().name+" - 副本";c.familyId="";c.variantKind="标准";c.variantOf="";c.workflowStatus="设计中";c.releaseLocked=false;cards.push(c);selected=c.id;renderAll();setStatus("已复制为独立卡牌；不会误继承原卡家族")};
 $("#delete").onclick=function(){if(cards.length<=1)return;if(isCardLocked(current())){setStatus("已锁定卡牌不能直接删除");return}recordHistory();var removed=selected;cards=cards.filter(function(c){return c.id!==removed});playtests=playtests.filter(function(x){return x.cardId!==removed});cardFamilies.forEach(function(f){if(f.baseCardId===removed){var m=cardFamilyMembers(f.id);f.baseCardId=m[0]?m[0].id:""}});ensureFamilyIntegrity();selected=cards[0].id;renderAll();setStatus("已删除卡牌及其测试记录")};
 
@@ -1784,11 +1789,12 @@ $("#cloneTemplate").onclick=function(){
   var statText=prompt("保留哪些数值？可填：攻击,血量,移速,射程，用逗号分隔",base.stats.map(function(x){return x[2]}).join(","));if(statText==null)return;
   var map={攻击:["attack","攻","攻击"],威力:["attack","威","威力"],火力:["attack","火","火力"],血量:["health","血","血量"],耐久:["health","耐","耐久"],移速:["move","移","移速"],射程:["range","射","射程"]};
   var stats=statText.split(/[,，]/).map(function(x){return x.trim()}).filter(Boolean).map(function(x){return map[x]||null}).filter(Boolean);
-  var id="custom-"+uid();customTemplates[id]={id:id,name:name,short:name.slice(0,4),hint:stats.length?stats.map(function(x){return x[2]}).join(" / "):"大文本区",typeLabel:typeLabel,stats:stats,baseLayout:base.baseLayout||base.id};
+  var id="custom-"+uid();customTemplates[id]={id:id,name:name,short:name.slice(0,4),hint:stats.length?stats.map(function(x){return x[2]}).join(" / "):"大文本区",typeLabel:typeLabel,stats:stats,baseLayout:base.baseLayout||base.id,cardRules:base.cardRules};
   recordHistory();rebuildTemplateCatalog();templateLayouts[id]=masterLayoutSnapshot(id,current().layout);customTemplates[id].masterLayout=clone(templateLayouts[id]);templateConditions[id]=clone(templateConditions[base.id]||{});current().templateId=id;current().layout=makeLayout(id);current().layoutOverrides={};renderAll();setStatus("已创建自定义模板："+name+"；已继承统一坐标与条件显示规则");
 };
 $("#deleteTemplate").onclick=function(){
   var c=current(),id=c&&c.templateId;if(!id||id==="unit"||id===KadiLayout.BASIC_ID){setStatus("标准单位模板作为空白起点保留");return}
+  var saved=KadiLayout.creationDefault({projectDesign:projectDesign},TEMPLATES);if(saved&&saved.templateId===id){setStatus("这是当前唯一默认，请先将另一张卡片设为默认");return}
   recordHistory();projectDesign.hiddenTemplates=Array.from(new Set((projectDesign.hiddenTemplates||[]).concat(id)));renderAll();persist();setStatus("模板已停用；已有卡片、字段与排版保持原样，可在模板与字段中恢复");
 };
 $("#batchImages").onclick=function(){$("#batchImageFiles").click()};
@@ -1826,7 +1832,7 @@ $("#customAssetList").onclick=async function(e){
   if(place){var pa=userAssets.find(function(x){return x.id===place.getAttribute("data-place-custom")});if(pa){setLayoutMode(true,false);addFreeImage(pa)}return}
   if(apply){var a=userAssets.find(function(x){return x.id===apply.getAttribute("data-apply-custom")}),role=apply.getAttribute("data-apply-role")||"";if(!a)return;try{await imageTools.applyRole(a,role);renderAll();setStatus("已应用自定义素材："+a.name)}catch(err){setStatus(err.message)}return}
   if(fav){var fa=userAssets.find(function(x){return x.id===fav.getAttribute("data-fav-custom")});if(fa){fa.favorite=!fa.favorite;renderCustomAssets();persist()}return}
-  if(remove){var id=remove.getAttribute("data-remove-custom");recordHistory();userAssets=userAssets.filter(function(a){return a.id!==id});cards.forEach(function(c){if(c.artAssetId===id)c.artAssetId="";["iconAssetId","frameImageAssetId","textureImageAssetId"].forEach(function(k){if(c.appearance[k]===id)c.appearance[k]=""});(c.extraElements||[]).forEach(function(el){if(el.assetId===id)el.assetId=""})});renderAll();setStatus("自定义素材已删除")}
+  if(remove){var id=remove.getAttribute("data-remove-custom");if(KadiLayout.defaultReferencesAsset({projectDesign:projectDesign},id)){setStatus("此素材用于唯一默认格式，请先更新默认格式再删除");return}recordHistory();userAssets=userAssets.filter(function(a){return a.id!==id});cards.forEach(function(c){if(c.artAssetId===id)c.artAssetId="";["iconAssetId","frameImageAssetId","textureImageAssetId"].forEach(function(k){if(c.appearance[k]===id)c.appearance[k]=""});(c.extraElements||[]).forEach(function(el){if(el.assetId===id)el.assetId=""})});renderAll();setStatus("自定义素材已删除")}
 };
 $("#batchRename").onclick=function(){
   var visible=getVisibleCards(),list=visible.filter(function(c){return !isCardLocked(c)}),prefix=$("#namePrefix").value,start=num($("#nameStart").value,1);if(!list.length){setStatus("没有可命名的未锁定卡牌");return}recordHistory();

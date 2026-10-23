@@ -2,6 +2,7 @@ import {ArchiveCore as C} from '../lib/archive-core.mjs';
 import {envelope} from '../../shared/exchange.mjs';
 import {recoveryCache} from './recovery-cache.mjs';
 import {createLocalService} from './local-service.mjs';
+import * as Layout from '../lib/layout-core.mjs';
 async function main(){
 const assert=(ok,message)=>{if(!ok)throw new Error(message);};
 const list=document.querySelector('#checks');
@@ -40,6 +41,14 @@ try{
  });
  await check('恢复缓存写入与删除按顺序提交，不复活已保存草稿',async()=>{
   const id='qa_recovery_'+Date.now();await Promise.all([recoveryCache(id,'put',{studio:{name:'旧草稿'}}),recoveryCache(id,'delete')]);assert(!(await recoveryCache(id,'get')),'已删除草稿被旧写入复活');
+ });
+ await check('唯一默认格式保存重开后保留原卡、透明卡框、自由图层与字体',async()=>{
+  const other=(await service({action:'create',title:'唯一默认隔离测试'})).project,id='qa_true_unit',catalog={[id]:{...Layout.BASIC_TEMPLATE,id,name:'真单位卡'}};
+  other.studio.customTemplates=catalog;const source={id:'qa_default_source',name:'帮派弟兄',templateId:id,appearance:{frameImageAssetId:'qa_frame'},layout:{title:{x:20,y:4,w:60,h:8,z:20},frameImage:{x:2,y:0,w:96,h:100,z:11,fit:'contain',lockAspect:true}},textStyles:{title:{size:19}},extraElements:[{id:'qa_free',kind:'text',text:'单位',layout:{x:10,y:50,w:20,h:8,z:40}}]};
+  other.studio.cards=[source];const before=JSON.stringify(source);Layout.captureDefault(other.studio,source,catalog);
+  await service({action:'studio',projectId:other.id,studio:other.studio,expectedStudioRevision:other.studioRevision});await service.close();service=createLocalService(dbName);
+  const read=(await service({action:'get',projectId:other.id})).project;assert(JSON.stringify(read.studio.cards[0])===before,'设置默认改动了原卡');assert(Layout.defaultTemplateId(read.studio,catalog)===id,'重开后默认丢失');
+  const fresh=Layout.applyCreationDefault({templateId:id,name:'新单位'},read.studio,()=>C.uid('layer'));assert(fresh.layout.frameImage.w===96&&fresh.textStyles.title.size===19&&fresh.extraElements[0].text==='单位','格式未完整继承');assert(fresh.extraElements[0].id!=='qa_free','自由层编号重复');
  });
  document.querySelector('#summary').textContent=`全部通过：${passed} 项真实 IndexedDB 检查`;
  document.querySelector('#summary').dataset.status='passed';

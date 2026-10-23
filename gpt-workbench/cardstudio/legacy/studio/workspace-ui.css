@@ -50,6 +50,7 @@ body.workspace-v9 .navigator-layers .layer-row{grid-template-columns:16px minmax
 body.workspace-v9 .stage{min-width:0;min-height:0;display:flex;flex-direction:column;align-items:stretch;gap:0;padding:12px 16px!important;background:#252b36!important;overflow:hidden;position:relative}
 body.workspace-v9 .stage:before{display:none!important}
 body.workspace-v9 .stagebar{width:100%;max-width:none!important;min-width:0;min-height:0!important;flex:0 0 auto;display:flex;flex-wrap:wrap;justify-content:space-between;gap:9px;padding:0 0 12px!important;margin:0!important;background:transparent!important;border-bottom:1px solid #ffffff10!important}
+.default-card-control{margin:0 12px 8px;width:calc(100% - 24px);white-space:normal;overflow-wrap:anywhere;flex:none}
 .stage-mode-slot{flex:0 0 auto}.stage-context{flex:1;min-width:130px;display:flex;justify-content:flex-start;gap:8px}.stage-context>span{max-width:200px!important;font-size:11px!important;white-space:normal!important;overflow-wrap:anywhere;color:#adb6c8!important}.stage-context b{font-size:11px!important}
 body.workspace-v9 .editor-mode-bar{height:auto!important;gap:3px!important;padding:3px!important;background:#ffffff0c!important;border-radius:8px!important}
 body.workspace-v9 .mode-choice{height:auto!important;min-height:30px!important;padding:6px 12px!important;font-size:11px!important;border-radius:5px!important;line-height:1.4}
