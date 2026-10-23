@@ -44,11 +44,12 @@ s=s.replace("$('#card-search').oninput=paintCards;", "$('#card-search').oninput=
 s=s.replace("'<button class=\"button primary\" data-action=\"generate\">从档案批量制卡</button>'", "'<button class=\"button primary\" data-action=\"new-card\">新建卡片</button> <button class=\"button\" data-action=\"generate\">从档案批量制卡</button>'")
 s=s.replace('\ninit();', '\n'+(root/'local/exchange-adapter.mjs').read_text()+'\n'+(root/'local/templates-adapter.mjs').read_text()+'\ninit();')
 s=s.replace("if(activeView==='cards')paintCards();", "if(activeView==='templates')paintTemplates();if(activeView==='cards')paintCards();")
+s=s.replace("templateId:'unit',map:[]","templateId:'basic-unit',map:[]")
 s=s.replace("const viewCopy={archive:", "const viewCopy={templates:['版式和字段，按需复用','模板与字段','修改名称、管理适用字段，或用模板新建一张卡片。'],archive:")
 s=s.replace("M.TARGETS.map(([key,label])=>", "[...M.TARGETS.map(([key,label])=>[key,p.studio.projectDesign?.fieldLabels?.[key]??label]),...(p.studio.fieldSchema||[]).filter(f=>!f.tpl||f.tpl===$('#binding-template').value).map(f=>['custom:'+f.key,f.label])].map(([key,label])=>")
 s=s.replace("(aliases[key]||[]).includes(f.name)", "(aliases[key]||[label]).includes(f.name)")
 s=s.replace("$('#binding-type').onchange=()=>mappingRows({...b,typeId:$('#binding-type').value,map:[]});", "$('#binding-type').onchange=()=>mappingRows({...b,typeId:$('#binding-type').value,map:[]});$('#binding-template').onchange=()=>mappingRows({...b,map:[]});")
-s=s.replace("$('#binding-template').value=b.templateId;", '$(\'#binding-template\').innerHTML=Object.entries(templateCatalog()).filter(([id])=>!(p.studio.projectDesign?.hiddenTemplates||[]).includes(id)||id===b.templateId).map(([id,t])=>`<option value="${H(id)}">${H(t.name||\'未命名模板\')}</option>`).join(\'\');$(\'#binding-template\').value=b.templateId;')
+s=s.replace("$('#binding-template').value=b.templateId;", '$(\'#binding-template\').innerHTML=Object.entries(TemplateLibrary.availableTemplateCatalog(p.studio,templateCatalog())).filter(([id])=>!(p.studio.projectDesign?.hiddenTemplates||[]).includes(id)||id===b.templateId).map(([id,t])=>`<option value="${H(id)}">${H(t.name||\'未命名模板\')}</option>`).join(\'\');$(\'#binding-template\').value=b.templateId;')
 s=s.replace("$('#card-search').oninput=paintCards;", "$('#template-file').onchange=e=>receiveTemplate(e.target.files[0]).catch(error);$('#card-search').oninput=paintCards;")
 assert "fetch('/api/service'" not in s and "rpc(" not in s
 (root/'local/main.mjs').write_text(s)

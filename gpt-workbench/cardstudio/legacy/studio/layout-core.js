@@ -1,0 +1,60 @@
+(function(root){
+  'use strict';
+  var BASIC_ID='basic-unit',oldIds=['unit','spell','building','event'];
+  var BASIC_TEMPLATE={id:BASIC_ID,name:'基础单位卡',short:'单位',hint:'名称 · 种族 · 系别 · 效果 · 费用 · 攻击 · 血量',typeLabel:'种族',stats:[['attack','攻','攻击'],['health','血','血量']],baseLayout:'unit',cardRules:'seven-v1'};
+  var fields=[['name','名称'],['unitType','种族'],['faction','系别'],['description','效果'],['cost','费用'],['attack','攻击'],['health','血量']];
+  var round=function(x){return Math.round(x*1000000)/1000000;};
+  function simple(card,catalog){return !!(card&&catalog[card.templateId]&&catalog[card.templateId].cardRules==='seven-v1');}
+  function templateFor(card,catalog){
+    var t=catalog[card.templateId]||catalog[BASIC_ID]||catalog.unit;
+    if(simple(card,catalog)&&card.cardKind==='spell')return Object.assign({},t,{name:t.name+' · 法术',short:'法术',stats:[]});
+    return t;
+  }
+  function available(catalog,studio,includeRetired){
+    var used=new Set((studio.cards||[]).map(function(c){return c.templateId;})),hidden=new Set(studio.projectDesign&&studio.projectDesign.hiddenTemplates||[]);
+    return Object.keys(catalog).filter(function(id){return (!oldIds.includes(id)||used.has(id))&&(includeRetired||!hidden.has(id)||id===BASIC_ID);});
+  }
+  // All rectangles use canvas percentages. Source aspect is measured in pixels,
+  // so conversion must account for the physical aspect of the card canvas.
+  function fitRect(width,height,target,canvas){
+    if(!(width>0&&height>0))throw new Error('图片尺寸无效');
+    canvas=canvas||{w:69,h:94};target=target||{x:0,y:0,w:100,h:100};
+    var tw=target.w/100*canvas.w,th=target.h/100*canvas.h,scale=Math.min(tw/width,th/height),w=width*scale/canvas.w*100,h=height*scale/canvas.h*100;
+    return {x:round(target.x+(target.w-w)/2),y:round(target.y+(target.h-h)/2),w:round(w),h:round(h)};
+  }
+  function targetRect(target,bleed,canvas){
+    canvas=canvas||{w:69,h:94};if(target!=='trim')return {x:0,y:0,w:100,h:100};
+    var bx=bleed/canvas.w*100,by=bleed/canvas.h*100;
+    return {x:bx,y:by,w:100-2*bx,h:100-2*by};
+  }
+  function imageLayout(width,height,target,bleed,base){
+    var bounds=targetRect(target,bleed||0),rect=fitRect(width,height,bounds);
+    return Object.assign({r:0,z:11,opacity:1,visible:true,locked:false,fit:'contain',lockAspect:true,fitTarget:target||'canvas'},base||{},rect);
+  }
+  function resized(layout,key,value){
+    var next=Object.assign({},layout);if(!Number.isFinite(value))throw new Error('尺寸需要有效数字');
+    if((key==='w'||key==='h')&&value<=0)throw new Error('图片宽高必须大于零');
+    if(layout.lockAspect&&(key==='w'||key==='h')){var other=key==='w'?'h':'w';next[other]=round(layout[other]*value/layout[key]);}
+    next[key]=value;return next;
+  }
+  function diagnostic(studio,card,layers,measurements){
+    var design=studio.projectDesign||{},bleed=Number(design.bleedMm??3),dpi=Number(design.targetPrintDpi||300),canvas={w:69,h:94},catalog=studio.catalog||{},isSpell=card.templateId==='spell'||simple(card,catalog)&&card.cardKind==='spell';
+    var report={format:'kadi-layout-report',version:1,appVersion:'1.2',exportedAt:new Date().toISOString(),projectName:studio.projectName||'',card:{id:card.id,name:card.name,templateId:card.templateId,kind:isSpell?'法术':'单位',fields:fields.filter(function(f){return !isSpell||!['unitType','attack','health'].includes(f[0]);}).map(function(f){return {key:f[0],label:design.fieldLabels&&Object.prototype.hasOwnProperty.call(design.fieldLabels,f[0])?design.fieldLabels[f[0]]:f[1],value:card[f[0]]??''};})},canvas:{unit:'mm',width:69,height:94,trimWidth:69-2*bleed,trimHeight:94-2*bleed,bleedMm:bleed,safeInsideTrimMm:Number(design.safeContentMm??3),dpi:dpi,editorPixels:{width:348,height:474},previewFile:'卡面预览.png'},layers:[]};
+    report.layers=layers.map(function(m,index){
+      var p=m.layout,asset=m.asset||null,measurement=measurements&&measurements[m.type+':'+m.id],out={id:m.id,type:m.type,name:m.label,orderFromTop:index,geometry:{unit:'percent',x:p.x,y:p.y,width:p.w,height:p.h,rotationDeg:p.r||0},millimeters:{x:round(p.x/100*canvas.w),y:round(p.y/100*canvas.h),width:round(p.w/100*canvas.w),height:round(p.h/100*canvas.h)},z:p.z??0,visible:m.rendered!==false&&p.visible!==false,locked:!!p.locked,opacity:p.opacity??1};
+      if(m.fieldKey)out.fieldKey=m.fieldKey;
+      if(m.text!=null)out.text=m.text;
+      if(m.element&&m.element.kind!=='image')out.text=m.element.text||'';
+      if(asset){out.image={assetId:asset.id,name:asset.name,width:asset.width||0,height:asset.height||0,originalAspect:asset.width&&asset.height?round(asset.width/asset.height):null,alphaBounds:asset.alphaBounds||null,alphaSampleScale:asset.alphaSampleScale||1,transparentPercent:asset.transparentPercent??null,fit:p.fit||'contain',fitTarget:p.fitTarget||'manual',lockAspect:!!p.lockAspect};}
+      if(m.id==='art'&&asset){out.image.fit='background';out.image.crop={focusX:card.appearance?.artFocusX??50,focusY:card.appearance?.artFocusY??50,zoomPercent:card.appearance?.artZoom??100,subjectX:card.appearance?.artSubjectX??50,subjectY:card.appearance?.artSubjectY??42};}
+      if(measurement)out.rendered=measurement;
+      return out;
+    });return report;
+  }
+  function readable(report){
+    var c=report.canvas,lines=['卡递排版参数 · '+report.appVersion,'卡牌：'+report.card.name,'模式：'+report.card.kind,'画布：'+c.width+' × '+c.height+' mm；成品：'+c.trimWidth+' × '+c.trimHeight+' mm','出血：'+c.bleedMm+' mm；裁切内安全距离：'+c.safeInsideTrimMm+' mm','位置与宽高从左上角开始，按画布百分比计算；图层按从上到下排列。',''];
+    report.layers.forEach(function(l){var p=l.geometry;lines.push(l.name+' ['+l.id+'] · Z '+l.z+' · '+(l.visible?'显示':'隐藏')+' · '+(l.locked?'锁定':'可编辑'),'  X '+p.x+'% / Y '+p.y+'% / 宽 '+p.width+'% / 高 '+p.height+'% / 角度 '+p.rotationDeg+'° / 不透明度 '+Math.round(l.opacity*100)+'%');if(l.image)lines.push('  素材：'+l.image.name+' · '+l.image.width+' × '+l.image.height+' px · 适配 '+l.image.fit+' · '+(l.image.lockAspect?'锁定比例':'自由比例'));});
+    lines.push('','参数.json 可供程序读取；卡面预览.png 用于核对实际效果。','该诊断包只包含当前卡的参数与预览；完整项目仍使用“保存项目”备份。');return lines.join('\n');
+  }
+  root.KadiLayout=Object.freeze({BASIC_ID:BASIC_ID,BASIC_TEMPLATE:BASIC_TEMPLATE,fields:fields,simple:simple,templateFor:templateFor,available:available,fitRect:fitRect,targetRect:targetRect,imageLayout:imageLayout,resized:resized,diagnostic:diagnostic,readable:readable});
+})(typeof window!=='undefined'?window:globalThis);

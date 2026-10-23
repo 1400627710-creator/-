@@ -1,5 +1,6 @@
+import {available,BASIC_ID} from './layout-core.mjs';
 import {copy,uid} from './model.mjs';
-const builtins=new Set(['unit','spell','building','event']);
+const builtins=new Set(['basic-unit','unit','spell','building','event']);
 const assert=(ok,message)=>{if(!ok)throw new Error(message);};
 function remapReferences(value,keys){
   if(Array.isArray(value))return value.map(x=>remapReferences(x,keys));
@@ -7,6 +8,7 @@ function remapReferences(value,keys){
   if(typeof value==='string')for(const [old,fresh] of keys){if(value==='custom:'+old)value='custom:'+fresh;value=value.replaceAll('{'+old+'}','{'+fresh+'}');}
   return value;
 }
+export function availableTemplateCatalog(studio,catalog,includeRetired=false){return Object.fromEntries(available(catalog,studio,includeRetired).map(id=>[id,catalog[id]]));}
 export function templateNames(studio,catalog){
   return Object.fromEntries(Object.entries(catalog).map(([id,t])=>[id,{...copy(t),name:studio.projectDesign?.templateLabels?.[id]??t.name}]));
 }
@@ -27,7 +29,7 @@ export function copyTemplate(studio,catalog,id,name){
   return next;
 }
 export function retireTemplate(studio,catalog,id,retired=true){
-  assert(catalog[id],'模板已不存在');assert(id!=='unit'||!retired,'标准单位模板作为空白起点保留');
+  assert(catalog[id],'模板已不存在');assert(!['unit',BASIC_ID].includes(id)||!retired,'标准单位模板作为空白起点保留');
   studio.projectDesign||={};const hidden=new Set(studio.projectDesign.hiddenTemplates||[]);
   if(retired)hidden.add(id);else hidden.delete(id);studio.projectDesign.hiddenTemplates=[...hidden];
   // Definitions and existing cards remain intact, including locked cards.

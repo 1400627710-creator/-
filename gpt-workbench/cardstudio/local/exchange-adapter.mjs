@@ -24,8 +24,8 @@ function setupExchange(){
 }
 
 function newCardDialog(templateId){
- const catalog=studioApi.getTemplates();
- dialog('新建卡片',`<label><span>卡片名称</span><input id="new-card-name" placeholder="由你命名"></label><label><span>使用模板</span><select id="new-card-template">${Object.entries(catalog).filter(([id])=>!(p.studio.projectDesign?.hiddenTemplates||[]).includes(id)||id==='unit').map(([id,t])=>`<option value="${H(id)}" ${id===templateId?'selected':''}>${H(t.name||id)}</option>`).join('')}</select></label>`,`<button class="button" data-action="close">取消</button><button class="button primary" data-action="create-card">创建并编辑</button>`);
+ const catalog=TemplateLibrary.availableTemplateCatalog(p.studio,studioApi.getTemplates());
+ dialog('新建卡片',`<label><span>卡片名称</span><input id="new-card-name" placeholder="由你命名"></label><label><span>使用模板</span><select id="new-card-template">${Object.entries(catalog).filter(([id])=>!(p.studio.projectDesign?.hiddenTemplates||[]).includes(id)||id==='basic-unit').map(([id,t])=>`<option value="${H(id)}" ${id===templateId?'selected':''}>${H(t.name||id)}</option>`).join('')}</select></label>`,`<button class="button" data-action="close">取消</button><button class="button primary" data-action="create-card">创建并编辑</button>`);
 }
 async function createCard(){
  const name=$('#new-card-name').value,template=$('#new-card-template').value;

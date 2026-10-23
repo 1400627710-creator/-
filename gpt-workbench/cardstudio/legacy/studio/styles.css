@@ -524,3 +524,20 @@ body.focus-stage .app-header{opacity:.28;transition:opacity .15s ease}body.focus
 @media(max-width:900px){.preflight-toolbar button{flex:1 1 140px}.preflight-actions{grid-column:1/-1}}
 
 .preflight-results.repair-busy{pointer-events:none;opacity:.65}
+
+/* Kadi 1.2: material images share the ordinary layout stack and geometry. */
+.card{isolation:isolate}
+.card .material-layer{position:absolute;padding:0;border:0;background:none;box-shadow:none;overflow:visible;pointer-events:none;line-height:0}
+.card .material-layer>img{display:block;width:100%;height:100%;pointer-events:none}
+#preview.layout-editing .material-layer{pointer-events:auto}
+.image-geometry-tools{padding:10px;margin:8px 0;border:1px solid var(--line,#cbd5e1);border-radius:10px;background:var(--panel,#f8fafc)}
+.image-geometry-tools>small{display:block;overflow-wrap:anywhere;line-height:1.5;margin:4px 0 8px}
+.image-geometry-tools .grid{gap:8px}.image-geometry-tools .row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.image-geometry-tools select{max-width:100%;min-width:0}
+#cardKindControl{display:flex;align-items:center;gap:10px;margin-bottom:10px}#cardKindControl select{flex:1;min-width:0}
+[hidden]{display:none!important}
+#exportLayoutParams{font-weight:700}
+
+.export-download-ready{display:inline-flex;align-items:center;padding:7px 10px;max-width:250px;border:1px solid #91a0ed;border-radius:7px;background:#edf0ff;color:#27348a;font-size:11px;line-height:1.4;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+#layoutParamsText{flex-basis:100%;width:100%;min-height:110px;resize:vertical;font:11px/1.5 monospace}

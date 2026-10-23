@@ -122,7 +122,7 @@
 <div aria-label="卡牌画布" class="canvas-viewport"><div class="checker"><div id="preview"></div></div></div>
 <p class="hint" id="stageHint">自由布局：双击卡面空白处直接输入；双击文字继续编辑。</p>
 <div class="export-actions"><button class="canvas-text-action" id="canvasAddText" type="button">＋ 画布文字</button>
-<button id="png">PNG 300dpi</button>
+<button id="exportLayoutParams" title="导出当前卡的预览图、图层位置和排版参数">导出排版参数</button><button id="png">PNG 300dpi</button>
 <button id="jpg">JPG 300dpi</button>
 <button id="singlePdf">单张 PDF</button>
 <button class="primary" id="batchPdf">A4 拼版 PDF</button>
@@ -140,7 +140,7 @@
 <button data-tool-mode="export">输出 <kbd>6</kbd></button>
 </div><div class="inspector-quick-actions"><button data-workspace-action="projectExport" type="button">保存项目</button><button data-workspace-action="openPreflight" type="button">检查 / 修复</button><button data-workspace-action="png" type="button">导出 PNG</button></div>
 <section data-tool-group="content">
-<h3>填写卡牌</h3>
+<h3>填写卡牌</h3><label id="cardKindControl" hidden>卡牌模式<select id="cardKind"><option value="unit">单位</option><option value="spell">法术</option></select></label>
 <div class="grid">
 <label class="field-wide"><button class="field-label-button" data-default-label="名称" data-rename-field="name" title="点击修改字段名称" type="button">名称<span aria-hidden="true">✎</span></button><input data-form="name"/></label>
 <label><button class="field-label-button" data-default-label="费用" data-rename-field="cost" title="点击修改字段名称" type="button">费用<span aria-hidden="true">✎</span></button><input data-form="cost" type="number"/></label>
@@ -149,7 +149,7 @@
 <label><button class="field-label-button" data-default-label="稀有度" data-rename-field="rarity" title="点击修改字段名称" type="button">稀有度<span aria-hidden="true">✎</span></button><input data-form="rarity"/></label>
 </div>
 <div class="grid" id="dynamicStats"></div>
-<label><button class="field-label-button" data-default-label="卡牌效果" data-rename-field="description" type="button">卡牌效果<span aria-hidden="true">✎</span></button><textarea id="description" rows="4"></textarea></label><details class="inspector-foldout" id="contentRuleTools"><summary>词条、图标与规则工具<span>展开更多</span></summary><div class="foldout-body"><div class="term-toolbar">
+<label><button class="field-label-button" data-default-label="效果" data-rename-field="description" type="button">效果<span aria-hidden="true">✎</span></button><textarea id="description" rows="4"></textarea></label><details class="inspector-foldout" id="contentRuleTools"><summary>词条、图标与规则工具<span>展开更多</span></summary><div class="foldout-body"><div class="term-toolbar">
 <input id="termQuickColor" title="词条颜色" type="color" value="#38bdf8"/>
 <button class="term-primary" id="markRuleTerm">选中文字 → 设为规则词条</button>
 <button id="insertKnownTerm">＋ 插入已有词条</button><button id="autoMarkTerms">自动识别词条</button><button id="openRuleTerms">📚 词条库</button>
@@ -173,7 +173,7 @@
 <section class="layout-panel" data-tool-group="layout" id="layoutPanel">
 <h3>布局 <span class="mode-required">进入布局模式后使用</span></h3>
 <div class="layout-actions">
-<button class="image-element-primary" id="addImageElement">＋ 导入小素材 / 图标</button>
+<button class="image-element-primary" id="importFrameLayer">＋ 导入透明卡框</button><button class="image-element-primary" id="addImageElement">＋ 导入小素材 / 图标</button>
 <input accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden="" id="freeImageFile" type="file"/>
 <button id="addTextElement">＋ 自定义文本</button>
 <button id="addNumberElement">＋ 卡牌编号</button>
@@ -193,7 +193,7 @@
 <button id="detachImageLabel">解除文字跟随</button>
 </div>
 <div class="selected-layer-head"><b>当前选择：<span id="selectedLayerName">未选择</span></b><small><span id="selectionCount">0 个模块</span> · 卡面框选 / Ctrl(Cmd)+点击多选 / Esc 清空</small><button id="renameSelectedField" type="button">改名</button></div>
-<div class="edit-scope-box" id="editScopeBox">
+<div id="imageGeometryTools" class="image-geometry-tools" hidden><b>图片适配</b><small id="imageSourceInfo"></small><div class="grid"><label>适配方式<select id="imageFitMode"><option value="contain">完整显示 · 保持比例</option><option value="cover">填满区域 · 居中裁切</option><option value="fill">拉伸铺满 · 自由比例</option></select></label><label>适配区域<select id="imageFitTarget"><option value="canvas">整张画布（含出血）</option><option value="trim">裁切后的成品区域</option><option value="manual">当前图片区域</option></select></label></div><div class="row"><button id="fitImageLayer">应用适配</button><button id="centerImageLayer">居中</button><button id="resetImageLayer">复位</button></div></div><div class="edit-scope-box" id="editScopeBox">
 <div><b>编辑范围</b><small id="editScopeHint">本卡精调：移动标准模块只影响当前卡，并自动记录为局部覆盖。</small></div>
 <div class="edit-scope-switch"><button class="active" id="editScopeCard">本卡精调</button><button id="editScopeTemplate">类型模板</button></div>
 </div>
@@ -662,6 +662,6 @@
 <script src="/glossary-format.js"></script>
 <script src="/glossary-bridge.js"></script>
 <script src="/public-repository.js"></script>
-<div aria-label="修改字段名称" class="field-rename-popover" hidden="" id="fieldRenamePopover" role="dialog"><label>字段显示名称<textarea id="fieldRenameInput" placeholder="输入你希望使用的名称" rows="2"></textarea></label><div><small>即时保存 · Enter 完成 · Esc 取消</small><button id="finishFieldRename" type="button">完成</button></div></div><script src="/app.js?v=3.0.0-beta10"></script>
+<div aria-label="修改字段名称" class="field-rename-popover" hidden="" id="fieldRenamePopover" role="dialog"><label>字段显示名称<textarea id="fieldRenameInput" placeholder="输入你希望使用的名称" rows="2"></textarea></label><div><small>即时保存 · Enter 完成 · Esc 取消</small><button id="finishFieldRename" type="button">完成</button></div></div><script src="/layout-core.js"></script><script src="/image-layers.js"></script><script src="/app.js?v=3.0.0-beta10"></script>
 </body>
 </html>
