@@ -1,11 +1,12 @@
 import * as M from '../lib/model.mjs';
 import {ArchiveCore as C} from '../lib/archive-core.mjs';
 import {fingerprint as hashText} from './sha256.mjs';
+import * as Quick from '../lib/quick-cards.mjs';
 import {validateEnvelope,planExchange,applyExchange} from '../../shared/exchange.mjs';
 
 const request=q=>new Promise((resolve,reject)=>{q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});
 const assert=(ok,message)=>{if(!ok)throw new Error(message);};
-const labels={archive:'编辑档案',studio:'编辑卡牌',generate:'批量制卡',follow:'恢复字段跟随',writeBack:'卡面回写档案',rename:'修改项目名称',inbox:'保留原文',restore:'恢复保存版本'};
+const labels={quickGenerate:'快速归档并制卡',batchCards:'批量编辑卡牌',archive:'编辑档案',studio:'编辑卡牌',generate:'批量制卡',follow:'恢复字段跟随',writeBack:'卡面回写档案',rename:'修改项目名称',inbox:'保留原文',restore:'恢复保存版本'};
 export const localMeta={getItem(key){try{return localStorage.getItem('cardstudio-local:'+key);}catch{return null;}},setItem(key,value){try{localStorage.setItem('cardstudio-local:'+key,value);}catch{}}};
 
 // Every change reads the current revision and writes all affected stores in
@@ -33,6 +34,7 @@ export function createLocalService(name='cardstudio-local-v1'){
   if(a.action==='prepareImport'){
    fingerprint=await hashText(JSON.stringify({kind:a.kind,payload:a.payload,records:a.records,sourceText:a.sourceText||'',inputId:a.inputId||null}));
   }
+  if(a.action==='quickGenerate')fingerprint=await hashText(JSON.stringify({kind:'quick-cards',rows:a.rows,sourceText:a.sourceText,templateId:a.templateId}));
   const db=await database(),readOnly=['list','get','poll','draft','revisions'].includes(a.action);
   const tx=db.transaction(['projects','drafts','history','snapshots'],readOnly?'readonly':'readwrite');
   const finished=new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error||new Error('本机保存已取消'));tx.onerror=()=>{};});
@@ -57,6 +59,7 @@ export function createLocalService(name='cardstudio-local-v1'){
    if(a.action==='poll')return {project:{id,revision:p.revision,archiveRevision:p.archive.revision,studioRevision:p.studioRevision},drafts:await pending(id)};
    if(a.action==='revisions')return {revisions:(await request(history.index('projectId').getAll(id))).sort((x,y)=>y.revision-x.revision)};
    if(a.action==='draft')return {draft:d};
+   if(a.action==='quickGenerate'&&p.imports.some(x=>x.kind==='quick-cards'&&x.fingerprint===fingerprint))return {project:p,stats:{created:0,duplicate:true}};
    if(a.action==='cancelDraft'){assert(d.status==='pending','这份预览已经处理');d.status='cancelled';drafts.put(d);return {cancelled:true};}
    if(a.action==='prepareImport'){
     if(a.kind!=='exchange'&&p.imports.some(x=>x.fingerprint===fingerprint))return {duplicate:true};
@@ -103,6 +106,8 @@ export function createLocalService(name='cardstudio-local-v1'){
    if(a.expectedRevision!==undefined)assert(a.expectedRevision===p.revision,'项目已被其他窗口更新，请重新载入');
    let stats;
    switch(a.action){
+    case 'quickGenerate':stats=Quick.createCards(p,a.rows,a.sourceText,a.templateId,fingerprint);break;
+    case 'batchCards':stats=Quick.batchCards(p,a.changes);break;
     case 'archive':{const previous=p.archive.revision;assert(a.expectedArchiveRevision===previous,'档案已被其他窗口更新，请先备份当前修改');p.archive=C.validateState(a.archive);p.archive.revision=Math.max(p.archive.revision,previous+1);stats=M.syncCards(p);p.studioRevision++;break;}
     case 'studio':assert(a.expectedStudioRevision===p.studioRevision,'卡牌已被其他窗口更新，请先备份当前修改');M.acceptStudio(p,a.studio);break;
     case 'generate':stats=M.generateCards(p,a.binding,a.archiveIds||[]);break;

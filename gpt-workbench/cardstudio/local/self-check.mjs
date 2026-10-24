@@ -4,6 +4,7 @@ import {recoveryCache} from './recovery-cache.mjs';
 import {createLocalService} from './local-service.mjs';
 import * as Layout from '../lib/layout-core.mjs';
 import * as Edit from '../lib/edit-core.mjs';
+import * as Quick from '../lib/quick-cards.mjs';
 async function main(){
 const assert=(ok,message)=>{if(!ok)throw new Error(message);};
 const list=document.querySelector('#checks');
@@ -57,6 +58,16 @@ try{
   card.extraElements.push(...Edit.duplicateExtras([layer],[layer],()=>C.uid('copy')));other.studio.cards=[card];
   await service({action:'studio',projectId:other.id,studio:other.studio,expectedStudioRevision:other.studioRevision});await service.close();service=createLocalService(dbName);
   const read=(await service({action:'get',projectId:other.id})).project.studio.cards[0];assert(read.layout.cost.materialOpacity===.25&&read.layout.cost.opacity===.6,'透明度串改');assert(read.textStyles.effect.strokePx===.8,'笔画粗度未保存');assert(read.extraElements[1].assetId==='edit_asset'&&!read.extraElements[1].layout.locked&&read.extraElements[0].layout.locked,'复制状态错误');
+ });
+ await check('快速制卡原子保存档案、卡面和映射，重复确认不增加内容',async()=>{
+  const original=(await service({action:'create',title:'快速制卡隔离'})).project,sourceText='帮派弟兄，人类，底层，登场：检索一张帮派弟兄。3费1/2身材。\n法术：火花，底层，造成2点伤害。2费',rows=Quick.parseInput(sourceText).rows;
+  assert(!(await service({action:'get',projectId:original.id})).project.studio.cards.length,'解析提前写入');const action={action:'quickGenerate',projectId:original.id,rows,sourceText,templateId:'basic-unit',expectedRevision:original.revision},result=await service(action),again=await service(action);assert(result.project.studio.cards.length===2&&result.project.archive.archives.length===2&&result.project.links.length===2,'快速制卡丢失关联');assert(again.stats.duplicate&&again.project.revision===result.project.revision,'重复确认改变正式内容');
+ });
+ await check('快速制卡与批量修改拒绝旧预览，非法数字不留下部分写入',async()=>{
+  const original=(await service({action:'create',title:'批量编辑隔离'})).project,sourceText='甲，人类，底层，检索。3费1/2',rows=Quick.parseInput(sourceText).rows;
+  let read=(await service({action:'quickGenerate',projectId:original.id,rows,sourceText,templateId:'basic-unit',expectedRevision:0})).project,id=read.studio.cards[0].id,revision=read.revision;
+  await rejects(()=>service({action:'batchCards',projectId:read.id,changes:[{id,patch:{cost:'5'}}],expectedRevision:0}));await rejects(()=>service({action:'batchCards',projectId:read.id,changes:[{id,patch:{cost:'错误'}}],expectedRevision:revision}));assert((await service({action:'get',projectId:read.id})).project.revision===revision,'拒绝后改变版本');
+  read=(await service({action:'batchCards',projectId:read.id,changes:[{id,patch:{cost:'5'}}],expectedRevision:revision})).project;await service.close();service=createLocalService(dbName);const restored=(await service({action:'get',projectId:read.id})).project;assert(restored.studio.cards[0].cost===5&&restored.links[0].overrides.cost,'批量修改或覆盖未保存');assert(restored.imports.at(-1).raw===sourceText,'原文丢失');
  });
  document.querySelector('#summary').textContent=`全部通过：${passed} 项真实 IndexedDB 检查`;
  document.querySelector('#summary').dataset.status='passed';

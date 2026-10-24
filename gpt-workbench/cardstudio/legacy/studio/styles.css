@@ -557,3 +557,4 @@ body.focus-stage .app-header{opacity:.28;transition:opacity .15s ease}body.focus
 .image-transform-overlay{position:absolute;box-sizing:border-box;z-index:100000;pointer-events:none;transform-origin:center;overflow:visible;outline:1px solid #2563eb}
 #preview.layout-editing .image-transform-overlay>.layout-handle{display:block;pointer-events:auto}
 #preview .material-layer>.layout-handle,#preview .free-image-element>.layout-handle{display:none!important}
+.bound-field-value{display:block;min-width:0;max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere}

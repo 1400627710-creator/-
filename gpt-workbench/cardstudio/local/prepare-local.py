@@ -7,6 +7,7 @@ s=s.replace("import {uiSurface,isRpcResponse} from '../lib/ui-surface.mjs';", "i
 s=s.replace("from './engines.mjs'", "from '../ui/engines.mjs'")
 s="import {recoveryCache} from './recovery-cache.mjs';\n"+s
 s="import {installGlossary} from '../../shared/glossary-ui.mjs';\n"+s
+s="import * as QuickCards from '../lib/quick-cards.mjs';\n"+s
 s="import * as TemplateLibrary from '../lib/template-library.mjs';\n"+s
 s="import {installExchange} from '../../shared/exchange-ui.mjs';\nimport {envelope as exchangeEnvelope} from '../../shared/exchange.mjs';\nimport {cardsEnvelope} from '../../shared/card-envelope.mjs';\n"+s
 s=s.replace("const surface=uiSurface(document.querySelector('meta[name=\"cardstudio-surface\"]')?.content,window.parent!==window);", "const surface='local';")
@@ -36,13 +37,13 @@ replace_between("$('#demo-btn').onclick=", "$('#modal').addEventListener", "$('#
 replace_between('async function init(){', '\ninit();', """async function init(){try{await list();appReady=true;status('已保存到本机');}catch(e){$('#connection-screen').hidden=false;$('#connection-error').textContent=e.message;status('本机保存不可用');}setInterval(()=>{if(appReady&&document.visibilityState==='visible')refresh().catch(()=>status('本机读取暂不可用'))},5000);}""")
 s=s.replace("await list();appReady=true", "await list();setupExchange();appReady=true")
 s=s.replace("activeView='archive';paint();await setView('archive');", "activeView='cards';paint();await setView('cards');")
-s=s.replace("async function act(action,el){switch(action){", "async function act(action,el){if(action.startsWith('glossary-'))return glossaryController.action(action,el);if(await templateAction(action,el))return;if(action.startsWith('exchange-'))return exchangeController.action(action);if(action==='new-card'){await newCardDialog();return;}if(action==='create-card'){await createCard();return;}switch(action){")
+s=s.replace("async function act(action,el){switch(action){", "async function act(action,el){if(action.startsWith('glossary-'))return glossaryController.action(action,el);if(await productionAction(action,el))return;if(await templateAction(action,el))return;if(action.startsWith('exchange-'))return exchangeController.action(action);if(action==='new-card'){await newCardDialog();return;}if(action==='create-card'){await createCard();return;}switch(action){")
 s=s.replace("async function openDraft(id){await flush();const r=await raw({action:'draft',draftId:id});showDraft(r.draft);}", "async function openDraft(id){await flush();const r=await raw({action:'draft',draftId:id});if(r.draft.kind==='exchange')return exchangeController.receive(r.draft.payload);showDraft(r.draft);}")
 s=s.replace("if(payload.format==='cardstudio-unified')", "if(payload.schema==='cardstudio-glossary-v1'){close();await glossaryController.receive(payload);return;}if(payload.format==='cardstudio-archive-exchange'){await exchangeController.receive(payload);return;}if(payload.format==='cardstudio-unified')")
 s=s.replace("name:['姓名','名称','卡名','技能名称']", "unitType:['种族','兵种','类型','族群'],rarity:['稀有度'],rulesKeywords:['规则关键词'],name:['姓名','名称','卡名','技能名称']")
 s=s.replace("$('#card-search').oninput=paintCards;", "$('#card-search').oninput=paintCards;$('#new-card-btn').onclick=()=>newCardDialog().catch(error);")
 s=s.replace("'<button class=\"button primary\" data-action=\"generate\">从档案批量制卡</button>'", "'<button class=\"button primary\" data-action=\"new-card\">新建卡片</button> <button class=\"button\" data-action=\"generate\">从档案批量制卡</button>'")
-s=s.replace('\ninit();', '\n'+(root/'local/exchange-adapter.mjs').read_text()+'\n'+(root/'local/templates-adapter.mjs').read_text()+'\ninit();')
+s=s.replace('\ninit();', '\n'+(root/'local/exchange-adapter.mjs').read_text()+'\n'+(root/'local/templates-adapter.mjs').read_text()+'\n'+(root/'local/production-adapter.mjs').read_text()+'\ninit();')
 s=s.replace("if(activeView==='cards')paintCards();", "if(activeView==='templates')paintTemplates();if(activeView==='cards')paintCards();")
 s=s.replace("templateId:'unit',map:[]","templateId:TemplateLibrary.defaultTemplateId(p.studio,templateCatalog()),map:[]")
 s=s.replace("const viewCopy={archive:", "const viewCopy={templates:['版式和字段，按需复用','模板与字段','修改名称、管理适用字段，或用模板新建一张卡片。'],archive:")
@@ -61,7 +62,7 @@ csp="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; 
 html=html.replace('<meta charset="utf-8">','<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="'+csp+'">')
 html=html.replace('<small>ARCHIVE × STUDIO</small>','<small>本地卡牌工作台</small>')
 html=html.replace('<button class="button quiet" id="history-btn">','<button class="button" id="exchange-btn">与车卡机互通</button><button class="button quiet" id="history-btn">')
-html=html.replace('<button id="generate-btn"', '<button id="new-card-btn" class="button">＋ 新建卡片</button><button id="generate-btn"')
+html=html.replace('<button id="generate-btn"', '<button class="button primary" data-action="production-quick">✦ 快速制卡</button><button class="button" data-action="production-bulk">批量编辑</button><button id="new-card-btn" class="button">＋ 新建卡片</button><button id="generate-btn"')
 html=html.replace('<button data-view="links"', '<button data-view="templates" class="nav-button"><span class="nav-icon">◇</span> 模板与字段</button><button data-view="links"')
 html=html.replace('<section id="links-view"', '<section id="templates-view" class="view"><div class="section-toolbar"><p class="muted">名称可直接编辑；模板停用后仍保留已有卡片。</p><div><button class="button" data-action="template-import">导入模板</button><button class="button primary" data-action="template-new">＋ 新建模板</button></div></div><div id="templates-list" class="template-grid"></div></section><section id="links-view"')
 html=html.replace('<script>/*APP*/</script>', '<input id="template-file" type="file" accept=".json,application/json" hidden><script>/*APP*/</script>')
