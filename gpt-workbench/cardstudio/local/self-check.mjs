@@ -3,6 +3,7 @@ import {envelope} from '../../shared/exchange.mjs';
 import {recoveryCache} from './recovery-cache.mjs';
 import {createLocalService} from './local-service.mjs';
 import * as Layout from '../lib/layout-core.mjs';
+import * as Edit from '../lib/edit-core.mjs';
 async function main(){
 const assert=(ok,message)=>{if(!ok)throw new Error(message);};
 const list=document.querySelector('#checks');
@@ -49,6 +50,13 @@ try{
   await service({action:'studio',projectId:other.id,studio:other.studio,expectedStudioRevision:other.studioRevision});await service.close();service=createLocalService(dbName);
   const read=(await service({action:'get',projectId:other.id})).project;assert(JSON.stringify(read.studio.cards[0])===before,'设置默认改动了原卡');assert(Layout.defaultTemplateId(read.studio,catalog)===id,'重开后默认丢失');
   const fresh=Layout.applyCreationDefault({templateId:id,name:'新单位'},read.studio,()=>C.uid('layer'));assert(fresh.layout.frameImage.w===96&&fresh.textStyles.title.size===19&&fresh.extraElements[0].text==='单位','格式未完整继承');assert(fresh.extraElements[0].id!=='qa_free','自由层编号重复');
+ });
+ await check('独立底图透明度、文字笔画和复制图层保存重开不丢失',async()=>{
+  const other=(await service({action:'create',title:'编辑属性隔离测试'})).project;
+  const layer={id:'edit_image',kind:'image',assetId:'edit_asset',layout:{x:10,y:12,w:20,h:30,r:25,z:10,opacity:.7,locked:true}},card={id:'edit_card',name:'编辑自检',templateId:'basic-unit',layout:{cost:Edit.setOpacity({opacity:.6},'module',.25,'material')},textStyles:{effect:{strokePx:.8}},extraElements:[layer]};
+  card.extraElements.push(...Edit.duplicateExtras([layer],[layer],()=>C.uid('copy')));other.studio.cards=[card];
+  await service({action:'studio',projectId:other.id,studio:other.studio,expectedStudioRevision:other.studioRevision});await service.close();service=createLocalService(dbName);
+  const read=(await service({action:'get',projectId:other.id})).project.studio.cards[0];assert(read.layout.cost.materialOpacity===.25&&read.layout.cost.opacity===.6,'透明度串改');assert(read.textStyles.effect.strokePx===.8,'笔画粗度未保存');assert(read.extraElements[1].assetId==='edit_asset'&&!read.extraElements[1].layout.locked&&read.extraElements[0].layout.locked,'复制状态错误');
  });
  document.querySelector('#summary').textContent=`全部通过：${passed} 项真实 IndexedDB 检查`;
  document.querySelector('#summary').dataset.status='passed';

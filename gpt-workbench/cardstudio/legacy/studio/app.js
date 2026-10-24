@@ -1,7 +1,7 @@
 (function(){
 "use strict";
 
-var KadiLayout=window.KadiLayout,IMAGE_ROLE_FIELDS=window.KadiImages.roleFields;
+var KadiLayout=window.KadiLayout,KadiEdit=window.KadiEdit,IMAGE_ROLE_FIELDS=window.KadiImages.roleFields;
 var APP_VERSION="3.0.0-beta10",PROJECT_SCHEMA_VERSION=20,PRIMARY_DB_KEY="project-v13",RECOVERY_DB_KEY="recovery-v1";
 
 var uid=function(){return crypto.randomUUID()};
@@ -268,7 +268,7 @@ var SEMANTIC_OBJECTS={
 };
 SEMANTIC_OBJECTS.frameImage={role:"透明卡框",kind:"image",alignBy:"frame",resize:"both",hint:"保持原图比例，独立调整卡框的位置、尺寸、透明度与层级。"};SEMANTIC_OBJECTS.textureImage=Object.assign({},SEMANTIC_OBJECTS.frameImage,{role:"图片底纹"});SEMANTIC_OBJECTS.iconImage=Object.assign({},SEMANTIC_OBJECTS.frameImage,{role:"素材图标"});
 function semanticForModel(m){return m&&m.type==="layout"?(SEMANTIC_OBJECTS[m.id]||{role:m.label||m.id,kind:"layout",anchor:"master",alignBy:"frame",resize:"both",hint:"标准模板对象。"}):{role:m&&m.label||"自由元素",kind:"free",anchor:"free",alignBy:"frame",resize:"both",hint:"自由元素不受主模板继承约束。"}}
-function layoutGeomEqual(a,b){if(!a||!b)return false;return ["x","y","w","h","r","z","visible","opacity","fit","lockAspect"].every(function(k){if(k==="visible")return (a[k]!==false)===(b[k]!==false);var av=Number(a[k]),bv=Number(b[k]);if(Number.isFinite(av)||Number.isFinite(bv))return Math.abs((Number.isFinite(av)?av:0)-(Number.isFinite(bv)?bv:0))<=Math.max(.001,(Number(projectDesign.layoutStep)||.05)/2+.001);return a[k]===b[k]})}
+function layoutGeomEqual(a,b){if(!a||!b)return false;return ["x","y","w","h","r","z","visible","opacity","materialOpacity","textOpacity","fit","lockAspect"].every(function(k){if(k==="visible")return (a[k]!==false)===(b[k]!==false);var av=Number(a[k]),bv=Number(b[k]);if(Number.isFinite(av)||Number.isFinite(bv))return Math.abs((Number.isFinite(av)?av:0)-(Number.isFinite(bv)?bv:0))<=Math.max(.001,(Number(projectDesign.layoutStep)||.05)/2+.001);return a[k]===b[k]})}
 function ensureLayoutOverrides(card){if(card.layoutOverrides&&typeof card.layoutOverrides==="object")return card.layoutOverrides;var master=makeLayout(card.templateId),out={};Object.keys(card.layout||{}).forEach(function(k){if(master[k]&&!layoutGeomEqual(card.layout[k],master[k]))out[k]=true});card.layoutOverrides=out;return out}
 function isLayoutOverride(card,key){return !!(card&&ensureLayoutOverrides(card)[key])}
 function setLayoutOverride(card,key,on){if(!card||!key)return;var map=ensureLayoutOverrides(card);if(on)map[key]=true;else delete map[key]}
@@ -503,8 +503,10 @@ function baseTextStyle(card,key,a){
   var group=key==="title"?"title":key==="effect"?"effect":key==="cost"?"cost":key.indexOf("stat_")===0?"stats":"meta";
   return {size:a[group+"Size"],color:a[group+"Color"],align:a[group+"Align"],bold:!!a[group+"Bold"],fontStyle:a.fontStyle||"default"};
 }
+function textModuleKey(key){return FIXED_TEXT_KEYS.concat(["tags","footerLeft","footerRight"]).includes(key)}
+function modelOpacityKind(m){return m.type==="extra"?(m.element.kind==="image"?"image":"text"):textModuleKey(m.id)?"module":"image"}
 function textStyleFor(card,key,a){var out=Object.assign(baseTextStyle(card,key,a),(card.textStyles&&card.textStyles[key])||{});if(key==="title")out.align="center";return out}
-function textCss(card,key,a,sizeOverride){var t=textStyleFor(card,key,a),family=FONT_STACKS[t.fontStyle]||FONT_STACKS.default;return "font-size:"+(sizeOverride==null?t.size:sizeOverride)+"px;color:"+t.color+";text-align:"+t.align+";font-weight:"+(t.bold?900:500)+";font-family:"+family}
+function textCss(card,key,a,sizeOverride){var t=textStyleFor(card,key,a),family=FONT_STACKS[t.fontStyle]||FONT_STACKS.default;return "font-size:"+(sizeOverride==null?t.size:sizeOverride)+"px;color:"+t.color+";text-align:"+t.align+";font-weight:"+(t.bold?900:500)+";font-family:"+family+";"+KadiEdit.strokeCss(t.strokePx)}
 // Beta 8: a single geometry model for preview, QA, crop, PnP, duplex and TTS.
 function syncPrintGeometry(){
   var raw=projectDesign.bleedMm==null?3:Number(projectDesign.bleedMm);
@@ -564,18 +566,23 @@ var cardHtml=function(card,editable){
   var style="--p:"+a.primary+";--s:"+a.secondary+";--a:"+a.accent+";--f:"+a.frame+";--t:"+a.text+";--stats-count:"+Math.max(1,t.stats.length)+";--rule-line-height:"+Math.max(1,Math.min(2,num(projectDesign.ruleLineHeight,1.34)))+";--rule-block-gap:"+Math.max(0,Math.min(1,num(projectDesign.ruleBlockGapEm,.18)))+"em;--rule-icon-baseline:"+Math.max(-.4,Math.min(.4,num(projectDesign.ruleIconBaselineEm,-.04)))+"em;--title-size:"+titleRenderSize+"px;--title-color:"+a.titleColor+";--title-align:"+a.titleAlign+";--title-weight:"+(a.titleBold?900:500)+";--effect-size:"+effectRenderSize+"px;--effect-color:"+a.effectColor+";--effect-align:"+a.effectAlign+";--effect-weight:"+(a.effectBold?800:400)+";--meta-size:"+a.metaSize+"px;--meta-color:"+a.metaColor+";--meta-align:"+a.metaAlign+";--meta-weight:"+(a.metaBold?800:500)+";--stats-size:"+a.statsSize+"px;--stats-color:"+a.statsColor+";--stats-align:"+a.statsAlign+";--stats-weight:"+(a.statsBold?900:500)+";--cost-size:"+a.costSize+"px;--cost-color:"+a.costColor+";--cost-align:"+a.costAlign+";--cost-weight:"+(a.costBold?900:500);
   var frameAsset=assetById(a.frameImageAssetId),textureAsset=assetById(a.textureImageAssetId),iconAsset=assetById(a.iconAssetId);
   var customFrame="",customTexture="",customIcon="";
-  function lp(key){var p=(card.layout&&card.layout[key])||DEFAULT_LAYOUT[key]||{x:0,y:0,w:10,h:10,r:0,z:20,opacity:1,visible:true};return 'left:'+p.x+'%;top:'+p.y+'%;width:'+p.w+'%;height:'+p.h+'%;z-index:'+p.z+';opacity:'+(p.opacity==null?1:p.opacity)+';transform:rotate('+p.r+'deg)'}
-  function handles(){return editable?'<i class="layout-handle resize" data-handle="resize"></i><i class="layout-handle rotate" data-handle="rotate"></i>':""}
-  function node(key,cls,inner,attrs,extraCss){var p=(card.layout&&card.layout[key])||DEFAULT_LAYOUT[key]||{},sem=SEMANTIC_OBJECTS[key];if(p.visible===false||!cardLayerAllowed(card,key)||!conditionVisible(card,key))return "";var semCls=sem?(" semantic-object semantic-"+sem.kind):"";var semAttr=sem?(' data-semantic-kind="'+esc(sem.kind)+'" data-semantic-role="'+esc(sem.role)+'"'):"";return '<div class="layout-node '+cls+semCls+(p.locked?' locked':'')+'" data-layout-key="'+key+'"'+semAttr+' style="'+lp(key)+(extraCss?";"+extraCss:"")+'" '+(attrs||"")+'>'+inner+handles()+'</div>'}
+  function lp(key,opacity){var p=(card.layout&&card.layout[key])||DEFAULT_LAYOUT[key]||{x:0,y:0,w:10,h:10,r:0,z:20,opacity:1,visible:true};return 'left:'+p.x+'%;top:'+p.y+'%;width:'+p.w+'%;height:'+p.h+'%;z-index:'+p.z+';opacity:'+(opacity==null?(p.opacity==null?1:p.opacity):opacity)+';transform:rotate('+p.r+'deg)'}
+  function handles(image){return editable?(image?["nw","ne","sw","se"].map(function(c){return '<i class="layout-handle resize corner-'+c+'" data-handle="resize" data-corner="'+c+'" title="拖动缩放素材；锁定宽高比可等比调整"></i>'}).join(""):'<i class="layout-handle resize" data-handle="resize"></i>')+'<i class="layout-handle rotate" data-handle="rotate"></i>':""}
+  function node(key,cls,inner,attrs,extraCss){
+    var p=(card.layout&&card.layout[key])||DEFAULT_LAYOUT[key]||{},sem=SEMANTIC_OBJECTS[key];if(p.visible===false||!cardLayerAllowed(card,key)||!conditionVisible(card,key))return "";
+    var semCls=sem?(" semantic-object semantic-"+sem.kind):"",semAttr=sem?(' data-semantic-kind="'+esc(sem.kind)+'" data-semantic-role="'+esc(sem.role)+'"'):"",state=KadiEdit.opacityState(p),split=textModuleKey(key)&&state.split;
+    var surface=split?'<div aria-hidden="true" class="layout-node '+cls+semCls+' module-surface" data-material-for="'+key+'" style="'+lp(key,state.material)+(extraCss?";"+extraCss:"")+'"></div>':"";
+    return surface+'<div class="layout-node '+cls+semCls+(split?' module-foreground':'')+(p.locked?' locked':'')+'" data-layout-key="'+key+'"'+semAttr+' style="'+lp(key,split?state.text:null)+(extraCss?";"+extraCss:"")+'" '+(attrs||"")+'>'+inner+handles(!!IMAGE_ROLE_FIELDS[key])+'</div>';
+  }
   function imageNode(key,asset){if(!asset)return "";var p=card.layout[key]||DEFAULT_LAYOUT[key];return node(key,"material-layer material-"+key,'<img src="'+esc(asset.dataUrl)+'" alt="'+esc(asset.name||"素材")+'" draggable="false" style="object-fit:'+esc(p.fit||"contain")+'">')}
   customFrame=imageNode("frameImage",frameAsset);customTexture=imageNode("textureImage",textureAsset);customIcon=imageNode("iconImage",iconAsset);
   var statNodes=(t.stats||[]).map(function(st){var k="stat_"+st[0],bs=badgeStyleFor(card,k),icon=resolvedBadgeIcon(bs,k),shape=bs.shape&&bs.shape!=="none"?(" badge-shape-"+bs.shape):" badge-shape-none";return node(k,"stat stat-layer semantic-badge"+shape+badgeClass(bs)+(icon?" has-badge-icon":""),icon+(bs.showLabel?'<small class="semantic-badge-label">'+st[1]+"</small>":"")+'<strong class="semantic-badge-value" style="'+textCss(card,k,a)+'" data-edit="'+st[0]+'"'+fieldEditAttrs(k)+'>'+esc(card[st[0]])+"</strong>","",badgeStyleCss(bs))}).join("");
   var extras=(card.extraElements||[]).map(function(el){
     var p=el.layout||{x:10,y:10,w:30,h:8,r:0,z:18,locked:false,opacity:1,visible:true};if(p.visible===false)return "";
     var base='left:'+p.x+'%;top:'+p.y+'%;width:'+p.w+'%;height:'+p.h+'%;z-index:'+p.z+';opacity:'+(p.opacity==null?1:p.opacity)+';transform:rotate('+p.r+'deg);';
-    if(el.kind==="image"){var asset=el.assetId&&assetById(el.assetId),src=el.src||(asset&&asset.dataUrl)||"";return '<div class="layout-node free-image-element '+(p.locked?"locked":"")+'" data-extra-id="'+el.id+'" style="'+base+'"><img src="'+esc(src)+'" alt="'+esc(el.name||"自由素材")+'" draggable="false" style="object-fit:'+esc(p.fit||"contain")+'">'+handles()+'</div>'}
+    if(el.kind==="image"){var asset=el.assetId&&assetById(el.assetId),src=el.src||(asset&&asset.dataUrl)||"";return '<div class="layout-node free-image-element '+(p.locked?"locked":"")+'" data-extra-id="'+el.id+'" style="'+base+'"><img src="'+esc(src)+'" alt="'+esc(el.name||"自由素材")+'" draggable="false" style="object-fit:'+esc(p.fit||"contain")+'">'+handles(true)+'</div>'}
     var inner=esc(resolveVars(el.text||"",card)).replace(/\\n/g,"<br>");
-    return '<div class="layout-node free-text-element '+(el.kind==="number"?"number-element ":"")+(el.parentId?"attached-label ":"")+(p.locked?"locked":"")+'" data-extra-id="'+el.id+'" data-parent-id="'+esc(el.parentId||"")+'" style="'+base+'font-size:'+(el.fontSize||11)+'px;color:'+(el.color||a.text)+';text-align:'+(el.align||"left")+';font-weight:'+(el.bold?900:500)+';font-family:'+(FONT_STACKS[el.fontStyle||a.fontStyle]||FONT_STACKS.default)+'">'+inner+handles()+'</div>'
+    return '<div class="layout-node free-text-element '+(el.kind==="number"?"number-element ":"")+(el.parentId?"attached-label ":"")+(p.locked?"locked":"")+'" data-extra-id="'+el.id+'" data-parent-id="'+esc(el.parentId||"")+'" style="'+base+'font-size:'+(el.fontSize||11)+'px;color:'+(el.color||a.text)+';text-align:'+(el.align||"left")+';font-weight:'+(el.bold?900:500)+';font-family:'+(FONT_STACKS[el.fontStyle||a.fontStyle]||FONT_STACKS.default)+';'+KadiEdit.strokeCss(el.strokePx)+'">'+inner+handles()+'</div>'
   }).join("");
   return '<div class="'+classes+'" style="'+style+'">'+customFrame+customTexture+customIcon+
     node("art","art",artEmpty+'<i class="art-subject-marker" aria-hidden="true"><span></span></i>')+ '<div class="shade"></div><div class="texture-layer"></div><div class="trim"></div><i class="card-axis-guide" aria-hidden="true"></i>'+printGuideHtml()+
@@ -754,7 +761,7 @@ function selectedModel(card){
 }
 function renderLayerPanel(){
   var box=$("#layerList");if(!box)return;var c=current(),layers=allLayerModels(c);
-  box.innerHTML=layers.map(function(m){var p=m.layout,sel=isSelectedRef({type:m.type,id:m.id});return '<button class="layer-row '+(sel?"selected ":"")+(p.visible===false?"is-hidden ":"")+'" data-layer-type="'+m.type+'" data-layer-id="'+esc(m.id)+'"><span class="layer-eye" data-layer-eye title="显示/隐藏">'+(p.visible===false?"○":"●")+'</span><span class="layer-name" title="'+esc(m.label)+'">'+esc(m.label)+'</span><span class="layer-meta">Z '+(p.z||0)+' · '+Math.round((p.opacity==null?1:p.opacity)*100)+'%</span><span class="layer-lock" data-layer-lock title="锁定/解锁">'+(p.locked?"🔒":"🔓")+'</span></button>'}).join("");
+  box.innerHTML=layers.map(function(m){var p=m.layout,sel=isSelectedRef({type:m.type,id:m.id});return '<button class="layer-row '+(sel?"selected ":"")+(p.visible===false?"is-hidden ":"")+'" data-layer-type="'+m.type+'" data-layer-id="'+esc(m.id)+'"><span class="layer-eye" data-layer-eye title="显示/隐藏">'+(p.visible===false?"○":"●")+'</span><span class="layer-name" title="'+esc(m.label)+'">'+esc(m.label)+'</span><span class="layer-meta">Z '+(p.z||0)+' · '+(modelOpacityKind(m)==="module"&&KadiEdit.opacityState(p).split?('底图 '+Math.round(KadiEdit.opacityState(p).material*100)+'% · 字 '+Math.round(KadiEdit.opacityState(p).text*100)+'%'):Math.round((p.opacity==null?1:p.opacity)*100)+'%')+'</span><span class="layer-lock" data-layer-lock title="锁定/解锁">'+(p.locked?"🔒":"🔓")+'</span></button>'}).join("");
 }
 var setArt=function(root,card){
   var art=root.querySelector(".art"),a=normalizeAppearance(card.appearance);
@@ -808,9 +815,19 @@ function semanticBoundsPercent(m){
   return {x:(rr.left-cr.left)/cr.width*100,y:(rr.top-cr.top)/cr.height*100,w:rr.width/cr.width*100,h:rr.height/cr.height*100,content:uses};
 }
 function applySelectionClasses(){
+  document.querySelectorAll('#preview .image-transform-overlay').forEach(function(el){el.remove()});
   document.querySelectorAll("#preview .layout-node.selected").forEach(function(x){x.classList.remove("selected","selected-primary")});var old=$("#preview .selection-bounds");if(old)old.remove();var oldTextGuide=$("#preview .semantic-content-guide");if(oldTextGuide)oldTextGuide.remove();
   selectedElements.forEach(function(ref){var n=nodeForRef(ref);if(n)n.classList.add("selected")});
   if(selectedElement){var p=nodeForRef(selectedElement);if(p)p.classList.add("selected-primary")}
+  if(layoutEditing&&selectedElements.length===1&&selectedElement){
+    var imageModel=selectedModel(current()),imageNode=nodeForRef(selectedElement),imageCard=$('#preview');
+    if(imageModel&&imageNode&&imageCard&&imageForModel(imageModel)&&!imageModel.layout.locked&&!isCardLocked(current())){
+      var transformBox=document.createElement('div'),ip=imageModel.layout;transformBox.className='image-transform-overlay';
+      transformBox.dataset.refType=selectedElement.type;transformBox.dataset.refId=selectedElement.id;
+      transformBox.style.cssText='left:'+ip.x+'%;top:'+ip.y+'%;width:'+ip.w+'%;height:'+ip.h+'%;transform:rotate('+(ip.r||0)+'deg)';
+      transformBox.innerHTML=Array.from(imageNode.querySelectorAll(':scope > .layout-handle')).map(function(h){return h.outerHTML}).join('');imageCard.appendChild(transformBox);
+    }
+  }
   if(layoutEditing&&selectedElements.length>1){var ms=selectedModels(current()).filter(function(m){return !m.layout.locked&&m.layout.visible!==false});if(ms.length>1){var b=selectionBounds(ms),card=$("#preview .card");if(card){var box=document.createElement("div");box.className="selection-bounds";box.style.left=b.x+"%";box.style.top=b.y+"%";box.style.width=b.w+"%";box.style.height=b.h+"%";box.innerHTML='<i class="selection-group-resize" data-group-handle="resize" title="缩放整个选区"></i>';card.appendChild(box)}}}
   if(layoutEditing&&selectedElement&&selectedElement.type==="layout"){var sm=selectedModel(current()),card=$("#preview .card"),rr=semanticContentRectForModel(sm);if(card&&rr){var cr=card.getBoundingClientRect(),guide=document.createElement("i");guide.className="semantic-content-guide";guide.style.left=((rr.left-cr.left)/cr.width*100)+"%";guide.style.top=((rr.top-cr.top)/cr.height*100)+"%";guide.style.width=(rr.width/cr.width*100)+"%";guide.style.height=(rr.height/cr.height*100)+"%";guide.setAttribute("data-label","实际内容");card.appendChild(guide)}}
 }
@@ -856,14 +873,21 @@ function semanticGeometryProfile(m,count){
 }
 function applySemanticGeometryVisibility(m,count){var profile=semanticGeometryProfile(m,count),showAll=advancedGeometry||count!==1||!m;var grid=$("#semanticGeometryGrid"),profileEl=$("#semanticControlProfile");if(profileEl)profileEl.textContent="控件策略："+profile.label;if(grid){grid.setAttribute("data-profile",(m&&m.type==="layout"?semanticForModel(m).kind:"free")||"none");grid.querySelectorAll("[data-geom-field]").forEach(function(label){var f=label.getAttribute("data-geom-field");label.classList.toggle("semantic-hidden",!showAll&&profile.fields.indexOf(f)<0)})}var adv=$("#advancedGeometry");if(adv)adv.checked=advancedGeometry}
 
+function refreshOpacityControls(models){
+  ["material","text"].forEach(function(channel){
+    var eligible=models.filter(function(m){return modelOpacityKind(m)!==(channel==="material"?"text":"image")}),id=channel==="material"?"elOpacity":"elTextOpacity",m=eligible[0],value=m?Math.round(KadiEdit.opacityState(m.layout)[channel]*100):100;
+    $("#"+id).value=value;$("#"+id+"Value").textContent=value+"%";
+    $("#"+id).disabled=isCardLocked(current())||!eligible.some(function(m){return !m.layout.locked});
+  });
+}
 function refreshElementPanel(){
   var c=current(),m=selectedModel(c),models=selectedModels(c),count=models.length,disabled=!m;
-  ["#elX","#elY","#elW","#elH","#elR","#elZ","#elOpacity","#toggleElementVisibility","#toggleElementLock","#layerUp","#layerDown","#bringFront","#sendBack","#duplicateElement","#deleteElement"].forEach(function(q){var el=$(q);if(el)el.disabled=disabled});
+  ["#elX","#elY","#elW","#elH","#elR","#elZ","#elOpacity","#elTextOpacity","#lockAspect","#toggleElementVisibility","#toggleElementLock","#layerUp","#layerDown","#bringFront","#sendBack","#duplicateElement","#deleteElement"].forEach(function(q){var el=$(q);if(el)el.disabled=disabled});
   var titleLocked=count===1&&m&&m.type==="layout"&&m.id==="title";if(titleLocked){$("#elX").disabled=true;$("#elH").disabled=true;$("#elR").disabled=true}var sem=m?semanticForModel(m):null,canInherit=count===1&&m&&m.type==="layout",overridden=canInherit&&isLayoutOverride(c,m.id);$("#semanticObjectBox").classList.toggle("is-override",!!overridden);$("#semanticObjectBox").classList.toggle("template-scope",templateEditMode);$("#semanticRole").textContent=sem?((m&&m.label||sem.role)+(templateEditMode&&canInherit?" · 编辑类型模板":overridden?" · 本卡覆盖":" · 跟随模板")):"未选择语义对象";$("#semanticRole").title=$("#semanticRole").textContent;$("#semanticHint").textContent=sem?sem.hint:"选择卡名、数值、规则区等对象后，这里会显示它真正的排版规则。";$("#inheritLayout").disabled=!canInherit||templateEditMode;$("#inheritLayout").checked=!!canInherit&&!overridden;$("#resetSelectedLayout").disabled=!canInherit||!overridden||templateEditMode;$("#snapSemanticAnchor").disabled=!canInherit;$("#opticalCenterSelected").disabled=!canInherit||!sem||sem.alignBy==="frame";applySemanticGeometryVisibility(m,count);var anchor=canInherit?semanticAnchorPoint(c,m.id):null,readout=$("#semanticAnchorReadout");if(readout){var actual=canInherit?semanticBoundsPercent(m):null,dx=anchor&&actual?(actual.x+actual.w/2-anchor.x):0,dy=anchor&&actual?(actual.y+actual.h/2-anchor.y):0;readout.textContent=anchor?("语义锚点："+anchor.x.toFixed(2)+"%, "+anchor.y.toFixed(2)+"% · 内容偏差 ΔX "+dx.toFixed(3)+"% / ΔY "+dy.toFixed(3)+"%"):"语义锚点：—"}$("#elXLabel").textContent=titleLocked?"水平中心":"X";$("#elYLabel").textContent="Y";$("#elWLabel").textContent=titleLocked?"文字最大宽":"宽";$("#elHLabel").textContent=titleLocked?"高度由模板控制":"高";$("#elRLabel").textContent="角度";renderConditionControls(m,count);renderBadgeControls(m,count);
   $("#selectedLayerName").title=m?m.label:"未选择";$("#selectionCount").textContent=count+" 个模块";$("#selectedLayerName").textContent=count>1?count+" 个模块":(m?m.label+(titleLocked?" · 中轴锁定":""):"未选择");
-  if(!m){refreshImageControls(null,0);applySelectionLockState();applySemanticGeometryVisibility(null,0);$("#elementText").value="";$("#elementText").disabled=true;$("#elOpacity").value=100;$("#elOpacityValue").textContent="100%";$("#addImageLabel").disabled=true;$("#detachImageLabel").disabled=true;$("#imageLabelPosition").disabled=true;$("#imageLabelTools").classList.remove("active");renderLayerPanel();refreshTextControls();return}
+  if(!m){refreshOpacityControls([]);refreshImageControls(null,0);applySelectionLockState();applySemanticGeometryVisibility(null,0);$("#elementText").value="";$("#elementText").disabled=true;$("#elOpacity").value=100;$("#elOpacityValue").textContent="100%";$("#addImageLabel").disabled=true;$("#detachImageLabel").disabled=true;$("#imageLabelPosition").disabled=true;$("#imageLabelTools").classList.remove("active");renderLayerPanel();refreshTextControls();return}
   $("#elX").value=Number(precisionRound(m.layout.x).toFixed(3));$("#elY").value=Number(precisionRound(m.layout.y).toFixed(3));$("#elW").value=Number(precisionRound(m.layout.w).toFixed(3));$("#elH").value=Number(precisionRound(m.layout.h).toFixed(3));$("#elR").value=Number(precisionRound(m.layout.r).toFixed(3));$("#elZ").value=m.layout.z==null?20:m.layout.z;
-  var opacity=Math.round((m.layout.opacity==null?1:m.layout.opacity)*100);$("#elOpacity").value=opacity;$("#elOpacityValue").textContent=count>1?"所选 → "+opacity+"%":opacity+"%";
+  refreshOpacityControls(models);
   var allHidden=count&&models.every(function(x){return x.layout.visible===false}),allLocked=count&&models.every(function(x){return x.layout.locked});
   $("#toggleElementVisibility").textContent=allHidden?"显示所选":"隐藏所选";$("#toggleElementLock").textContent=allLocked?"解锁所选":"锁定所选";
   var isSingle=count===1,isExtra=isSingle&&m.type==="extra",isImage=isExtra&&m.element.kind==="image",isAttached=isExtra&&!!m.element.parentId;
@@ -901,9 +925,9 @@ function beginLayoutPointer(e,node,mode){
   var models=selectedModels(current()).filter(function(x){return !x.layout.locked});if(!models.length)return;
   recordHistory();markModelsOverride(models);var cardEl=$("#preview .card"),rect=cardEl.getBoundingClientRect(),starts=models.map(function(x){return {ref:{type:x.type,id:x.id},layout:clone(x.layout)}}),group=selectionBounds(models);
   var linked=[];if((mode||"move")==="move")models.forEach(function(sm){if(sm.type==="extra"&&sm.element.kind==="image"){(current().extraElements||[]).filter(function(x){return x.parentId===sm.id&&!isSelectedRef({type:"extra",id:x.id})}).forEach(function(x){if(!linked.some(function(y){return y.element.id===x.id}))linked.push({element:x,start:clone(x.layout)})})}});
-  dragState={pointerId:e.pointerId,node:node,mode:mode||"move",model:m,models:models,starts:starts,group:group,rect:rect,startX:e.clientX,startY:e.clientY,start:clone(m.layout),linked:linked};
+  dragState={pointerId:e.pointerId,node:node,mode:mode||"move",model:m,models:models,starts:starts,group:group,rect:rect,startX:e.clientX,startY:e.clientY,start:clone(m.layout),corner:(e.target.closest("[data-corner]")||{}).dataset?.corner||"se",linked:linked};
   if(mode==="rotate"){var nr=node.getBoundingClientRect();dragState.cx=nr.left+nr.width/2;dragState.cy=nr.top+nr.height/2;dragState.startAngle=Math.atan2(e.clientY-dragState.cy,e.clientX-dragState.cx)*180/Math.PI}
-  node.setPointerCapture&&node.setPointerCapture(e.pointerId);
+  $("#preview").setPointerCapture&&$("#preview").setPointerCapture(e.pointerId);
 }
 function clearSnapGuides(){document.querySelectorAll("#preview .snap-guide").forEach(function(x){x.remove()})}
 function showSnapGuides(snap){clearSnapGuides();if(!snap)return;var card=$("#preview .card");if(!card)return;if(snap.x!=null){var v=document.createElement("i");v.className="snap-guide snap-guide-v";v.style.left=snap.x+"%";card.appendChild(v)}if(snap.y!=null){var h=document.createElement("i");h.className="snap-guide snap-guide-h";h.style.top=snap.y+"%";card.appendChild(h)}}
@@ -916,12 +940,12 @@ function snappedMove(d,dx,dy){
   return {dx:dx+(bestX?bestX.diff:0),dy:dy+(bestY?bestY.diff:0),x:bestX?bestX.target:null,y:bestY?bestY.target:null};
 }
 function moveLayoutPointer(e){
-  if(!dragState)return;var d=dragState,dx=(e.clientX-d.startX)/d.rect.width*100,dy=(e.clientY-d.startY)/d.rect.height*100;
+  if(!dragState||e.pointerId!==dragState.pointerId)return;var d=dragState,dx=(e.clientX-d.startX)/d.rect.width*100,dy=(e.clientY-d.startY)/d.rect.height*100;
   var snap=null;if(d.mode==="move"){snap=snappedMove(d,dx,dy);dx=snap.dx;dy=snap.dy;
     d.starts.forEach(function(st){var m=modelFromRef(current(),st.ref);if(!m)return;m.layout.x=clamp(st.layout.x+dx,-20,120);m.layout.y=clamp(st.layout.y+dy,-20,120)});
     (d.linked||[]).forEach(function(x){x.element.layout.x=x.start.x+dx;x.element.layout.y=x.start.y+dy});
   }else if(d.mode==="resize"){
-    if(d.starts.length===1&&d.starts[0].ref.type==="layout"&&d.starts[0].ref.id==="title"){var st=d.starts[0],tm=modelFromRef(current(),st.ref),sem=SEMANTIC_OBJECTS.title,nw=clamp(st.layout.w+dx*2,sem.minW,sem.maxW);tm.layout.w=precisionRound(nw);tm.layout.x=Math.round(((100-tm.layout.w)/2)*1000)/1000;tm.layout.h=st.layout.h;tm.layout.r=0}else{
+    if(d.starts.length===1&&imageForModel(d.model)){Object.assign(d.model.layout,KadiEdit.resizeCorner(d.start,d.corner,dx,dy,!!d.start.lockAspect||e.shiftKey));}else if(d.starts.length===1&&d.starts[0].ref.type==="layout"&&d.starts[0].ref.id==="title"){var st=d.starts[0],tm=modelFromRef(current(),st.ref),sem=SEMANTIC_OBJECTS.title,nw=clamp(st.layout.w+dx*2,sem.minW,sem.maxW);tm.layout.w=precisionRound(nw);tm.layout.x=Math.round(((100-tm.layout.w)/2)*1000)/1000;tm.layout.h=st.layout.h;tm.layout.r=0}else{
     var lock=($("#lockAspect")&&$("#lockAspect").checked)||e.shiftKey,g=d.group,newW=Math.max(2,g.w+dx),newH=Math.max(2,g.h+dy),sx=newW/g.w,sy=newH/g.h;
     if(lock){var scale=Math.max(.05,Math.abs(dx/g.w)>=Math.abs(dy/g.h)?sx:sy);sx=sy=scale}
     d.starts.forEach(function(st){var m=modelFromRef(current(),st.ref);if(!m)return;m.layout.x=g.x+(st.layout.x-g.x)*sx;m.layout.y=g.y+(st.layout.y-g.y)*sy;m.layout.w=clamp(st.layout.w*sx,2,140);m.layout.h=(m.type==="layout"&&m.id==="title")?st.layout.h:clamp(st.layout.h*sy,2,140);if(m.type==="layout"&&m.id==="title"){m.layout.x=(100-m.layout.w)/2;m.layout.r=0}});}
@@ -1015,13 +1039,13 @@ function textControlTargets(){
 function readTextControlStyle(target){
   var c=current(),a=normalizeAppearance(c.appearance);
   if(target.type==="layout")return textStyleFor(c,target.key,a);
-  var el=target.element;return {size:el.fontSize||11,color:el.color||a.text,align:el.align||"left",bold:!!el.bold,fontStyle:el.fontStyle||a.fontStyle||"default"};
+  var el=target.element;return {size:el.fontSize||11,color:el.color||a.text,align:el.align||"left",bold:!!el.bold,strokePx:el.strokePx||0,fontStyle:el.fontStyle||a.fontStyle||"default"};
 }
 function refreshTextControls(){
   if(!$("#textTarget"))return;var targets=textControlTargets(),disabled=isCardLocked(current())||!targets.some(function(t){var p=t.type==="layout"?current().layout[t.key]:t.element.layout;return !p||!p.locked}),style=targets.length?readTextControlStyle(targets[0]):{size:13,color:"#334155",align:"left",bold:false,fontStyle:"default"};
-  ["#textSize","#textColor","#textAlign","#textBold","#textFont","#clearTextOverride","#applyTextAll"].forEach(function(q){var el=$(q);if(el)el.disabled=disabled});
+  ["#textSize","#textColor","#textAlign","#textBold","#textStroke","#textFont","#clearTextOverride","#applyTextAll"].forEach(function(q){var el=$(q);if(el)el.disabled=disabled});
   var titleOnly=targets.length&&targets.every(function(t){return t.type==="layout"&&t.key==="title"});if($("#textAlign"))$("#textAlign").disabled=disabled||titleOnly;
-  $("#textSize").value=style.size;$("#textColor").value=style.color;$("#textAlign").value=titleOnly?"center":style.align;$("#textBold").checked=!!style.bold;$("#textFont").value=style.fontStyle||"default";
+  $("#textSize").value=style.size;$("#textColor").value=style.color;$("#textAlign").value=titleOnly?"center":style.align;$("#textBold").checked=!!style.bold;$("#textStroke").value=Math.round((style.strokePx||0)/1.2*100);$("#textStrokeValue").textContent=$("#textStroke").value+"%";$("#textFont").value=style.fontStyle||"default";
 }
 function setTextStyleValue(field,value,record){
   if(isCardLocked(current())){setStatus("当前卡牌已锁定，不能修改文字样式");refreshTextControls();return}var targets=textControlTargets().filter(function(t){var p=t.type==="layout"?current().layout[t.key]:t.element.layout;return !p||!p.locked});if(!targets.length){setStatus("请先选择一个文字模块，或在“文字模块”中指定区域");return}if(record!==false)recordHistory();var c=current();
@@ -1178,6 +1202,7 @@ $("#editScopeTemplate").onclick=function(){setLayoutMode(true,false);setTemplate
 $("#advancedGeometry").onchange=function(){advancedGeometry=!!this.checked;try{localStorage.setItem("card-studio-advanced-geometry",JSON.stringify(advancedGeometry))}catch(e){}refreshElementPanel()};
 $("#preview").addEventListener("pointerdown",function(e){
   if(e.target.closest("[data-inline-editing]")||e.detail>1)return;
+  var transformBox=e.target.closest('.image-transform-overlay');if(transformBox&&layoutEditing&&!isCardLocked(current())){var original=nodeForRef({type:transformBox.dataset.refType,id:transformBox.dataset.refId}),transformHandle=e.target.closest('[data-handle]');if(original&&transformHandle)beginLayoutPointer(e,original,transformHandle.dataset.handle);return}
   if(!layoutEditing)return;if(isCardLocked(current())){setStatus("当前卡牌已锁定，布局为只读");return;}var groupHandle=e.target.closest("[data-group-handle]"),handle=e.target.closest("[data-handle]"),node=e.target.closest(".layout-node");if(groupHandle){var gm=selectedModels(current()).find(function(m){return !m.layout.locked&&m.layout.visible!==false}),gn=gm&&nodeForRef({type:gm.type,id:gm.id});if(gn)beginLayoutPointer(e,gn,"resize");return}
   if(node){var nm=getElementModel(current(),node);if(nm&&nm.id==="art"&&nm.layout.locked){beginMarquee(e);return}if(nm&&nm.layout.locked){selectLayoutNode(node,e.ctrlKey||e.metaKey||e.shiftKey);return}beginLayoutPointer(e,node,handle?handle.getAttribute("data-handle"):"move");return}
   if(e.target.closest(".card"))beginMarquee(e);
@@ -1210,7 +1235,13 @@ function applyGeometryInput(k,el,finish){
 }
 ["X","Y","W","H","R","Z"].forEach(function(k){var el=$("#el"+k);el.addEventListener("input",function(){applyGeometryInput(k,this,false)});el.addEventListener("change",function(){applyGeometryInput(k,this,true)});el.addEventListener("blur",function(){if(geometryEditInput===this){geometryEditInput=null;refreshElementPanel()}})});
 
-$("#elOpacity").addEventListener("pointerdown",function(){if(mutableSelectedModels().length)recordHistory()});$("#elOpacity").addEventListener("input",function(){var models=mutableSelectedModels();if(!models.length)return;markModelsOverride(models);var v=clamp(num(this.value,100)/100,0,1);models.forEach(function(m){m.layout.opacity=v});$("#elOpacityValue").textContent=(models.length>1?"所选 → ":"")+Math.round(v*100)+"%";renderPreviewOnly();refreshElementPanel();persist()});
+["material","text"].forEach(function(channel){
+  var el=$(channel==="material"?"#elOpacity":"#elTextOpacity"),editing=false;
+  function begin(){if(!editing){recordHistory();editing=true;}}
+  el.addEventListener("pointerdown",function(){if(!el.disabled)begin()});
+  el.addEventListener("input",function(){var models=mutableSelectedModels().filter(function(m){return modelOpacityKind(m)!==(channel==="material"?"text":"image")});if(!models.length)return;begin();markModelsOverride(models);var value=clamp(num(el.value,100)/100,0,1);models.forEach(function(m){Object.assign(m.layout,KadiEdit.setOpacity(m.layout,modelOpacityKind(m),value,channel))});renderPreviewOnly();refreshElementPanel();persist()});
+  ["change","blur"].forEach(function(event){el.addEventListener(event,function(){editing=false})});
+});
 $("#importFrameLayer").onclick=function(){setLayoutMode(true,false);$("#smartFrameFile").click()};
 $("#addTextElement").onclick=function(){setLayoutMode(true,false);insertCanvasTextAt()};$("#addNumberElement").onclick=function(){setLayoutMode(true);addExtra("number")};
 $("#addImageElement").onclick=function(){setLayoutMode(true,false);$("#freeImageFile").click()};
@@ -1228,12 +1259,10 @@ $("#bringFront").onclick=function(){var models=mutableSelectedModels();if(!model
 $("#sendBack").onclick=function(){var models=mutableSelectedModels();if(!models.length)return;recordHistory();markModelsOverride(models);var min=Math.min.apply(null,allLayerModels(current()).map(function(x){return x.layout.z||0}));models.sort(function(a,b){return (a.layout.z||0)-(b.layout.z||0)}).forEach(function(m,i){m.layout.z=min-models.length+i});renderPreviewOnly();refreshElementPanel();persist()};
 $("#deleteElement").onclick=function(){var models=mutableSelectedModels();if(!models.length)return;recordHistory();markModelsOverride(models);var removeIds={};models.forEach(function(m){if(m.type==="extra"){removeIds[m.id]=1;if(m.element.kind==="image")(current().extraElements||[]).forEach(function(x){if(x.parentId===m.id)removeIds[x.id]=1})}else m.layout.visible=false});current().extraElements=(current().extraElements||[]).filter(function(x){return !removeIds[x.id]});clearSelection();renderPreviewOnly();persist();setStatus("已处理所选 "+models.length+" 个模块：自定义元素删除，模板字段隐藏")};
 function duplicateSelection(){
-  var models=mutableSelectedModels();if(!models.length)return;recordHistory();var out=[],c=current(),idMap={},pairs=[],tokenMap={cost:"费用",title:"名称",faction:"系别",rarityText:"稀有度",type:"兵种",stat_attack:"攻击",stat_health:"血量",stat_move:"移速",stat_range:"射程",footerLeft:"系列",footerRight:"署名"};
-  var extras=models.filter(function(m){return m.type==="extra"}).map(function(m){return m.element}),extraIds={};extras.forEach(function(el){extraIds[el.id]=1});
-  models.forEach(function(m){if(m.type==="extra"&&m.element.kind==="image"){(c.extraElements||[]).filter(function(x){return x.parentId===m.id&&!extraIds[x.id]}).forEach(function(x){extras.push(x);extraIds[x.id]=1})}});
-  extras.forEach(function(el){var x=clone(el),oldId=x.id,oldParent=x.parentId||"";x.id=uid();idMap[oldId]=x.id;x.layout.x+=3;x.layout.y+=3;c.extraElements.push(x);pairs.push({copy:x,oldParent:oldParent});out.push({type:"extra",id:x.id})});
-  pairs.forEach(function(p){if(p.oldParent&&idMap[p.oldParent])p.copy.parentId=idMap[p.oldParent]});
-  models.filter(function(m){return m.type==="layout"}).forEach(function(m){var asset=imageForModel(m),x=asset?{id:uid(),kind:"image",name:asset.name,assetId:asset.id,layout:clone(m.layout),initialLayout:clone(m.layout)}:{id:uid(),kind:"text",text:"{"+(tokenMap[m.id]||"名称")+"}",fontSize:12,color:c.appearance.text,align:"left",bold:false,fontStyle:"",layout:clone(m.layout)};x.layout.x+=3;x.layout.y+=3;x.layout.z=Math.max(45,x.layout.z||45);c.extraElements.push(x);out.push({type:"extra",id:x.id})});
+  if(isCardLocked(current()))return;var models=selectedModels(current());if(!models.length)return;recordHistory();var out=[],c=current(),tokenMap={cost:"费用",title:"名称",faction:"系别",rarityText:"稀有度",type:"兵种",stat_attack:"攻击",stat_health:"血量",stat_move:"移速",stat_range:"射程",footerLeft:"系列",footerRight:"署名"};
+  var extras=KadiEdit.duplicateExtras(models.filter(function(m){return m.type==="extra"}).map(function(m){return m.element}),c.extraElements,uid);
+  extras.forEach(function(x){c.extraElements.push(x);out.push({type:"extra",id:x.id})});
+  models.filter(function(m){return m.type==="layout"}).forEach(function(m){var asset=imageForModel(m),x=asset?{id:uid(),kind:"image",name:asset.name,assetId:asset.id,layout:clone(m.layout),initialLayout:clone(m.layout)}:{id:uid(),kind:"text",text:"{"+(tokenMap[m.id]||"名称")+"}",fontSize:12,color:c.appearance.text,align:"left",bold:false,fontStyle:"",layout:clone(m.layout)};x.layout.x+=3;x.layout.y+=3;x.layout.z=(m.layout.z||0)+1;x.layout.locked=false;if(x.kind==="image")x.initialLayout=clone(x.layout);c.extraElements.push(x);out.push({type:"extra",id:x.id})});
   renderPreviewOnly();setSelection(out,out[out.length-1]);persist();setStatus("已复制 "+out.length+" 个模块（附属文字关系已保留）");
 }
 $("#duplicateElement").onclick=duplicateSelection;
@@ -1291,7 +1320,7 @@ function editableSelectedModels(){return mutableSelectedModels().filter(function
 function applySelectionLockState(){
   var c=current(),all=selectedModels(c),locked=isCardLocked(c),writable=mutableSelectedModels().length>0;
   if(locked){$$("#layoutPanel button,#layoutPanel input,#layoutPanel select").forEach(function(el){el.disabled=true})}
-  else if(all.length&&!writable){["elX","elY","elW","elH","elR","elZ","elOpacity","toggleElementVisibility","layerUp","layerDown","bringFront","sendBack","duplicateElement","deleteElement","elementText","addImageLabel","detachImageLabel","imageLabelPosition","inheritLayout","resetSelectedLayout","snapSemanticAnchor","opticalCenterSelected","saveBadgeStyle","applyBadgePhysicalSize","resetBadgeStyle","saveCondition","clearCondition"].forEach(function(id){var el=$("#"+id);if(el)el.disabled=true})}
+  else if(all.length&&!writable){["elX","elY","elW","elH","elR","elZ","elOpacity","elTextOpacity","lockAspect","toggleElementVisibility","layerUp","layerDown","bringFront","sendBack","deleteElement","elementText","addImageLabel","detachImageLabel","imageLabelPosition","inheritLayout","resetSelectedLayout","snapSemanticAnchor","opticalCenterSelected","saveBadgeStyle","applyBadgePhysicalSize","resetBadgeStyle","saveCondition","clearCondition"].forEach(function(id){var el=$("#"+id);if(el)el.disabled=true})}
 }
 function alignSelection(kind){
   var ms=editableSelectedModels();if(!ms.length){setStatus("请先选择要对齐的模块");return}
@@ -1476,10 +1505,13 @@ $("#textSize").addEventListener("change",function(){setTextStyleValue("size",Mat
 $("#textColor").addEventListener("change",function(){setTextStyleValue("color",this.value,true)});
 $("#textAlign").addEventListener("change",function(){setTextStyleValue("align",this.value,true)});
 $("#textBold").addEventListener("change",function(){setTextStyleValue("bold",this.checked,true)});
+var strokeEditing=false;
+$("#textStroke").addEventListener("input",function(){var value=clamp(Number(this.value)||0,0,100)/100*1.2;setTextStyleValue("strokePx",value,!strokeEditing);strokeEditing=true});
+["change","blur"].forEach(function(event){$("#textStroke").addEventListener(event,function(){strokeEditing=false})});
 $("#textFont").addEventListener("change",function(){setTextStyleValue("fontStyle",this.value,true)});
 $("#clearTextOverride").onclick=function(){
   var targets=textControlTargets().filter(function(t){var p=t.type==="layout"?current().layout[t.key]:t.element.layout;return !p||!p.locked});if(!targets.length)return;recordHistory();var c=current(),a=normalizeAppearance(c.appearance);
-  targets.forEach(function(t){if(t.type==="layout"){if(c.textStyles)delete c.textStyles[t.key]}else{t.element.fontSize=11;t.element.color=a.text;t.element.align="left";t.element.bold=false;t.element.fontStyle=""}});
+  targets.forEach(function(t){if(t.type==="layout"){if(c.textStyles)delete c.textStyles[t.key]}else{t.element.fontSize=11;t.element.color=a.text;t.element.align="left";t.element.bold=false;t.element.strokePx=0;t.element.fontStyle=""}});
   renderPreviewOnly();refreshTextControls();persist();setStatus("已恢复所选文字模块的默认样式");
 };
 $("#applyTextAll").onclick=function(){

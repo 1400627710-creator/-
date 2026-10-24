@@ -541,3 +541,19 @@ body.focus-stage .app-header{opacity:.28;transition:opacity .15s ease}body.focus
 .export-download-ready{display:inline-flex;align-items:center;padding:7px 10px;max-width:250px;border:1px solid #91a0ed;border-radius:7px;background:#edf0ff;color:#27348a;font-size:11px;line-height:1.4;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 #layoutParamsText{flex-basis:100%;width:100%;min-height:110px;resize:vertical;font:11px/1.5 monospace}
+
+/* Independent material paint keeps the original text box and padding intact. */
+.card .module-foreground{background:transparent!important;background-image:none!important;border-color:transparent!important;box-shadow:none!important;backdrop-filter:none!important}
+.card .module-foreground.semantic-badge:before{display:none!important}
+.card .module-surface{pointer-events:none!important;user-select:none!important;text-shadow:none!important}
+.card .module-surface:before,.card .module-surface:after{pointer-events:none!important}
+#preview.layout-editing .layout-node{touch-action:none}
+.layout-handle.resize[data-corner]{width:14px;height:14px;bottom:auto;right:auto;transform:none;border-radius:4px;touch-action:none}
+.layout-handle.resize.corner-nw{left:-9px;top:-9px;cursor:nwse-resize}
+.layout-handle.resize.corner-ne{right:-9px;top:-9px;left:auto;cursor:nesw-resize}
+.layout-handle.resize.corner-sw{left:-9px;bottom:-9px;top:auto;cursor:nesw-resize}
+.layout-handle.resize.corner-se{right:-9px;bottom:-9px;left:auto;top:auto;cursor:nwse-resize}
+/* Handles live above the card layers so text cannot intercept a corner drag. */
+.image-transform-overlay{position:absolute;box-sizing:border-box;z-index:100000;pointer-events:none;transform-origin:center;overflow:visible;outline:1px solid #2563eb}
+#preview.layout-editing .image-transform-overlay>.layout-handle{display:block;pointer-events:auto}
+#preview .material-layer>.layout-handle,#preview .free-image-element>.layout-handle{display:none!important}
