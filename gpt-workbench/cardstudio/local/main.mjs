@@ -5,11 +5,13 @@ import * as TemplateLibrary from '../lib/template-library.mjs';
 import * as QuickCards from '../lib/quick-cards.mjs';
 import {installGlossary} from '../../shared/glossary-ui.mjs';
 import {recoveryCache} from './recovery-cache.mjs';
+import {installAssistant} from './assistant-panel.mjs';
 import * as M from '../lib/model.mjs';
 import {localService,localMeta} from './local-service.mjs';
 import {compatibleProject} from '../lib/compatible-export.mjs';
 import {ArchiveCore as C} from '../lib/archive-core.mjs';
 import {mountArchive,mountStudio} from '../ui/engines.mjs';
+let assistantController=null;
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const H=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 const surface='local';
@@ -46,7 +48,7 @@ async function load(id){
 }
 async function flush(){if(archiveApi)await archiveApi.flushSave();if(studioApi)studioApi.flush();await queue;if(conflicted)throw new Error('保存有冲突，请先下载当前修改，再重新载入');}
 async function list(){const r=await raw({action:'list'});projectList=r.projects||[];if(!projectList.length){const created=await raw({action:'create',title:'我的第一个项目'});projectList=[{id:created.project.id,title:created.project.title}];}$('#projects').innerHTML=projectList.map(x=>`<option value="${H(x.id)}">${H(x.title)}</option>`).join('');const last=localMeta.getItem(demo?'cardstudio-demo-active':'cardstudio-unified-active');await load(projectList.find(x=>x.id===requestedProjectId)?.id||projectList.find(x=>x.id===last)?.id||projectList[0].id);}
-function paint(){if(!p)return;$('#project-title').innerHTML=H(p.title)+' <span>↗</span>';$('#project-title').title='点击修改项目名称：'+p.title;$('#projects').value=p.id;const option=$(`#projects option[value="${CSS.escape(p.id)}"]`);if(option)option.textContent=p.title;$('#archive-count').textContent=p.archive.archives.length;$('#card-count').textContent=p.studio.cards.length;$('#link-count').textContent=p.links.length;$('#storage-label').textContent='本机项目 · 自动保存';if(demo){$('.pill').textContent='演示空间';$('.pill').classList.add('demo-tag');}paintDrafts();if(activeView==='templates')paintTemplates();if(activeView==='cards')paintCards();if(activeView==='links')paintLinks();
+function paint(){if(!p)return;assistantController?.projectChanged();$('#project-title').innerHTML=H(p.title)+' <span>↗</span>';$('#project-title').title='点击修改项目名称：'+p.title;$('#projects').value=p.id;const option=$(`#projects option[value="${CSS.escape(p.id)}"]`);if(option)option.textContent=p.title;$('#archive-count').textContent=p.archive.archives.length;$('#card-count').textContent=p.studio.cards.length;$('#link-count').textContent=p.links.length;$('#storage-label').textContent='本机项目 · 自动保存';if(demo){$('.pill').textContent='演示空间';$('.pill').classList.add('demo-tag');}paintDrafts();if(activeView==='templates')paintTemplates();if(activeView==='cards')paintCards();if(activeView==='links')paintLinks();
 localMeta.setItem(demo?'cardstudio-demo-active':'cardstudio-unified-active',p.id);}
 const viewCopy={templates:['版式和字段，按需复用','模板与字段','修改名称、管理适用字段，或用模板新建一张卡片。'],archive:['你的资料，逐步成形','档案资料','保留每个字段，也保留故事的不同时间。'],cards:['从档案，到卡片','卡片集','让资料套用模板，成为可编辑、可导出的卡片。'],links:['每个字段，都有来处','字段与映射','保留原始字段关系，让每次修改都可以追溯。']};
 async function setView(view){if(!p)return;if(activeView==='studio'&&view!=='studio'){try{await flush();}catch(e){error(e);return;}}activeView=view;$$('.view').forEach(x=>x.classList.toggle('active',x.id===`${view}-view`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===view));if(viewCopy[view]){$('#page-kicker').textContent=viewCopy[view][0];$('#page-title').textContent=viewCopy[view][1];$('#page-description').textContent=viewCopy[view][2];}paint();}
@@ -113,7 +115,7 @@ async function refresh(){
  }else{drafts=pending;paintDrafts();}
 }
 
-async function act(action,el){if(action.startsWith('glossary-'))return glossaryController.action(action,el);if(await productionAction(action,el))return;if(await templateAction(action,el))return;if(action.startsWith('exchange-'))return exchangeController.action(action);if(action==='new-card'){await newCardDialog();return;}if(action==='create-card'){await createCard();return;}switch(action){case 'close':close();break;case 'choose-file':$('#file-input').click();break;case 'generate':mappingDialog();break;case 'reuse-binding':mappingDialog(p.bindings.find(b=>b.id===el.dataset.id));break;case 'confirm-generate':await confirmGenerate();break;case 'parse-table':await previewText();break;case 'ask-gpt':await askGPT();break;case 'copy-prompt':await copyLocalPrompt();break;case 'import-gpt-result':openGptResultDialog();break;case 'preview-gpt-result':await previewGptResult();break;
+async function act(action,el){if(action.startsWith('glossary-'))return glossaryController.action(action,el);if(await assistantAction(action,el))return;if(await productionAction(action,el))return;if(await templateAction(action,el))return;if(action.startsWith('exchange-'))return exchangeController.action(action);if(action==='new-card'){await newCardDialog();return;}if(action==='create-card'){await createCard();return;}switch(action){case 'close':close();break;case 'choose-file':$('#file-input').click();break;case 'generate':mappingDialog();break;case 'reuse-binding':mappingDialog(p.bindings.find(b=>b.id===el.dataset.id));break;case 'confirm-generate':await confirmGenerate();break;case 'parse-table':await previewText();break;case 'ask-gpt':await askGPT();break;case 'copy-prompt':await copyLocalPrompt();break;case 'import-gpt-result':openGptResultDialog();break;case 'preview-gpt-result':await previewGptResult();break;
 case 'open-draft':await openDraft(el.dataset.id);break;case 'commit-draft':{const id=el.dataset.id;const r=await job({action:'commitDraft',draftId:id});drafts=drafts.filter(d=>d.id!==id);close();archiveApi.replaceState(p.archive);studioApi.replaceState(p.studio);setView('archive');paint();toast(r.duplicate?'已归档，无需重复确认':'资料已归档，可以继续编辑或批量制卡');break;}
  case 'cancel-draft':await raw({action:'cancelDraft',draftId:el.dataset.id});drafts=drafts.filter(d=>d.id!==el.dataset.id);close();paint();toast('已取消，正式资料未修改');break;
  case 'edit-card':await flush();if(!p.studio.cards.some(c=>c.id===el.dataset.id))throw new Error('这张卡片已移除');studioApi.replaceState(p.studio,{resetHistory:false});await setView('studio');studioApi.openCard(el.dataset.id);break;
@@ -130,10 +132,10 @@ document.addEventListener('click',async e=>{const el=e.target.closest('[data-act
 $$('[data-view]').forEach(el=>el.onclick=()=>setView(el.dataset.view));$('#input-btn').onclick=$('#side-import').onclick=inputDialog;$('#import-btn').onclick=()=>$('#file-input').click();$('#backup-btn').onclick=backupDialog;$('#generate-btn').onclick=$('#mapping-btn').onclick=()=>mappingDialog();$('#template-file').onchange=e=>receiveTemplate(e.target.files[0]).catch(error);$('#card-search').oninput=paintCards;$('#new-card-btn').onclick=()=>newCardDialog().catch(error);$('#close-studio').onclick=()=>setView('cards');$('#file-input').onchange=async e=>{try{await fileImport(e.target.files[0])}catch(e){error(e)}finally{e.target.value=''}};$('#projects').onchange=e=>load(e.target.value).catch(e=>{if(p)$('#projects').value=p.id;error(e);});
 $('#project-title').onclick=()=>dialog('修改项目名称',`<label><span>项目名称</span><input id="rename-value" value="${H(p.title)}"></label>`,'<button class="button" data-action="close">取消</button><button class="button primary" data-action="rename">保存</button>');$('#new-project').onclick=()=>dialog('新建项目','<label><span>项目名称</span><input id="new-project-name" placeholder="例如：长夜纪事 · 第一卷"></label>','<button class="button" data-action="close">取消</button><button class="button primary" data-action="create-project">创建项目</button>');
 $('#history-btn').onclick=async()=>{try{await flush();const r=await raw({action:'revisions',projectId:p.id});dialog('保存记录',`<p>本机保留最近 30 次保存；故事时间版本仍在档案中单独管理。</p>${r.revisions.length?r.revisions.map(x=>`<div class="import-choice"><div><strong>版本 ${x.revision} · ${H(x.label)}</strong><p>${H(x.created_at)}</p></div><button class="button" data-action="restore-revision" data-revision="${x.revision}">恢复</button></div>`).join(''):'<p>这里显示最近 30 次本机保存。</p>'}`);}catch(e){error(e)}};
-$('#help-btn').onclick=()=>dialog('卡递 · 本地文件版','<p>双击 HTML 即可打开，无需安装、无需登录。</p><p>资料自动保存到当前浏览器的本机数据库。请尽量保持文件位置和浏览器不变，并定期用“备份与迁移”导出完整统一备份。清理浏览器数据会清除本机项目。</p><p>导入旧档案、卡递工程、表格或统一备份后，核对预览再确认。档案与卡片的字段映射、故事时间版本、素材和排版都会保留。</p><p>双击画布添加文字；字段标签支持任意改名；打印设置中可调整出血。项目检查可一键处理能够自动修复的问题。</p><p>GPT 整理：复制原文与指令到当前对话，再将 JSON 从“导入 GPT 结果”粘贴回来。当前文件本身不运行模型，也不会自动读取线上私人项目。</p>');
+$('#help-btn').onclick=()=>dialog('卡递 · 本地文件版','<p>双击 HTML 即可打开，无需安装、无需登录。</p><p>资料自动保存到当前浏览器的本机数据库。请尽量保持文件位置和浏览器不变，并定期用“备份与迁移”导出完整统一备份。清理浏览器数据会清除本机项目。</p><p>导入旧档案、卡递工程、表格或统一备份后，核对预览再确认。档案与卡片的字段映射、故事时间版本、素材和排版都会保留。</p><p>双击画布添加文字；字段标签支持任意改名；打印设置中可调整出血。项目检查可一键处理能够自动修复的问题。</p><p>GPT 整理：档案资料右侧提供卡递助手。在 GPT 内打开工作台，可直接交给当前对话整理与批量制卡；独立本地文件提供离线格式整理，仍可使用旧版 JSON 接力。资料保存在当前浏览器，迁移时请导出完整统一备份。</p>');
 $('#demo-btn').onclick=()=>location.reload();
 $('#modal').addEventListener('click',e=>{if(e.target===$('#modal'))close()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#modal').hidden)close();if(e.key==='Tab'&&!$('#modal').hidden){const els=$$('#modal button,#modal input,#modal textarea,#modal select').filter(x=>!x.disabled),first=els[0],last=els.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});window.addEventListener('beforeunload',e=>{if(busy||dirtyArchive||dirtyStudio){remember();e.preventDefault();e.returnValue=''}});
-async function init(){try{await list();setupExchange();appReady=true;status('已保存到本机');}catch(e){$('#connection-screen').hidden=false;$('#connection-error').textContent=e.message;status('本机保存不可用');}setInterval(()=>{if(appReady&&document.visibilityState==='visible')refresh().catch(()=>status('本机读取暂不可用'))},5000);}
+async function init(){try{await list();setupExchange();setupAssistant();appReady=true;status('已保存到本机');}catch(e){$('#connection-screen').hidden=false;$('#connection-error').textContent=e.message;status('本机保存不可用');}setInterval(()=>{if(appReady&&document.visibilityState==='visible')refresh().catch(()=>status('本机读取暂不可用'))},5000);}
 
 function editingInput(){let el=document.activeElement;while(el?.shadowRoot?.activeElement)el=el.shadowRoot.activeElement;return !!el?.matches('input,textarea,[contenteditable="true"]');}
 let exchangeController;
@@ -289,6 +291,28 @@ async function productionAction(action){
   if(!changes.length){close();toast('没有需要保存的修改');return true;}const beforeRevision=bulkSession.baseRevision,result=await job({action:'batchCards',changes,expectedRevision:bulkSession.baseRevision});close();await setView('cards');toast(`已保存 ${result.stats.updated} 张卡片，排版保持原样`);lastProductionEdit={projectId:p.id,beforeRevision,afterRevision:p.revision};notice('批量修改已保存。',' <button class="button" data-action="production-undo">撤销本次批量修改</button>');return true;
  }
  if(action==='production-undo'){if(!lastProductionEdit||lastProductionEdit.projectId!==p.id)throw Error('本次操作记录已失效，请查看保存记录');await flush();if(p.revision!==lastProductionEdit.afterRevision)throw Error('后续已有新的修改，请在保存记录中核对后恢复');await job({action:'restore',revision:lastProductionEdit.beforeRevision,expectedRevision:p.revision});lastProductionEdit=null;notice('已撤销本次操作，保存记录仍保留。');await setView('cards');return true;}
+ return false;
+}
+
+function setupAssistant(){
+ assistantController=installAssistant({getProject:()=>p,flush,run:a=>job(a),toast,setView,recordsFromText,
+  selection:()=>{const state=archiveApi.getState(),panel=state.panels.find(x=>x.id===state.activePanelId);return panel?[panel.archiveId]:[];},
+  defaultTemplate:()=>TemplateLibrary.defaultTemplateId(p.studio,templateCatalog()),
+  openArchive:async id=>{await setView('archive');archiveApi.openArchive(id);},
+  legacyImport:()=>assistantAction('assistant-cloud-projects')
+ });
+ assistantController.ready.then(()=>{if(document.querySelector('meta[name="cardstudio-surface"]')?.content==='mcp-local')setView('archive');}).catch(error);
+}
+async function assistantAction(action,el){
+ if(action==='assistant-cloud-projects'){
+  const r=await assistantController.bridge.remote('app_service',{action:'list'}),projects=r._meta?.data?.projects||[];
+  dialog('导入旧云端项目',`<p>原云端项目保持原样。选择后会完整复制为本窗口的新项目，图片、档案和字段映射一起保留。</p>${projects.length?projects.map(x=>`<div class="import-choice"><div><strong>${H(x.title)}</strong></div><button class="button" data-action="assistant-cloud-import" data-id="${H(x.id)}">导入为新项目</button></div>`).join(''):'<p>当前账户没有旧云端项目。可从“备份与迁移”导入本地完整备份。</p>'}`,undefined,true);return true;
+ }
+ if(action==='assistant-cloud-import'){
+  await flush();const response=await assistantController.bridge.remote('app_service',{action:'get',projectId:el.dataset.id});const payload=M.validateProject(response._meta?.data?.project);
+  const created=await raw({action:'create',title:payload.title});projectList.push({id:created.project.id,title:payload.title});$('#projects').insertAdjacentHTML('beforeend',`<option value="${H(created.project.id)}">${H(payload.title)}</option>`);close();await load(created.project.id);
+  const preview=await raw({action:'prepareImport',projectId:p.id,kind:'unified',payload});await job({action:'commitDraft',draftId:preview.draft.id});await setView('archive');toast('已复制为当前窗口的新项目，旧云端资料保持原样');return true;
+ }
  return false;
 }
 

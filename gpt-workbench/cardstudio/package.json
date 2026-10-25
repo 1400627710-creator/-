@@ -12,8 +12,8 @@
     "start": "node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js dev --config dist/server/wrangler.json --local --persist-to .wrangler/state --ip 127.0.0.1 --inspector-port 0",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
-    "build:ui": "python3 scripts/prepare-engines.py && vite build --config vite.ui.config.mjs && node scripts/prepare-ui.mjs",
-    "test": "vite build --config vite.tests.config.mjs && node --test tests/*.test.mjs",
+    "build:ui": "python3 scripts/prepare-engines.py && vite build --config vite.ui.config.mjs && node scripts/prepare-ui.mjs && npm run build:local && node scripts/prepare-assistant-ui.mjs",
+    "test": "npm run build:local && node scripts/prepare-assistant-ui.mjs && vite build --config vite.tests.config.mjs && node --test tests/*.test.mjs",
     "build:local": "python3 scripts/prepare-engines.py && python3 local/prepare-local.py && vite build --config local/vite.config.mjs && node local/finish-local.mjs"
   },
   "dependencies": {

@@ -39,7 +39,7 @@ html=(root/'legacy/studio/index.html').read_text()
 body=re.search(r'<body[^>]*>([\s\S]*?)</body>',html).group(1)
 body=re.sub(r'<script[\s\S]*?</script>','',body)
 body=body.replace('特殊效果的统一定义、颜色与检索仓库 · 与 Community 共用 cardstudio-glossary-v1','词条定义、颜色和检索 · 与车卡机共用词条格式')
-body=body.replace('<b>CardStudio</b>','<b>卡递</b>').replace('Card design workspace','卡牌工作台').replace('Beta 10','本地 1.3')
+body=body.replace('<b>CardStudio</b>','<b>卡递</b>').replace('Card design workspace','卡牌工作台').replace('Beta 10','本地 1.4')
 css='\n'.join((root/'legacy/studio'/name).read_text() for name in ['styles.css','workspace-ui.css','public-repository.css'])
 css=css.replace(':root',':host');css=re.sub(r'(?<![\w.#-])body(?![\w-])','.legacy-body',css);css=re.sub(r'(^|[},\s])html(?=[\s,{.#:])',r'\1.legacy-body',css)
 css+='\n:host{display:block;height:100%;min-width:0}.legacy-body{height:100%;overflow:hidden}.legacy-body.workspace-v9{height:100%;min-height:0}#publishSharedGlossary,#receiveCommunityTerms,#openCommunityEdition,#downloadCommunityEdition,#openPublicTerms,#openPublicAssets,#openAiSettings,#openAiWorkbench,#openRecovery,#projectImport,#importBtn,.ai-bridge{display:none!important}.app-header .version-badge{font-size:11px}.project-name{pointer-events:none}.top-menu{z-index:160}.canvas-viewport{min-height:240px}'

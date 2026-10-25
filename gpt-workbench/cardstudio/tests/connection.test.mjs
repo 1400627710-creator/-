@@ -28,14 +28,16 @@ test('窗口消息：同窗口的请求回声不能冒充初始化响应',()=>{
 test('窗口资源：插件与网站使用不同标记，显示模式遵循宿主元数据',async()=>{
  const tools=(await rpc('tools/list')).result.tools;
  const opener=tools.find(t=>t.name==='open_workbench');
- assert.equal(opener._meta.ui.resourceUri,'ui://cardstudio/workbench');
+ assert.equal(opener._meta.ui.resourceUri,'ui://cardstudio/assistant-workbench');
  assert.deepEqual(opener._meta['openai/ui'].entrypoints,[{type:'global'}]);
  assert.equal(opener._meta['openai/outputTemplate'],undefined);
  const resource=(await rpc('resources/read',{uri:opener._meta.ui.resourceUri})).result.contents[0];
  assert.equal(resource.mimeType,'text/html;profile=mcp-app');
  assert.deepEqual(resource._meta['openai/ui'],{preferredDisplayMode:'fullscreen',availableDisplayModes:['inline','fullscreen']});
  assert.equal(resource._meta.ui.preferredDisplayMode,undefined);
- assert.ok(resource.text.includes('name="cardstudio-surface" content="mcp"'));
+ assert.ok(resource.text.includes('name="cardstudio-surface" content="mcp-local"'));
+ const legacy=(await rpc('resources/read',{uri:'ui://cardstudio/workbench'})).result.contents[0];
+ assert.ok(legacy.text.includes('name="cardstudio-surface" content="mcp"'));
  const webpage=await workbench();
  assert.equal(webpage.status,200);
  const html=await webpage.text();

@@ -5,6 +5,8 @@ import {createLocalService} from './local-service.mjs';
 import * as Layout from '../lib/layout-core.mjs';
 import * as Edit from '../lib/edit-core.mjs';
 import * as Quick from '../lib/quick-cards.mjs';
+import * as Assistant from '../lib/assistant-core.mjs';
+import {createAssistantStore} from './assistant-store.mjs';
 async function main(){
 const assert=(ok,message)=>{if(!ok)throw new Error(message);};
 const list=document.querySelector('#checks');
@@ -68,6 +70,14 @@ try{
   let read=(await service({action:'quickGenerate',projectId:original.id,rows,sourceText,templateId:'basic-unit',expectedRevision:0})).project,id=read.studio.cards[0].id,revision=read.revision;
   await rejects(()=>service({action:'batchCards',projectId:read.id,changes:[{id,patch:{cost:'5'}}],expectedRevision:0}));await rejects(()=>service({action:'batchCards',projectId:read.id,changes:[{id,patch:{cost:'错误'}}],expectedRevision:revision}));assert((await service({action:'get',projectId:read.id})).project.revision===revision,'拒绝后改变版本');
   read=(await service({action:'batchCards',projectId:read.id,changes:[{id,patch:{cost:'5'}}],expectedRevision:revision})).project;await service.close();service=createLocalService(dbName);const restored=(await service({action:'get',projectId:read.id})).project;assert(restored.studio.cards[0].cost===5&&restored.links[0].overrides.cost,'批量修改或覆盖未保存');assert(restored.imports.at(-1).raw===sourceText,'原文丢失');
+ });
+ await check('助手任务与原文保存重开不丢失，项目记录相互隔离',async()=>{
+  const name='assistant-qa-'+Date.now(),store=createAssistantStore(name),t={id:'job_one',projectId:'project_one',createdAt:new Date().toISOString(),sourceText:'合成原文',status:'processing'};await store.put(t);await store.put({...t,id:'job_two',projectId:'project_two'});await store.close();const reopened=createAssistantStore(name);assert((await reopened.get(t.id)).sourceText==='合成原文','任务原文丢失');assert((await reopened.list('project_one')).length===1,'任务跨项目混入');await reopened.transition(t.id,['processing'],{status:'cancelled'});assert(!await reopened.transition(t.id,['processing'],{status:'review'}),'取消的任务被迟到回复重新激活');await reopened.close();
+ });
+ await check('助手批次在真实事务中保存归档与卡面，重复回复不改版本，旧回复拒绝且整批可恢复',async()=>{
+  const original=(await service({action:'create',title:'助手批次隔离'})).project,sourceText='甲，人类，底层，检索。3费1/2',task=Assistant.makeRequest(original,{sourceText}),reply={kind:'batch',message:'合成资料',records:[{title:'甲',typeName:'单位',sourceQuote:'甲',cardKind:'unit',fields:[['unitType','种族','人类'],['faction','系别','底层'],['description','效果','检索。'],['cost','费用','3'],['attack','攻击','1'],['health','血量','2']].map(([key,name,value])=>({key,name,value,sourceQuote:value}))}]};
+  const action={action:'assistantApply',projectId:original.id,task,reply,expectedRevision:0},r=await service(action),again=await service(action);assert(r.project.studio.cards.length===1&&r.project.archive.archives.length===1&&r.project.links.length===1,'助手批次未完整提交');assert(again.stats.duplicate&&again.project.revision===r.project.revision,'重复回复写入两次');
+  const stale={...task,id:'job_stale'};await rejects(()=>service({...action,task:stale}));await service.close();service=createLocalService(dbName);const read=(await service({action:'get',projectId:original.id})).project;assert(read.assistantBatches[0].jobId===task.id,'批次重开丢失');const restored=(await service({action:'restore',projectId:read.id,revision:0,expectedRevision:read.revision})).project;assert(!restored.studio.cards.length&&!restored.archive.archives.length,'整批恢复未还原');
  });
  document.querySelector('#summary').textContent=`全部通过：${passed} 项真实 IndexedDB 检查`;
  document.querySelector('#summary').dataset.status='passed';

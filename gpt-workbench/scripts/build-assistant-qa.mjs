@@ -1,0 +1,10 @@
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {build} from '../cardstudio/node_modules/vite/dist/node/index.js';
+import {fileURLToPath} from 'node:url';
+const root=fileURLToPath(new URL('../',import.meta.url)),out=process.argv[2];if(!out)throw Error('Provide an isolated QA output directory');mkdirSync(out,{recursive:true});
+const html=readFileSync(root+'cardstudio/CardStudio-Local.html','utf8');writeFileSync(out+'/index.html',html);writeFileSync(out+'/assistant.html',html.replace('content="local"','content="mcp-local"'));
+const result=await build({configFile:false,root:root+'cardstudio',publicDir:false,logLevel:'warn',build:{write:false,lib:{entry:root+'cardstudio/tests/assistant-host-fixture.mjs',name:'AssistantQA',formats:['iife']},minify:true}});
+const code=(Array.isArray(result)?result[0]:result).output.find(x=>x.type==='chunk').code;
+const bootstrap=`(()=>{const s=document.createElement('script');s.textContent=new TextDecoder().decode(Uint8Array.from(atob('${Buffer.from(code).toString('base64')}'),c=>c.charCodeAt(0)));document.head.append(s)})();`;
+writeFileSync(out+'/host.html',`<!doctype html><meta charset="utf-8"><title>卡递助手 · 隔离协议测试</title><style>body{margin:0;background:#eee9f5;font:12px system-ui;color:#655574}header{height:55px;padding:6px 15px;box-sizing:border-box;display:flex;align-items:center;gap:15px}button{padding:7px 12px}#summary{overflow-wrap:anywhere}iframe{width:100%;height:calc(100dvh - 55px);border:0;background:#faf9fc}</style><header><b>隔离合成测试 · 非真实 GPT</b><button id="respond">回送合成 GPT 结果</button><span id="summary">等待窗口提交</span></header><iframe src="assistant.html" title="卡递测试窗口"></iframe><script>${bootstrap}</script>`);
+console.log('Assistant protocol QA:',out+'/host.html');

@@ -5,12 +5,15 @@ root=Path(__file__).resolve().parents[1]
 s=(root/'ui/main.mjs').read_text()
 s=s.replace("import {uiSurface,isRpcResponse} from '../lib/ui-surface.mjs';", "import {localService,localMeta} from './local-service.mjs';")
 s=s.replace("from './engines.mjs'", "from '../ui/engines.mjs'")
+s="import {installAssistant} from './assistant-panel.mjs';\n"+s
 s="import {recoveryCache} from './recovery-cache.mjs';\n"+s
 s="import {installGlossary} from '../../shared/glossary-ui.mjs';\n"+s
 s="import * as QuickCards from '../lib/quick-cards.mjs';\n"+s
 s="import * as TemplateLibrary from '../lib/template-library.mjs';\n"+s
 s="import {installExchange} from '../../shared/exchange-ui.mjs';\nimport {envelope as exchangeEnvelope} from '../../shared/exchange.mjs';\nimport {cardsEnvelope} from '../../shared/card-envelope.mjs';\n"+s
 s=s.replace("const surface=uiSurface(document.querySelector('meta[name=\"cardstudio-surface\"]')?.content,window.parent!==window);", "const surface='local';")
+s=s.replace("const $=", "let assistantController=null;\nconst $=")
+s=s.replace("function paint(){if(!p)return;", "function paint(){if(!p)return;assistantController?.projectChanged();")
 s=s.replace("embedded=surface==='mcp'", 'embedded=false')
 
 def replace_between(start,end,value):
@@ -32,18 +35,18 @@ s=s.replace("status(demo?'演示 · 本机保存':'已保存')", "status('已保
 s=s.replace('服务器', '本机')
 s=s.replace('保存版本用于恢复编辑状态；故事时间版本仍在档案中单独管理。','本机保留最近 30 次保存；故事时间版本仍在档案中单独管理。')
 s=s.replace('演示空间仅保留当前数据，私人项目提供保存历史。','这里显示最近 30 次本机保存。')
-replace_between("$('#help-btn').onclick=", "$('#demo-btn').onclick=", "$('#help-btn').onclick=()=>dialog('卡递 · 本地文件版','<p>双击 HTML 即可打开，无需安装、无需登录。</p><p>资料自动保存到当前浏览器的本机数据库。请尽量保持文件位置和浏览器不变，并定期用“备份与迁移”导出完整统一备份。清理浏览器数据会清除本机项目。</p><p>导入旧档案、卡递工程、表格或统一备份后，核对预览再确认。档案与卡片的字段映射、故事时间版本、素材和排版都会保留。</p><p>双击画布添加文字；字段标签支持任意改名；打印设置中可调整出血。项目检查可一键处理能够自动修复的问题。</p><p>GPT 整理：复制原文与指令到当前对话，再将 JSON 从“导入 GPT 结果”粘贴回来。当前文件本身不运行模型，也不会自动读取线上私人项目。</p>');")
+replace_between("$('#help-btn').onclick=", "$('#demo-btn').onclick=", "$('#help-btn').onclick=()=>dialog('卡递 · 本地文件版','<p>双击 HTML 即可打开，无需安装、无需登录。</p><p>资料自动保存到当前浏览器的本机数据库。请尽量保持文件位置和浏览器不变，并定期用“备份与迁移”导出完整统一备份。清理浏览器数据会清除本机项目。</p><p>导入旧档案、卡递工程、表格或统一备份后，核对预览再确认。档案与卡片的字段映射、故事时间版本、素材和排版都会保留。</p><p>双击画布添加文字；字段标签支持任意改名；打印设置中可调整出血。项目检查可一键处理能够自动修复的问题。</p><p>GPT 整理：档案资料右侧提供卡递助手。在 GPT 内打开工作台，可直接交给当前对话整理与批量制卡；独立本地文件提供离线格式整理，仍可使用旧版 JSON 接力。资料保存在当前浏览器，迁移时请导出完整统一备份。</p>');")
 replace_between("$('#demo-btn').onclick=", "$('#modal').addEventListener", "$('#demo-btn').onclick=()=>location.reload();")
 replace_between('async function init(){', '\ninit();', """async function init(){try{await list();appReady=true;status('已保存到本机');}catch(e){$('#connection-screen').hidden=false;$('#connection-error').textContent=e.message;status('本机保存不可用');}setInterval(()=>{if(appReady&&document.visibilityState==='visible')refresh().catch(()=>status('本机读取暂不可用'))},5000);}""")
-s=s.replace("await list();appReady=true", "await list();setupExchange();appReady=true")
+s=s.replace("await list();appReady=true", "await list();setupExchange();setupAssistant();appReady=true")
 s=s.replace("activeView='archive';paint();await setView('archive');", "activeView='cards';paint();await setView('cards');")
-s=s.replace("async function act(action,el){switch(action){", "async function act(action,el){if(action.startsWith('glossary-'))return glossaryController.action(action,el);if(await productionAction(action,el))return;if(await templateAction(action,el))return;if(action.startsWith('exchange-'))return exchangeController.action(action);if(action==='new-card'){await newCardDialog();return;}if(action==='create-card'){await createCard();return;}switch(action){")
+s=s.replace("async function act(action,el){switch(action){", "async function act(action,el){if(action.startsWith('glossary-'))return glossaryController.action(action,el);if(await assistantAction(action,el))return;if(await productionAction(action,el))return;if(await templateAction(action,el))return;if(action.startsWith('exchange-'))return exchangeController.action(action);if(action==='new-card'){await newCardDialog();return;}if(action==='create-card'){await createCard();return;}switch(action){")
 s=s.replace("async function openDraft(id){await flush();const r=await raw({action:'draft',draftId:id});showDraft(r.draft);}", "async function openDraft(id){await flush();const r=await raw({action:'draft',draftId:id});if(r.draft.kind==='exchange')return exchangeController.receive(r.draft.payload);showDraft(r.draft);}")
 s=s.replace("if(payload.format==='cardstudio-unified')", "if(payload.schema==='cardstudio-glossary-v1'){close();await glossaryController.receive(payload);return;}if(payload.format==='cardstudio-archive-exchange'){await exchangeController.receive(payload);return;}if(payload.format==='cardstudio-unified')")
 s=s.replace("name:['姓名','名称','卡名','技能名称']", "unitType:['种族','兵种','类型','族群'],rarity:['稀有度'],rulesKeywords:['规则关键词'],name:['姓名','名称','卡名','技能名称']")
 s=s.replace("$('#card-search').oninput=paintCards;", "$('#card-search').oninput=paintCards;$('#new-card-btn').onclick=()=>newCardDialog().catch(error);")
 s=s.replace("'<button class=\"button primary\" data-action=\"generate\">从档案批量制卡</button>'", "'<button class=\"button primary\" data-action=\"new-card\">新建卡片</button> <button class=\"button\" data-action=\"generate\">从档案批量制卡</button>'")
-s=s.replace('\ninit();', '\n'+(root/'local/exchange-adapter.mjs').read_text()+'\n'+(root/'local/templates-adapter.mjs').read_text()+'\n'+(root/'local/production-adapter.mjs').read_text()+'\ninit();')
+s=s.replace('\ninit();', '\n'+(root/'local/exchange-adapter.mjs').read_text()+'\n'+(root/'local/templates-adapter.mjs').read_text()+'\n'+(root/'local/production-adapter.mjs').read_text()+'\n'+(root/'local/assistant-adapter.mjs').read_text()+'\ninit();')
 s=s.replace("if(activeView==='cards')paintCards();", "if(activeView==='templates')paintTemplates();if(activeView==='cards')paintCards();")
 s=s.replace("templateId:'unit',map:[]","templateId:TemplateLibrary.defaultTemplateId(p.studio,templateCatalog()),map:[]")
 s=s.replace("const viewCopy={archive:", "const viewCopy={templates:['版式和字段，按需复用','模板与字段','修改名称、管理适用字段，或用模板新建一张卡片。'],archive:")

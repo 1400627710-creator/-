@@ -1,0 +1,7 @@
+export function createAssistantStore(name='cardstudio-assistant-v1'){
+ let opened;
+ const db=()=>opened||=(new Promise((resolve,reject)=>{const q=indexedDB.open(name,1);q.onupgradeneeded=()=>{const s=q.result.createObjectStore('jobs',{keyPath:'id'});s.createIndex('projectId','projectId');};q.onsuccess=()=>{q.result.onversionchange=()=>q.result.close();resolve(q.result);};q.onerror=()=>reject(q.error);q.onblocked=()=>reject(Error('助手记录被其他窗口占用'));})).catch(e=>{opened=null;throw e;});
+ async function run(mode,fn){const d=await db();return new Promise((resolve,reject)=>{const tx=d.transaction('jobs',mode),s=tx.objectStore('jobs');let value;const q=fn(s);q.onsuccess=()=>{value=q.result;};tx.oncomplete=()=>resolve(value);tx.onabort=()=>reject(tx.error||Error('助手记录未保存'));tx.onerror=()=>{};});}
+ async function transition(id,allowed,patch){const d=await db();return new Promise((resolve,reject)=>{const tx=d.transaction('jobs','readwrite'),s=tx.objectStore('jobs'),q=s.get(id);let value=null;q.onsuccess=()=>{if(q.result&&allowed.includes(q.result.status)){value={...q.result,...structuredClone(patch)};s.put(value);}};tx.oncomplete=()=>resolve(value);tx.onabort=()=>reject(tx.error||Error('助手任务状态未保存'));tx.onerror=()=>{};});}
+ return {transition,get:id=>run('readonly',s=>s.get(id)),put:job=>run('readwrite',s=>s.put(structuredClone(job))),list:async projectId=>(await run('readonly',s=>projectId?s.index('projectId').getAll(projectId):s.getAll())).sort((a,b)=>b.createdAt.localeCompare(a.createdAt)),close:async()=>{if(opened)(await opened).close();opened=null;}};
+}
