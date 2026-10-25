@@ -2,7 +2,8 @@ from pathlib import Path
 import hashlib,json,subprocess,sys,zipfile
 
 root=Path(__file__).resolve().parents[1]
-version=json.loads((root/'VERSION.json').read_text())['版本']
+release=json.loads((root/'VERSION.json').read_text())
+version=release['版本']; release_date=tuple(map(int,release['日期'].split('-')))+(0,0,0)
 files=[p for p in subprocess.check_output(['git','ls-files','-z'],cwd=root).decode().split('\0') if p]
 entries=[]
 for name in sorted(set(files)-{'MANIFEST.json','MD5SUMS.txt'}):
@@ -17,7 +18,7 @@ out=Path(sys.argv[1]).resolve() if len(sys.argv)>1 else root.parent/f'deliverabl
 out.parent.mkdir(parents=True,exist_ok=True)
 with zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
     for name in sorted(set(files)|{'MANIFEST.json','MD5SUMS.txt'}):
-        path=root/name;info=zipfile.ZipInfo(f'卡递与车卡机-{version}/'+name,date_time=(2026,10,25,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=path.stat().st_mode<<16
+        path=root/name;info=zipfile.ZipInfo(f'卡递与车卡机-{version}/'+name,date_time=release_date);info.compress_type=zipfile.ZIP_DEFLATED;info.external_attr=path.stat().st_mode<<16
         archive.writestr(info,path.read_bytes())
 with zipfile.ZipFile(out) as archive:
     assert archive.testzip() is None

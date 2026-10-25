@@ -1,6 +1,6 @@
 {
-  "版本": "1.4",
-  "文件数": 259,
+  "版本": "1.4.1",
+  "文件数": 261,
   "说明": "不包含 MANIFEST.json 和 MD5SUMS.txt 自身；MD5SUMS.txt 另外包含清单校验值。",
   "files": [
     {
@@ -19,16 +19,16 @@
     },
     {
       "path": "README.md",
-      "bytes": 6945,
-      "md5": "7c10fc1954b4a391ef378c063380da19",
-      "sha256": "b41e64c5a2475b8fbfa821b4e5fc45a58e226bd830e81d6c85a98fc58511ec58",
+      "bytes": 7901,
+      "md5": "d3c13220b23e8b5a4a58188dcd56db38",
+      "sha256": "78dfd5b06a9a5d20ba2951562041580e3d7d59e606e54c027efd385b5fc9068f",
       "gitMode": "100644"
     },
     {
       "path": "VERSION.json",
-      "bytes": 1719,
-      "md5": "5d811ae470e5ad52f1d6560f3eb5be25",
-      "sha256": "4be3258c57e4ceb53ec0275ccbfb420b5797714f1d23d334f2ba94c4c5d24746",
+      "bytes": 1893,
+      "md5": "0838f2f26b0eba35cfa6fe7cf8a5b401",
+      "sha256": "3cf7ffa186a05922e1d0101e4906bc766a014bc7f7a89a06cd335a9094c90422",
       "gitMode": "100644"
     },
     {
@@ -47,9 +47,9 @@
     },
     {
       "path": "cardstudio/CardStudio-Local.html",
-      "bytes": 3197057,
-      "md5": "99609c16a6af87419bd50ae5e3b33693",
-      "sha256": "9254ba50c905ac4cfb059175928909d6561d71a2eac7176c87965c8cc848d4f6",
+      "bytes": 3213453,
+      "md5": "cabddf494313b2dd9015df3a0986da96",
+      "sha256": "acd19889ad11aea6bfe21213289a4626a55997834252b4548995d85c27392636",
       "gitMode": "100644"
     },
     {
@@ -68,9 +68,9 @@
     },
     {
       "path": "cardstudio/app/api/health/route.ts",
-      "bytes": 105,
-      "md5": "27b916b420e9a07d25e3312f3a2026ed",
-      "sha256": "03fbf91c2b9e8669be19be639a8e13f6076eeeaa39a07216444027c427c904a1",
+      "bytes": 107,
+      "md5": "49f0741e5921d5a234f7bf63b940af61",
+      "sha256": "c395afd499d13e3f51599e0d4ba84096e45c75ff72e70f5098ca4599aecf4718",
       "gitMode": "100644"
     },
     {
@@ -768,9 +768,9 @@
     },
     {
       "path": "cardstudio/legacy/studio/app.js",
-      "bytes": 425469,
-      "md5": "6a613a7a519bd19b06b9a7dca1c4c30f",
-      "sha256": "c5d0862cf314ab8b2bf661a4038d68dfe9a33a9d475d67e5f36cc105646e65db",
+      "bytes": 425571,
+      "md5": "cd9a29470e76231f5a4a9b8d6f4644fa",
+      "sha256": "e733177cb6a40196b2f47b16264feb4a5ffb587438e06d5ff7752f31d6a1b1ea",
       "gitMode": "100644"
     },
     {
@@ -810,9 +810,9 @@
     },
     {
       "path": "cardstudio/legacy/studio/layout-core.js",
-      "bytes": 10803,
-      "md5": "da6de8867d0c0e191ba948d8e6b8a484",
-      "sha256": "8d06c02927750b6a9e6ed540ebf000fad36ae91739df51d3a7b34befaa305c3d",
+      "bytes": 11244,
+      "md5": "64cefb3defad50b071846f3583c85de3",
+      "sha256": "f7ee16cf74f04eb88a4051bd5aa3a72bde43dcdec709f06e4e627fce0a1a9b23",
       "gitMode": "100644"
     },
     {
@@ -971,9 +971,9 @@
     },
     {
       "path": "cardstudio/lib/layout-core.mjs",
-      "bytes": 285,
-      "md5": "7264218b64b5659aad59f69208227713",
-      "sha256": "560198675adc2a72ea37e43c9ad24b9dc9f7b2adbcf0212f130e294f41a2f851",
+      "bytes": 299,
+      "md5": "5f0baafe4588bdd47fe0e3286a25b0da",
+      "sha256": "aadebbe28ff5a7452f1345df38c026f2393de6ffe4996bd3d256a121b93aa561",
       "gitMode": "100644"
     },
     {
@@ -1020,9 +1020,9 @@
     },
     {
       "path": "cardstudio/lib/template-library.mjs",
-      "bytes": 6167,
-      "md5": "07cac7ca773c9651fc627cc329b5344b",
-      "sha256": "08c510e021b00edd5afdf9a2b2a32ba6840d5095ce51e6d0dee670bd8f05540f",
+      "bytes": 15496,
+      "md5": "50344c9384689daf32999d64f594b6f6",
+      "sha256": "c4e729bfa53317c5ade5dd27fce920d5957faa1fc7371d25a4caeb22e290c0da",
       "gitMode": "100644"
     },
     {
@@ -1104,9 +1104,9 @@
     },
     {
       "path": "cardstudio/local/index.html",
-      "bytes": 5920,
-      "md5": "7d39f43328cc26b747c082f7adcbf1ea",
-      "sha256": "ea38c0a99cb0d9ec5dae7d5ab3e52ad5e65e2767603e6daad4fb71b8c825650d",
+      "bytes": 6041,
+      "md5": "eb76d0db0635cec182b8b8b7c6309b0b",
+      "sha256": "b1f3d3e75ee706a794021a2b14b27670f3d69cb15afa25e2e153c9c327a5f259",
       "gitMode": "100644"
     },
     {
@@ -1118,16 +1118,16 @@
     },
     {
       "path": "cardstudio/local/main.mjs",
-      "bytes": 68490,
-      "md5": "9d1df9733dc33ede8878ea37064999f1",
-      "sha256": "2e67b99a8ee512389eed4bdc458af928856823ff5bbb4234dc12d0762b35047e",
+      "bytes": 72871,
+      "md5": "b8a8d93aff1244a32f3d1bcf79ad2e47",
+      "sha256": "01fac5e0c0175f72745760602e722983c007ce25eb9b6e7a9ffe48a72062ec1a",
       "gitMode": "100644"
     },
     {
       "path": "cardstudio/local/prepare-local.py",
-      "bytes": 11558,
-      "md5": "fc958f7dd350b8d21e50461df5e55a94",
-      "sha256": "d8c2da0e8a2279d5a5110b8971d10992438c02dabd6e6eec6a6d7b4ad9efab2b",
+      "bytes": 11782,
+      "md5": "681eddcadfd8d350df6a56303cdf04db",
+      "sha256": "22949d78918ffb5089c122b13171d9498e78d665e48f0cad71ec1fa5bf55c299",
       "gitMode": "100644"
     },
     {
@@ -1160,16 +1160,16 @@
     },
     {
       "path": "cardstudio/local/style.css",
-      "bytes": 6078,
-      "md5": "653dcdeae9750e26e5b973b6346690b9",
-      "sha256": "51ee06846b6d6a14435b4b048cb0401057f342e264b6671de8541cf99fdeb4d8",
+      "bytes": 6261,
+      "md5": "8458643c3b24352ff110743d0456c41c",
+      "sha256": "79c4b726f396968d2fd7f8be48ec1cc46a94d83946a8233a2098e8dcadc086ee",
       "gitMode": "100644"
     },
     {
       "path": "cardstudio/local/templates-adapter.mjs",
-      "bytes": 9531,
-      "md5": "a207e4a8e36d494a84ca16e2932d3eb3",
-      "sha256": "eb03d9023625ce6f839df3a5016c4c17d132280b731adaacd9604593367e7711",
+      "bytes": 13809,
+      "md5": "1b7b493f617155f20f81c25ee0fa710e",
+      "sha256": "1de99c9c3201463ced3f22ffaeca8fd1cbd97cf4d4f90e27123dd6b055a01c7d",
       "gitMode": "100644"
     },
     {
@@ -1335,9 +1335,9 @@
     },
     {
       "path": "cardstudio/scripts/prepare-engines.py",
-      "bytes": 10944,
-      "md5": "3ad448b03ef7e8067d59d7348956da0e",
-      "sha256": "1789a40ae12c92f2918eadd473f963bf2536bbb994cfb015f0088a0908493af7",
+      "bytes": 11504,
+      "md5": "15b018bb80d4157a48ed8338c41d7111",
+      "sha256": "a24f3d88b0fffb6134c6ea543201ac149075af18d5d34fdd9522a6eb667a2b62",
       "gitMode": "100644"
     },
     {
@@ -1474,6 +1474,13 @@
       "gitMode": "100644"
     },
     {
+      "path": "cardstudio/tests/template-pack.test.mjs",
+      "bytes": 8459,
+      "md5": "4d0379099b1861f1ee861bf861b8c2e6",
+      "sha256": "6aafff49ae6032c82cb93dd1b47148a2c24708f87343746a9c3b585777f065f0",
+      "gitMode": "100644"
+    },
+    {
       "path": "cardstudio/tsconfig.json",
       "bytes": 800,
       "md5": "107f3fd79057c6e38df3c43273491889",
@@ -1583,6 +1590,13 @@
       "bytes": 6611,
       "md5": "ac5074cd2cbab10edbaa656f498dd811",
       "sha256": "e47eaf4ecd3d81079143b75ab22673b954173a0e53744b28a75483c68f6fab68",
+      "gitMode": "100644"
+    },
+    {
+      "path": "docs/卡递1.4.1完整模板说明.md",
+      "bytes": 6191,
+      "md5": "236ab9fdc8bf3ce36ba5df88e24aa26a",
+      "sha256": "df32a2811d1fbf4f3440026c3848d13ceb9609f01fb6a71525e984a37470f10f",
       "gitMode": "100644"
     },
     {
@@ -1720,9 +1734,9 @@
     },
     {
       "path": "scripts/package-release.py",
-      "bytes": 1945,
-      "md5": "f767c3a2769b85dad7c2ed591dea527e",
-      "sha256": "ca41b9b47f50796f74f874992856104ebd3130908eed06d9a568157e5d191fcb",
+      "bytes": 2022,
+      "md5": "2de8bfea21e66ae947e2d67dfbd81d3f",
+      "sha256": "4ea3ce87e55ae61370a61e2690e6e2677ebda6cedd1d631ab0d327873cde4d1c",
       "gitMode": "100644"
     },
     {
